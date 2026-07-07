@@ -17,8 +17,8 @@ const mono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Project Amazon PH PPC Training Ground',
-    template: '%s | PPC Training Ground',
+    default: 'Project Amazon PH AMPH Academy v2',
+    template: '%s | AMPH Academy v2',
   },
   description:
     'Amazon advertising training for Filipino virtual assistants. Three courses. One outcome: become the Amazon ads specialist clients retain at ₱60k–₱80k per month.',
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_PH',
-    siteName: 'PPC Training Ground',
+    siteName: 'AMPH Academy v2',
   },
   robots: {
     index: true,

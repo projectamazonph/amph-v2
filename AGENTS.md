@@ -1,4 +1,4 @@
-# AGENTS.md — PPC Training Ground
+# AGENTS.md — AMPH Academy v2
 
 Conventions for AI coding assistants and developers working on this codebase.
 
@@ -26,7 +26,7 @@ PostgreSQL in production, SQLite in dev. Schema must be Postgres-compatible. Eve
 
 ## The Business Layer
 
-Xendit for payments. Three pricing tiers. Refund window 7 days. Tax-compliant receipts. See `docs/business-layer.md`.
+PayMongo for payments (one-time, Philippine peso, GCash/Maya/card/bank). Three pricing tiers. Refund window 7 days. Tax-compliant receipts. See `docs/business-layer.md`.
 
 ## The Admin Panel
 
@@ -51,7 +51,7 @@ Xendit for payments. Three pricing tiers. Refund window 7 days. Tax-compliant re
 
 - Conventional commits: `feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:`.
 - One concern per commit. Don't mix refactor + feature.
-- Reference story IDs: `feat(admin): user list table (STORY-132)`.
+- Reference story IDs: `feat(admin): user list table (STORY-027)`.
 - Always `git commit` after work. Never leave uncommitted changes.
 
 ## Branching
@@ -112,7 +112,7 @@ When something breaks:
 ## Memoria Protocol
 
 This repo uses Memoria for cross-agent context. Tag memories with:
-- `project:ppc-training-ground`
+- `project:amph-v2`
 - `phase:1` (analysis), `2` (planning), `3` (solutioning), `4` (implementation), `5` (enrichment)
 - `agent:dusk` (this instance)
 

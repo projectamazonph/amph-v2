@@ -1,6 +1,7 @@
-# Build Spec — Project Amazon PH PPC Training Ground
+# Build Spec — AMPH Academy v2
 
-**Project:** ppc-training-ground (v2)
+**Project:** amph-v2
+**Repo:** github.com/projectamazonph/amph-v2
 **Date:** 2026-07-07
 **Owner:** Ryan Roland Dabao
 **Status:** Approved
@@ -20,7 +21,7 @@ The v1 platform at `github.com/projectamazonph/AMPH-Academy` shipped. It works. 
 
 Incremental refactor would touch every file while running on production users. Greenfield is faster, safer, and gives a clean baseline for every ADR.
 
-**Decision:** v1 is frozen at `projectamazonph/AMPH-Academy`. v2 lives at `projectamazonph/ppc-training-ground`. No code carries over. v1 stays online until v2 is feature-complete, then traffic redirects.
+**Decision:** v1 is frozen at `projectamazonph/AMPH-Academy`. v2 lives at `projectamazonph/amph-v2`. No code carries over. v1 stays online until v2 is feature-complete, then traffic redirects.
 
 ---
 
@@ -34,7 +35,7 @@ Same product. Same audience. Same pricing. Same content ownership. Different fou
 | Design system | Ad-hoc glass morphism | **Field Manual** design system (docs/design-brief.md) |
 | Copy | AI-generated tone | **Humanized** voice (docs/voice-guide.md) |
 | Admin | Badges + Live Classes only | Full backend (docs/admin-backend.md) |
-| Payments | Free, no gating | **Xendit + tier gating** (docs/business-layer.md) |
+| Payments | Free, no gating | **PayMongo + tier gating** (docs/business-layer.md) |
 | Schema | Ad-hoc, legacy tables | **Clean from day 1** (docs/db-schema.md) |
 | Tests | Zero | **70%+ on lib/actions** |
 | Observability | Console.log | **Sentry + structured logs** |
@@ -88,8 +89,8 @@ These are explicitly **not** in scope for v2:
 **Risk:** Solo developer burnout over 11 weeks.
 **Mitigation:** Sprint slips trigger rescope, not extension. If a sprint ships < 5 points for 3 consecutive sprints, velocity target drops. Sprints are 1 week each with clear ship-or-cut decisions.
 
-**Risk:** Xendit integration drags.
-**Mitigation:** Mock provider interface for Sprint 5 testing. Real Xendit in Sprint 7. PayMongo as fallback.
+**Risk:** PayMongo integration drags.
+**Mitigation:** Mock provider interface for Sprint 5 testing. Real PayMongo in Sprint 7. DR Congo PayMongo link as fallback if primary account fails verification.
 
 **Risk:** Performance budgets too aggressive.
 **Mitigation:** Lighthouse CI baseline taken in Sprint 0. Budgets set to baseline + 20%, tightened each sprint.
@@ -129,7 +130,7 @@ After v2 reaches feature-complete:
 
 - Affiliate program timing — defer to v2.1 or v3.
 - Subscription pricing model — defer. One-time only for v2.
-- PayMongo fallback — build only if Xendit proves unreliable.
+- PayMongo primary vs DR Congo fallback — build only if primary proves unreliable.
 
 ---
 

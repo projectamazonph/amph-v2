@@ -1,4 +1,4 @@
-# Database Schema — PPC Training Ground
+# Database Schema — AMPH Academy v2
 
 **Date:** 2026-07-07
 **Owner:** Ryan Roland Dabao
@@ -709,7 +709,7 @@ model PricingTier {
   features    String   // JSON array of feature bullets
   sortOrder   Int      @default(0)
   isActive    Boolean  @default(true)
-  xenditProductId String?
+  paymongoProductId String?
   deletedAt   DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -730,8 +730,8 @@ model CheckoutSession {
   email           String
   pricingTierId   String
   status          CheckoutStatus @default(PENDING)
-  xenditInvoiceId String?  @unique
-  xenditInvoiceUrl String?
+  paymongoInvoiceId String?  @unique
+  paymongoInvoiceUrl String?
   amountPhp       Int
   discountCodeId  String?
   discountAmount  Int      @default(0)
@@ -754,7 +754,7 @@ model CheckoutSession {
 
   @@index([userId])
   @@index([status])
-  @@index([xenditInvoiceId])
+  @@index([paymongoInvoiceId])
   @@index([expiresAt])
   @@index([deletedAt])
 }
@@ -774,8 +774,8 @@ model Payment {
   pricingTierId     String
   enrollmentId      String?  @unique
   checkoutSessionId String?  @unique
-  xenditPaymentId   String?  @unique
-  xenditChargeId    String?
+  paymongoPaymentId   String?  @unique
+  paymongoChargeId    String?
   amountPhp         Int      // centavos
   feePhp            Int      @default(0)
   netAmountPhp      Int
@@ -788,7 +788,7 @@ model Payment {
   refundReason      String?
   receiptUrl        String?
   invoiceUrl        String?
-  metadata          String?  // JSON of Xendit response
+  metadata          String?  // JSON of PayMongo response
   deletedAt         DateTime?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -801,7 +801,7 @@ model Payment {
 
   @@index([userId])
   @@index([status])
-  @@index([xenditPaymentId])
+  @@index([paymongoPaymentId])
   @@index([paidAt])
   @@index([deletedAt])
 }
@@ -877,7 +877,7 @@ model RefundRequest {
   reviewedById String?
   reviewedAt  DateTime?
   reviewerNotes String?
-  xenditRefundId String?
+  paymongoRefundId String?
   processedAt DateTime?
   failedAt    DateTime?
   failureReason String?
@@ -1064,7 +1064,7 @@ Every subsequent schema change follows ADR-012 (soft-delete), ADR-013 (soft-publ
 
 ## Backup and Restore
 
-- **Dev:** Daily SQLite backup to `~/.hermes/backups/ppc-training-ground/`. 7-day retention.
+- **Dev:** Daily SQLite backup to `~/.hermes/backups/amph-v2/`. 7-day retention.
 - **Production:** Vercel Postgres automatic daily backups. 30-day retention.
 - **Quarterly restore drill:** Restore production backup to staging. Smoke test. Document findings.
 

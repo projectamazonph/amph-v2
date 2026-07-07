@@ -1,8 +1,8 @@
 project:
-  name: "PPC Training Ground"
+  name: "AMPH Academy v2"
   level: 3
   initialized: "2026-07-07T15:43:00Z"
-  last_updated: "2026-07-07T15:43:00Z"
+  last_updated: "2026-07-07T16:30:00Z"
 
 current_phase: 4
 current_workflow: "sprint_planning"
@@ -96,7 +96,7 @@ phases:
           - "STORY-020-gamification-fixtures"
           - "STORY-021-xp-level-streak"
           - "STORY-022-pricing-tier-seed"
-          - "STORY-023-xendit-integration"
+          - "STORY-023-paymongo-integration"
           - "STORY-024-checkout-flow"
           - "STORY-025-enrollment-creation"
           - "STORY-026-payment-admin-list"

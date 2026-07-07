@@ -21,7 +21,7 @@ export default function HomePage() {
             maxWidth: '600px',
           }}
         >
-          PPC Training Ground teaches Filipino VAs the Amazon advertising work
+          AMPH Academy v2 teaches Filipino VAs the Amazon advertising work
           that pays ₱60,000 to ₱80,000 a month. Practice with real campaign
           tools, not just theory.
         </p>

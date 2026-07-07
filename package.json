@@ -1,8 +1,8 @@
 {
-  "name": "ppc-training-ground",
+  "name": "amph-v2",
   "version": "0.1.0",
   "private": true,
-  "description": "Project Amazon PH PPC Training Ground — Amazon advertising training for Filipino VAs",
+  "description": "Project Amazon PH AMPH Academy v2 — Amazon advertising training for Filipino VAs",
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=9.0.0"
@@ -39,8 +39,8 @@
     "react-email-components": "^0.0.25",
     "@react-email/components": "^0.0.32",
     "@react-email/render": "^1.0.3",
+    "paymongo": "^1.0.0",
     "resend": "^4.0.1",
-    "xendit-node": "^7.0.0",
     "zod": "^3.23.8",
     "zustand": "^5.0.2"
   },

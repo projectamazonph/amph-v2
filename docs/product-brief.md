@@ -1,6 +1,6 @@
-# Project Brief — PPC Training Ground
+# Project Brief — AMPH Academy v2
 
-**Project:** Project Amazon PH PPC Training Ground (v2)
+**Project:** Project Amazon PH AMPH Academy v2 (v2)
 **Owner:** Ryan Roland Dabao
 **Date:** 2026-07-07
 **Status:** Approved (build phase)
@@ -86,7 +86,7 @@ Unlike competitors, this platform:
 ## Risks
 
 - **Solo burnout.** Mitigated by sprint-based scope decisions.
-- **Payment integration delays.** Mitigated by Xendit + PayMongo fallback.
+- **Payment integration delays.** Mitigated by PayMongo + PayMongo fallback.
 - **Content quality regression.** Mitigated by voice guide + lint rule.
 - **Production scaling surprise.** Mitigated by Vercel + managed Postgres + early observability.
 

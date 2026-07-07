@@ -71,7 +71,7 @@ All routes live under `/admin/*`. Middleware checks `role >= ADMIN` for the enti
 │   ├── /settings/branding         Logo, colors, copy
 │   ├── /settings/pricing          Edit tier prices
 │   ├── /settings/email            Email templates, sender config
-│   └── /settings/integrations     Xendit keys, Sentry DSN, etc.
+│   └── /settings/integrations     PayMongo keys, Sentry DSN, etc.
 └── /audit-log                     View audit log
     └── /audit-log?entity=User&id=xxx  Filter to specific entity
 ```
@@ -262,13 +262,13 @@ Hard delete reserved for GDPR right-to-erasure requests. Workflow: user requests
 
 ### Refund Payment
 
-Calls Xendit refund API. Updates local Payment record. Refund window: 7 days from purchase. Beyond 7 days: requires manual approval from admin.
+Calls PayMongo refund API. Updates local Payment record. Refund window: 7 days from purchase. Beyond 7 days: requires manual approval from admin.
 
 ```typescript
 // POST /api/admin/payments/[id]/refund
 // Body: { amount: number, reason: string }
 // Pre-checks: refundable, within window
-// Side effects: xendit.refund, payment.status = REFUNDED, enrollment.status = REFUNDED, user notified by email
+// Side effects: paymongo.refund, payment.status = REFUNDED, enrollment.status = REFUNDED, user notified by email
 ```
 
 ### Edit Pricing

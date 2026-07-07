@@ -62,7 +62,7 @@ This document collects the ADRs that govern AMPH Academy's architecture. New ADR
 
 **Status:** Accepted (2026-07-02)
 **Context:** Next.js App Router supports both. Server actions are simpler for forms and mutations.
-**Decision:** Use server actions for all mutations. Reserve API routes for: webhooks (Xendit), file uploads (large), third-party integrations (Composio).
+**Decision:** Use server actions for all mutations. Reserve API routes for: webhooks (PayMongo), file uploads (large), third-party integrations (Composio).
 **Consequences:**
 - Less boilerplate (no fetch wrappers)
 - Progressive enhancement works automatically
@@ -70,18 +70,19 @@ This document collects the ADRs that govern AMPH Academy's architecture. New ADR
 - Cannot be called from external clients (intentional)
 - **Revisit when:** Need to expose API to external consumers.
 
-## ADR-006: Xendit for Payments
+## ADR-006: PayMongo for Payments
 
 **Status:** Accepted (2026-07-07)
-**Context:** AMPH Academy sells in Philippine pesos. Need payment provider that supports PHP, GCash, Maya, and bank transfer.
-**Decision:** Xendit as primary payment provider. Fallback to PayMongo if Xendit proves unreliable.
+**Context:** AMPH Academy sells in Philippine pesos. Need payment provider that supports PHP, GCash, Maya, and bank transfer with strong DX and reliable webhooks.
+**Decision:** PayMongo as primary payment provider. Native PHP support, clean API, strong webhook reliability for Philippine market.
 **Consequences:**
 - Native PHP support, no conversion fees
-- Multiple payment methods (GCash, Maya, GrabPay, card, bank)
-- Webhook-driven payment confirmation
-- 2.9% + ₱15 fee on cards, lower on e-wallets
-- See `business-layer-spec.md` for full integration
-- **Revisit when:** International expansion (add Stripe), or fees become unacceptable.
+- Multiple payment methods (GCash, Maya, GrabPay, card, bank, OTC)
+- Sources API for card payments, Payments API for e-wallets
+- Webhook-driven payment confirmation with signature verification
+- Test mode uses `sk_test_*` / `pk_test_*` keys; live uses `sk_live_*` / `pk_live_*`
+- See `business-layer.md` for full integration
+- **Revisit when:** International expansion (add Stripe), or recurring billing becomes a need.
 
 ## ADR-007: Resend for Email
 

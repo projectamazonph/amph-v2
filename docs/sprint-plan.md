@@ -1,4 +1,4 @@
-# Sprint Plan â€” PPC Training Ground (v2 Build)
+# Sprint Plan â€” AMPH Academy v2 (v2 Build)
 
 **Date:** 2026-07-07
 **Owner:** Ryan Roland Dabao
@@ -12,7 +12,7 @@
 | S2 | Tools | Campaign Builder + Bid Elevator + STR Triage engines + fixtures |
 | S3 | Curriculum | Course + Module + Lesson + Quiz + Progress |
 | S4 | Gamification | Badges + Certificates + Live Classes |
-| S5 | Payments | Xendit integration + Checkout + Enrollment + Tier gating |
+| S5 | Payments | PayMongo integration + Checkout + Enrollment + Tier gating |
 | S6 | Admin | Full admin panel (users, courses, content, payments, audit) |
 | S7 | Refunds + Email | Refund flow + email templates + receipts |
 | S8 | Polish | Voice guide applied to all UI copy + lesson content audit |
@@ -96,8 +96,8 @@ Velocity target: 6 pts/sprint. Slip-trigger: 3 consecutive sprints at < 5 pts â†
 | Story | Pts | Description |
 |-------|-----|-------------|
 | STORY-022: PricingTier seed + UI | 1 | Three tiers on `/pricing`. |
-| STORY-023: Xendit integration | 1.5 | Invoice creation, webhook handler, signature verification. |
-| STORY-024: Checkout flow | 1.5 | Email capture, tier selection, redirect to Xendit, return handling. |
+| STORY-023: PayMongo integration | 1.5 | Invoice creation, webhook handler, signature verification. |
+| STORY-024: Checkout flow | 1.5 | Email capture, tier selection, redirect to PayMongo, return handling. |
 | STORY-025: Enrollment creation | 1 | On webhook, create Enrollment. Send welcome email. |
 | STORY-026: Payment admin list | 1 | `/admin/payments` table. |
 
@@ -128,7 +128,7 @@ Velocity target: 6 pts/sprint. Slip-trigger: 3 consecutive sprints at < 5 pts â†
 | Story | Pts | Description |
 |-------|-----|-------------|
 | STORY-032: Self-service refund request | 1 | Within 7 days, user can request refund. |
-| STORY-033: Admin refund approval | 1 | Approve/reject. Xendit refund API. Status updates. |
+| STORY-033: Admin refund approval | 1 | Approve/reject. PayMongo refund API. Status updates. |
 | STORY-034: Receipt PDF | 1 | `@react-pdf/renderer`. BIR-compliant. |
 | STORY-035: Email templates | 1 | Welcome, receipt, refund, certificate, class reminder (5 templates). |
 | STORY-036: Resend integration | 1 | Domain auth, sender config, delivery tracking. |

@@ -1,5 +1,5 @@
 project:
-  name: "PPC Training Ground"
+  name: "AMPH Academy v2"
   type: "web-app"
   level: 3
   description: "Amazon PPC training platform for Filipino VAs (v2 rebuild, greenfield)"

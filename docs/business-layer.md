@@ -1,4 +1,4 @@
-# Business Layer Specification — AMPH Academy v2
+# Business Layer — AMPH Academy v2
 
 **Status:** Approved
 **Owner:** Ryan Roland Dabao
@@ -8,16 +8,14 @@
 
 ## Purpose
 
-The business layer is what turns AMPH Academy from "free course site" into "paid product business." It covers pricing tiers, the enrollment flow, payment processing, refunds, receipts, and tier-based content gating.
+The business layer is what turns AMPH Academy from "free course site" into "paid product business." It covers pricing tiers, the enrollment flow, payment processing via PayMongo, refunds, receipts, and tier-based content gating.
 
-This spec assumes Xendit as the payment provider. Xendit is the right choice because:
+This spec assumes PayMongo as the payment provider. PayMongo is the right choice because:
 - Native Philippine peso (PHP) support, no currency conversion fees
-- Supports GCash, Maya, GrabPay, bank transfer, and credit card
-- Webhooks for payment confirmation
-- Developer-friendly API
-- Reasonable fees (2.9% + ₱15 for cards, lower for e-wallets)
-
-Fallback: PayMongo (also PHP-native, similar feature set).
+- Supports GCash, Maya, GrabPay, bank transfer (InstaPay/PESONet), and credit/debit card
+- Cleaner API than alternatives; better developer experience for one-time Philippine peso flows
+- Reliable webhook delivery with signature verification
+- Test mode well-documented (`sk_test_*` / `pk_test_*` keys)
 
 ## Pricing Tiers
 
@@ -39,10 +37,10 @@ Prices are stored on `Course.tier` + `Course.price`. Tier is a `CourseTier` enum
 
 ```
 1. Visitor browses /pricing
-2. Picks tier → POST /api/checkout (creates Xendit invoice)
-3. Redirected to Xendit payment page
+2. Picks tier → POST /api/checkout (creates PayMongo Checkout Session or Source)
+3. Redirected to PayMongo-hosted payment page
 4. Pays via GCash / Maya / card / bank
-5. Xendit webhook POST /api/webhooks/xendit → server verifies signature
+5. PayMongo webhook POST /api/webhooks/paymongo → server verifies signature
 6. Server creates Enrollment, links to Payment
 7. Server sends confirmation email with course access link
 8. User clicks link → already logged in or sent to signup → lands in dashboard
@@ -57,9 +55,9 @@ CheckoutSession created (status: PENDING)
   ↓
 User submits payment method
   ↓
-CheckoutSession.status = AWAITING_PAYMENT (Xendit invoice created)
+CheckoutSession.status = AWAITING_PAYMENT (PayMongo source/checkout created)
   ↓
-User completes payment in Xendit
+User completes payment on PayMongo
   ↓ (webhook)
 CheckoutSession.status = PAID
 Enrollment created (status: ACTIVE)
@@ -71,7 +69,7 @@ User accesses dashboard
 
 Failure paths:
 
-- Webhook times out → Xendit retries. If still failing after 3 retries, mark CheckoutSession as `FAILED_PENDING_REVIEW`, notify admin.
+- Webhook times out → PayMongo retries (typically 3 attempts over 24h). If still failing, mark CheckoutSession as `FAILED_PENDING_REVIEW`, notify admin.
 - User abandons checkout → CheckoutSession expires after 24 hours, no Enrollment created.
 - Webhook arrives but Enrollment can't be created (DB issue) → mark CheckoutSession as `ERROR`, retry queue picks it up.
 
@@ -80,35 +78,39 @@ Failure paths:
 ```prisma
 model PricingTier {
   id          String   @id @default(cuid())
-  orgId       String?
-  slug        String   @unique  // "ppc-foundations", "accelerated-mastery", "ultimate-transformation"
+  slug        String   @unique
   name        String
   description String
-  pricePhp    Int      // in centavos (299900 = ₱2,999.00)
-  features    String   // JSON array of bullet points
+  pricePhp    Int      // centavos (299900 = ₱2,999.00)
+  features    String   // JSON
   sortOrder   Int      @default(0)
   isActive    Boolean  @default(true)
-  stripePriceId String?  // Xendit equivalent
+  paymongoProductId String?
+  deletedAt   DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   enrollments Enrollment[]
   discounts   DiscountTier[]
+  checkouts   CheckoutSession[]
+  payments    Payment[]
 
-  @@index([orgId])
   @@index([isActive, sortOrder])
+  @@index([deletedAt])
 }
 
 model CheckoutSession {
   id              String   @id @default(cuid())
-  orgId           String?
-  userId          String?  // nullable for guest checkout
-  email           String   // captured at checkout start
-  pricingTierId   String?
-  courseId        String?
+  userId          String?
+  email           String
+  pricingTierId   String
   status          CheckoutStatus @default(PENDING)
-  xenditInvoiceId String?  @unique
-  xenditInvoiceUrl String?
+  // PayMongo references
+  paymongoSourceId      String? @unique
+  paymongoPaymentId     String? @unique
+  paymongoCheckoutId    String? @unique
+  paymongoCheckoutUrl   String?
+  paymongoRedirectUrl   String?
   amountPhp       Int
   discountCodeId  String?
   discountAmount  Int      @default(0)
@@ -119,120 +121,22 @@ model CheckoutSession {
   failureReason   String?
   ipAddress       String?
   userAgent       String?
-  metadata        String?  // JSON
+  metadata        String?
+  deletedAt       DateTime?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  user            User?           @relation(fields: [userId], references: [id])
-  pricingTier     PricingTier?    @relation(fields: [pricingTierId], references: [id])
+  user            User?         @relation(fields: [userId], references: [id])
+  pricingTier     PricingTier   @relation(fields: [pricingTierId], references: [id])
+  discountCode    DiscountCode? @relation(fields: [discountCodeId], references: [id])
   payment         Payment?
-  discountCode    DiscountCode?   @relation(fields: [discountCodeId], references: [id])
 
-  @@index([orgId])
   @@index([userId])
   @@index([status])
-  @@index([xenditInvoiceId])
+  @@index([paymongoSourceId])
+  @@index([paymongoCheckoutId])
   @@index([expiresAt])
-}
-
-model Payment {
-  id                String   @id @default(cuid())
-  orgId             String?
-  userId            String
-  pricingTierId     String?
-  enrollmentId      String?  @unique
-  checkoutSessionId String?  @unique
-  xenditPaymentId   String?  @unique
-  xenditChargeId    String?
-  amountPhp         Int      // in centavos
-  feePhp            Int      @default(0)
-  netAmountPhp      Int      // amountPhp - feePhp
-  currency          String   @default("PHP")
-  method            PaymentMethod  // GCASH, MAYA, CARD, BANK, etc.
-  status            PaymentStatus  @default(PENDING)
-  paidAt            DateTime?
-  refundedAt        DateTime?
-  refundAmountPhp   Int?
-  refundReason      String?
-  receiptUrl        String?
-  invoiceUrl        String?
-  metadata          String?  // JSON of Xendit response
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  user              User          @relation(fields: [userId], references: [id])
-  pricingTier       PricingTier?  @relation(fields: [pricingTierId], references: [id])
-  enrollment        Enrollment?   @relation(fields: [enrollmentId], references: [id])
-  checkoutSession   CheckoutSession? @relation(fields: [checkoutSessionId], references: [id])
-
-  @@index([orgId])
-  @@index([userId])
-  @@index([status])
-  @@index([xenditPaymentId])
-  @@index([paidAt])
-}
-
-model DiscountCode {
-  id              String   @id @default(cuid())
-  orgId           String?
-  code            String   @unique  // "LAUNCH50", "BLACKFRIDAY", etc.
-  description     String
-  type            DiscountType  // PERCENTAGE, FIXED
-  value           Int      // percentage (1-100) or centavos
-  maxUses         Int?     // null = unlimited
-  currentUses     Int      @default(0)
-  minPurchasePhp  Int      @default(0)
-  startsAt        DateTime
-  expiresAt       DateTime
-  isActive        Boolean  @default(true)
-  createdById     String
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  createdBy       User         @relation(fields: [createdById], references: [id])
-  tiers           DiscountTier[]
-  checkouts       CheckoutSession[]
-
-  @@index([orgId])
-  @@index([code])
-  @@index([isActive, startsAt, expiresAt])
-}
-
-model DiscountTier {
-  id            String   @id @default(cuid())
-  discountId    String
-  pricingTierId String
-
-  discount      DiscountCode @relation(fields: [discountId], references: [id], onDelete: Cascade)
-  pricingTier   PricingTier  @relation(fields: [pricingTierId], references: [id], onDelete: Cascade)
-
-  @@unique([discountId, pricingTierId])
-}
-
-model RefundRequest {
-  id          String   @id @default(cuid())
-  orgId       String?
-  userId      String
-  paymentId   String
-  reason      String
-  amountPhp   Int
-  status      RefundStatus @default(PENDING)
-  reviewedById String?
-  reviewedAt   DateTime?
-  reviewerNotes String?
-  xenditRefundId String?
-  processedAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  user        User     @relation(fields: [userId], references: [id])
-  payment     Payment  @relation(fields: [paymentId], references: [id])
-  reviewedBy  User?    @relation("RefundReviewer", fields: [reviewedById], references: [id])
-
-  @@index([orgId])
-  @@index([userId])
-  @@index([status])
-  @@index([paymentId])
+  @@index([deletedAt])
 }
 
 enum CheckoutStatus {
@@ -244,12 +148,44 @@ enum CheckoutStatus {
   ERROR
 }
 
-enum PaymentStatus {
-  PENDING
-  COMPLETED
-  FAILED
-  REFUNDED
-  PARTIALLY_REFUNDED
+model Payment {
+  id                String   @id @default(cuid())
+  userId            String
+  pricingTierId     String
+  enrollmentId      String?  @unique
+  checkoutSessionId String?  @unique
+  // PayMongo references
+  paymongoPaymentId   String?  @unique
+  paymongoSourceId    String?
+  paymongoChargeId    String?
+  amountPhp         Int
+  feePhp            Int      @default(0)
+  netAmountPhp      Int
+  currency          String   @default("PHP")
+  method            PaymentMethod
+  status            PaymentStatus @default(PENDING)
+  paidAt            DateTime?
+  refundedAt        DateTime?
+  refundAmountPhp   Int?
+  refundReason      String?
+  receiptUrl        String?
+  invoiceUrl        String?
+  metadata          String?  // JSON of PayMongo response
+  deletedAt         DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user              User             @relation(fields: [userId], references: [id])
+  pricingTier       PricingTier      @relation(fields: [pricingTierId], references: [id])
+  enrollment        Enrollment?      @relation(fields: [enrollmentId], references: [id])
+  checkoutSession   CheckoutSession? @relation(fields: [checkoutSessionId], references: [id])
+  refundRequests    RefundRequest[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([paymongoPaymentId])
+  @@index([paidAt])
+  @@index([deletedAt])
 }
 
 enum PaymentMethod {
@@ -263,9 +199,82 @@ enum PaymentMethod {
   OTHER
 }
 
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+model DiscountCode {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  description     String
+  type            DiscountType
+  value           Int
+  maxUses         Int?
+  currentUses     Int      @default(0)
+  minPurchasePhp  Int      @default(0)
+  startsAt        DateTime
+  expiresAt       DateTime
+  isActive        Boolean  @default(true)
+  createdById     String
+  deletedAt       DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  createdBy       User           @relation(fields: [createdById], references: [id])
+  tiers           DiscountTier[]
+  checkouts       CheckoutSession[]
+
+  @@index([code])
+  @@index([isActive, startsAt, expiresAt])
+  @@index([deletedAt])
+}
+
+model DiscountTier {
+  id            String   @id @default(cuid())
+  discountId    String
+  pricingTierId String
+
+  discount      DiscountCode @relation(fields: [discountId], references: [id], onDelete: Cascade)
+  pricingTier   PricingTier  @relation(fields: [pricingTierId], references: [id], onDelete: Cascade)
+
+  @@unique([discountId, pricingTierId])
+}
+
 enum DiscountType {
   PERCENTAGE
   FIXED
+}
+
+model RefundRequest {
+  id          String   @id @default(cuid())
+  userId      String
+  paymentId   String
+  reason      String
+  amountPhp   Int
+  status      RefundStatus @default(PENDING)
+  reviewedById String?
+  reviewedAt  DateTime?
+  reviewerNotes String?
+  paymongoRefundId String?
+  processedAt DateTime?
+  failedAt    DateTime?
+  failureReason String?
+  deletedAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id])
+  payment     Payment  @relation(fields: [paymentId], references: [id])
+  reviewedBy  User?    @relation("RefundReviewer", fields: [reviewedById], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([paymentId])
+  @@index([deletedAt])
 }
 
 enum RefundStatus {
@@ -277,46 +286,94 @@ enum RefundStatus {
 }
 ```
 
-## Xendit Integration
+## PayMongo Integration
 
 ### Setup
 
-Environment variables:
+1. Create a PayMongo account at https://paymongo.com.
+2. Get test API keys from the PayMongo Dashboard (Developers → API Keys).
+3. Set webhook endpoint in Dashboard (Developers → Webhooks) pointing to `https://amph-v2.vercel.app/api/webhooks/paymongo`.
+4. Subscribe to events: `checkout_session.payment.paid`, `checkout_session.payment.failed`, `source.chargeable`, `payment.paid`, `payment.failed`, `payment.refunded`.
+
+### Environment Variables
 
 ```
-XENDIT_SECRET_KEY=xnd_development_...
-XENDIT_WEBHOOK_TOKEN=whk_...
-XENDIT_PUBLIC_KEY=xnd_public_development_...
+# Test mode
+PAYMONGO_SECRET_KEY="sk_test_..."
+PAYMONGO_PUBLIC_KEY="pk_test_..."
+
+# Live mode (after verification)
+PAYMONGO_SECRET_KEY="sk_live_..."
+PAYMONGO_PUBLIC_KEY="pk_live_..."
+
+# Webhook secret (from PayMongo dashboard after registering endpoint)
+PAYMONGO_WEBHOOK_SECRET="whsec_..."
 ```
 
-Stored in Vercel env vars. Never committed.
+### Approach: Checkout Session (preferred)
 
-### Create Invoice
+PayMongo's hosted Checkout Sessions are the recommended integration. They handle the entire UI, support all payment methods in one flow, and reduce PCI scope.
 
 ```typescript
-// src/lib/xendit.ts
-import { Xendit } from 'xendit-node';
+// src/lib/paymongo.ts
+import Paymongo from 'paymongo';
 
-const xendit = new Xendit({ secretKey: process.env.XENDIT_SECRET_KEY! });
+const paymongo = new Paymongo(process.env.PAYMONGO_SECRET_KEY!);
 
-export async function createInvoice(params: {
-  externalId: string;
-  amount: number;
-  payerEmail: string;
+export async function createCheckoutSession(params: {
+  amount: number;            // centavos
   description: string;
+  email: string;
   successUrl: string;
-  failureUrl: string;
+  cancelUrl: string;
+  metadata?: Record<string, string>;
 }) {
-  return xendit.Invoice.createInvoice({
+  return paymongo.checkoutSessions.create({
     data: {
-      externalId: params.externalId,
-      amount: params.amount,
-      payerEmail: params.payerEmail,
-      description: params.description,
-      successRedirectUrl: params.successUrl,
-      failureRedirectUrl: params.failureUrl,
-      currency: 'PHP',
-      paymentMethods: ['GCASH', 'PAYMAYA', 'GRABPAY', 'CREDIT_CARD', 'BANK_TRANSFER'],
+      attributes: {
+        amount: params.amount,
+        currency: 'PHP',
+        description: params.description,
+        payment_method_types: [
+          'gcash',
+          'paymaya',
+          'grab_pay',
+          'card',
+          'dob',         // Direct online bank transfer (InstaPay/PESONet)
+          'billease',    // Optional: buy-now-pay-later
+        ],
+        success_url: params.successUrl,
+        cancel_url: params.cancelUrl,
+        metadata: params.metadata ?? {},
+      },
+    },
+  });
+}
+```
+
+### Approach: Sources (alternative, for embedded flows)
+
+For embedded payment flows where you want users to stay on your site:
+
+```typescript
+// Create a Source for GCash/Maya/bank
+export async function createSource(params: {
+  amount: number;
+  type: 'gcash' | 'paymaya' | 'grab_pays' | 'dob';
+  email: string;
+  redirectUrl: string;
+  metadata?: Record<string, string>;
+}) {
+  return paymongo.sources.create({
+    data: {
+      attributes: {
+        amount: params.amount,
+        currency: 'PHP',
+        type: params.type,
+        redirect: { success: `${params.redirectUrl}?status=success`, failed: `${params.redirectUrl}?status=failed` },
+        billing: { email: params.email },
+        metadata: params.metadata ?? {},
+      },
     },
   });
 }
@@ -325,37 +382,86 @@ export async function createInvoice(params: {
 ### Webhook Handler
 
 ```typescript
-// src/app/api/webhooks/xendit/route.ts
-import { verifyWebhookSignature } from '@/lib/xendit';
-import { handleInvoicePaid, handleInvoiceFailed } from '@/lib/enrollment';
+// src/app/api/webhooks/paymongo/route.ts
+import crypto from 'crypto';
+import { handleCheckoutPaid, handleCheckoutFailed, handlePaymentRefunded } from '@/lib/enrollment';
 
 export async function POST(request: Request) {
   const body = await request.text();
-  const signature = request.headers.get('x-callback-token')!;
+  const signatureHeader = request.headers.get('paymongo-signature');
 
-  if (!verifyWebhookSignature(signature)) {
+  if (!signatureHeader) {
+    return new Response('Missing signature', { status: 401 });
+  }
+
+  // Verify signature: PayMongo sends two signatures (live + test), separated by comma
+  // Format: "t=timestamp,te=test_signature,li=live_signature"
+  if (!verifyPayMongoSignature(body, signatureHeader)) {
     return new Response('Invalid signature', { status: 401 });
   }
 
   const event = JSON.parse(body);
 
-  switch (event.event) {
-    case 'invoice.paid':
-      await handleInvoicePaid(event);
+  switch (event.data.attributes.type) {
+    case 'checkout_session.payment.paid':
+      await handleCheckoutPaid(event);
       break;
-    case 'invoice.expired':
-    case 'invoice.failed':
-      await handleInvoiceFailed(event);
+    case 'checkout_session.payment.failed':
+      await handleCheckoutFailed(event);
+      break;
+    case 'payment.refunded':
+      await handlePaymentRefunded(event);
       break;
     default:
-      console.log('Unhandled Xendit event:', event.event);
+      console.log('Unhandled PayMongo event:', event.data.attributes.type);
   }
 
   return new Response('OK', { status: 200 });
 }
+
+function verifyPayMongoSignature(body: string, header: string): boolean {
+  const webhookSecret = process.env.PAYMONGO_WEBHOOK_SECRET!;
+  const parts = Object.fromEntries(
+    header.split(',').map(p => p.split('=') as [string, string])
+  );
+  const timestamp = parts.t;
+  const expectedSig = parts.te ?? parts.li;
+
+  if (!timestamp || !expectedSig) return false;
+
+  const payload = `${timestamp}.${body}`;
+  const computed = crypto
+    .createHmac('sha256', webhookSecret)
+    .update(payload)
+    .digest('hex');
+
+  return crypto.timingSafeEqual(
+    Buffer.from(expectedSig, 'utf8'),
+    Buffer.from(computed, 'utf8')
+  );
+}
 ```
 
-Webhook must respond in < 5 seconds. All heavy work goes to a background queue (Inngest or Vercel cron).
+Webhook must respond in < 5 seconds. All heavy work goes to a background queue.
+
+### Idempotency
+
+PayMongo may send the same webhook multiple times. The handler must be idempotent:
+
+```typescript
+// Before processing, check if event already handled
+const existing = await db.processedWebhook.findUnique({
+  where: { paymongoEventId: event.data.id }
+});
+if (existing) return;
+
+await db.$transaction(async (tx) => {
+  await tx.processedWebhook.create({
+    data: { paymongoEventId: event.data.id, processedAt: new Date() }
+  });
+  // ... rest of handler
+});
+```
 
 ## Tier Gating
 
@@ -424,9 +530,29 @@ For Ultimate-tier-only content (live portfolio review, custom templates), check 
 7. Admin clicks "Approve" or "Reject"
 
 On approve:
-1. Call Xendit refund API
+
+1. Call PayMongo refund API
 2. On success: Payment.status = REFUNDED, Enrollment.status = CANCELLED, user loses access, email sent
 3. On failure: RefundRequest.status = FAILED, admin retries
+
+### PayMongo Refund API Call
+
+```typescript
+export async function refundPayment(paymentId: string, amountCentavos: number, reason: string) {
+  return paymongo.refunds.create({
+    data: {
+      attributes: {
+        amount: amountCentavos,
+        payment_id: paymentId,
+        reason: 'requested_by_customer',
+        metadata: { internalReason: reason },
+      },
+    },
+  });
+}
+```
+
+Valid reasons: `duplicate`, `fraudulent`, `requested_by_customer`. Use `requested_by_customer` for all standard refund requests.
 
 ### Admin-Initiated Refund
 
@@ -440,13 +566,13 @@ Sent automatically on successful payment. Includes:
 - Course/tier name
 - Amount paid
 - Payment method (GCash, Maya, etc.)
-- Transaction ID
+- PayMongo transaction ID
 - Refund policy summary
 - Receipt PDF link
 
 ### PDF Receipt
 
-Generated server-side using `@react-pdf/renderer`. Includes BIR-compliant fields (TIN, business name, etc.). Available at `Payment.receiptUrl`. Stored in Vercel Blob or S3.
+Generated server-side using `@react-pdf/renderer`. Includes BIR-compliant fields (TIN, business name, etc.). Available at `Payment.receiptUrl`. Stored in Vercel Blob.
 
 ### Philippine Tax Compliance
 
@@ -508,6 +634,31 @@ If a recurring subscription (future) fails:
 
 For v2, AMPH Academy is one-time purchase only. No recurring billing. Dunning applies only to subscription billing (deferred to v2.1 or later).
 
+## PayMongo Test Mode
+
+Test mode API keys allow testing without real charges. Test card numbers:
+
+- **Successful payment:** `4242 4242 4242 4242`, any future expiry, any CVC
+- **Declined payment:** `4000 0000 0000 0002`
+- **Insufficient funds:** `4000 0000 0000 9995`
+- **Lost card:** `4000 0000 0000 9987`
+- **Stolen card:** `4000 0000 0000 9979`
+
+Test GCash/Maya: PayMongo test mode simulates redirect flow without actual money movement.
+
+Test webhook endpoint: use `ngrok` or `cloudflared` tunnel to expose localhost during development. Register the tunneled URL as your webhook endpoint in PayMongo dashboard.
+
+## Going Live Checklist
+
+1. PayMongo business account verified (KYC complete, bank account linked for payouts).
+2. Live API keys generated and stored in Vercel env vars.
+3. Production webhook endpoint registered in PayMongo dashboard with HMAC secret rotated.
+4. Test checkout → payment → webhook → enrollment flow end-to-end with real test card.
+5. Refund flow tested with test payment.
+6. Email receipts verified in production.
+7. Tax compliance (BIR) confirmed with accountant.
+8. Live transactions tested with small amounts before public launch.
+
 ## Open Questions
 
 - Bundle pricing for all-access pass: yes/no?
@@ -527,3 +678,4 @@ For v2, AMPH Academy is one-time purchase only. No recurring billing. Dunning ap
 - Tax-compliant receipts generated for every payment
 - Email notifications sent on all payment state transitions
 - Zero orphan CheckoutSessions (every one ends in PAID, EXPIRED, FAILED, or ERROR)
+- Webhook handler idempotent (replays don't double-process)
