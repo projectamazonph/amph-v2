@@ -1,0 +1,147 @@
+/**
+ * Server actions for authentication: signup, signin, signout.
+ */
+
+'use server';
+
+import { redirect } from 'next/navigation';
+import { db } from '@/lib/db';
+import {
+  hashPassword,
+  verifyPassword,
+  signToken,
+  setAuthCookie,
+  clearAuthCookie,
+  getSession,
+} from '@/lib/auth';
+import {
+  createSafeAction,
+  signUpSchema,
+  signInSchema,
+  type ActionResult,
+} from '@/lib/validation';
+
+// ---------------------------------------------------------------------------
+// Sign up
+// ---------------------------------------------------------------------------
+
+export const signUpAction = createSafeAction(signUpSchema, async (data) => {
+  const existing = await db.user.findUnique({ where: { email: data.email } });
+  if (existing) {
+    throw new Error('An account with that email already exists.');
+  }
+
+  const user = await db.user.create({
+    data: {
+      email: data.email,
+      name: data.name,
+      passwordHash: hashPassword(data.password),
+      role: 'STUDENT',
+      status: 'ACTIVE',
+    },
+  });
+
+  const token = await signToken({
+    sub: user.id,
+    email: user.email,
+    role: user.role,
+    name: user.name,
+  });
+  await setAuthCookie(token);
+
+  return { userId: user.id };
+});
+
+// ---------------------------------------------------------------------------
+// Sign in
+// ---------------------------------------------------------------------------
+
+export const signInAction = createSafeAction(signInSchema, async (data) => {
+  const user = await db.user.findUnique({ where: { email: data.email } });
+  if (!user || !user.passwordHash) {
+    throw new Error('Email or password is incorrect.');
+  }
+
+  if (user.status !== 'ACTIVE') {
+    throw new Error('This account is suspended. Contact support.');
+  }
+
+  if (!verifyPassword(data.password, user.passwordHash)) {
+    throw new Error('Email or password is incorrect.');
+  }
+
+  // Update last active (fire and forget)
+  db.user.update({
+    where: { id: user.id },
+    data: { lastActiveAt: new Date() },
+  }).catch(() => {
+    /* ignore — non-critical */
+  });
+
+  const token = await signToken({
+    sub: user.id,
+    email: user.email,
+    role: user.role,
+    name: user.name,
+  });
+  await setAuthCookie(token);
+
+  return { userId: user.id, role: user.role };
+});
+
+// ---------------------------------------------------------------------------
+// Sign out
+// ---------------------------------------------------------------------------
+
+export async function signOutAction(): Promise<ActionResult<{ ok: true }>> {
+  await clearAuthCookie();
+  return { success: true, data: { ok: true } };
+}
+
+// ---------------------------------------------------------------------------
+// Form-action wrappers (for progressive enhancement — work without JS)
+// ---------------------------------------------------------------------------
+
+export async function signUpFormAction(formData: FormData): Promise<void> {
+  const result = await signUpAction({
+    email: formData.get('email'),
+    password: formData.get('password'),
+    name: formData.get('name') || undefined,
+  });
+
+  if (result.success) {
+    redirect('/');
+  }
+
+  // On failure, redirect back to signup with error query param
+  const error = result.success ? '' : encodeURIComponent(result.error);
+  redirect(`/auth/signup?error=${error}`);
+}
+
+export async function signInFormAction(formData: FormData): Promise<void> {
+  const result = await signInAction({
+    email: formData.get('email'),
+    password: formData.get('password'),
+  });
+
+  if (result.success) {
+    // Admin goes to admin dashboard, others to home
+    if (result.data.role === 'ADMIN') {
+      redirect('/admin');
+    }
+    redirect('/');
+  }
+
+  const error = result.success ? '' : encodeURIComponent(result.error);
+  redirect(`/auth/signin?error=${error}`);
+}
+
+export async function signOutFormAction(): Promise<void> {
+  await signOutAction();
+  redirect('/');
+}
+
+// Convenience for sign-out button
+export async function getCurrentUser() {
+  return getSession();
+}

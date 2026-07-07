@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Space_Grotesk, JetBrains_Mono } from 'next/font/google';
+import Link from 'next/link';
 import '../styles/globals.css';
 
 const display = Space_Grotesk({
@@ -17,8 +18,8 @@ const mono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Project Amazon PH AMPH Academy v2',
-    template: '%s | AMPH Academy v2',
+    default: 'AMPH Academy',
+    template: '%s | AMPH Academy',
   },
   description:
     'Amazon advertising training for Filipino virtual assistants. Three courses. One outcome: become the Amazon ads specialist clients retain at ₱60k–₱80k per month.',
@@ -28,7 +29,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_PH',
-    siteName: 'AMPH Academy v2',
+    siteName: 'AMPH Academy',
   },
   robots: {
     index: true,
@@ -50,6 +51,62 @@ export default function RootLayout({
         <a href="#main-content" className="skip-link">
           Skip to main content
         </a>
+        <header
+          style={{
+            borderBottom: '1px solid var(--border)',
+            padding: 'var(--space-3) 0',
+          }}
+        >
+          <nav
+            className="container"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+            aria-label="Primary"
+          >
+            <Link
+              href="/"
+              style={{
+                fontWeight: 700,
+                fontSize: 'var(--text-lg)',
+                color: 'var(--ink-900)',
+                textDecoration: 'none',
+                letterSpacing: '-0.01em',
+              }}
+            >
+              AMPH Academy
+            </Link>
+            <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+              <Link
+                href="/auth/signin"
+                style={{
+                  color: 'var(--ink-700)',
+                  fontSize: 'var(--text-sm)',
+                  textDecoration: 'none',
+                  padding: 'var(--space-2) var(--space-3)',
+                }}
+              >
+                Sign in
+              </Link>
+              <Link
+                href="/auth/signup"
+                style={{
+                  background: 'var(--accent)',
+                  color: 'var(--accent-ink)',
+                  padding: 'var(--space-2) var(--space-4)',
+                  borderRadius: 'var(--radius-md)',
+                  fontSize: 'var(--text-sm)',
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                }}
+              >
+                Get started
+              </Link>
+            </div>
+          </nav>
+        </header>
         {children}
       </body>
     </html>

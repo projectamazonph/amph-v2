@@ -1,0 +1,248 @@
+/**
+ * Seed script — idempotent, safe to re-run.
+ *
+ * Creates:
+ *  - 1 admin user (email from ADMIN_EMAIL env, password "ChangeMe123!")
+ *  - 3 PricingTiers (PPC Foundations / Accelerated Mastery / Ultimate Transformation)
+ *  - 5 Badges with full enum fields (per Architect A2)
+ *
+ * To reset and re-seed: pnpm prisma migrate reset (drops + recreates DB)
+ */
+
+import { PrismaClient, CourseTier, BadgeCategory, BadgeTier } from '@prisma/client';
+import { randomBytes, scryptSync } from 'node:crypto';
+
+const prisma = new PrismaClient();
+
+function hashPassword(password: string): string {
+  // Format: scrypt$<salt-hex>$<hash-hex>
+  const salt = randomBytes(16).toString('hex');
+  const hash = scryptSync(password, salt, 64).toString('hex');
+  return `scrypt\$${salt}\$${hash}`;
+}
+
+async function upsertAdminUser(): Promise<void> {
+  const email = process.env.ADMIN_EMAIL ?? '[email protected]';
+  const password = process.env.ADMIN_PASSWORD ?? 'ChangeMe123!';
+
+  await prisma.user.upsert({
+    where: { email },
+    update: {
+      emailVerified: new Date(),
+      role: 'ADMIN',
+      status: 'ACTIVE',
+    },
+    create: {
+      email,
+      name: 'Ryan Dabao',
+      emailVerified: new Date(),
+      passwordHash: hashPassword(password),
+      role: 'ADMIN',
+      status: 'ACTIVE',
+    },
+  });
+
+  console.log(`  ✓ admin user: ${email}`);
+}
+
+async function upsertPricingTiers(): Promise<void> {
+  const tiers = [
+    {
+      slug: 'ppc-foundations',
+      name: 'PPC Foundations',
+      tier: CourseTier.PPC_FOUNDATIONS,
+      pricePhp: 299900, // ₱2,999.00 in centavos
+      description:
+        'Five core modules. The basics of Amazon advertising — campaign structure, bid logic, search term triage.',
+      features: JSON.stringify({
+        bullets: [
+          '5 core modules (~15 hours)',
+          'Campaign Builder simulator',
+          'Bid Elevator simulator',
+          'Search Term Triage simulator',
+          'Badges and progress tracking',
+        ],
+        includesLiveClasses: false,
+        includesOneOnOne: false,
+      }),
+      sortOrder: 1,
+    },
+    {
+      slug: 'accelerated-mastery',
+      name: 'Accelerated Mastery',
+      tier: CourseTier.ACCELERATED_MASTERY,
+      pricePhp: 599900, // ₱5,999.00
+      description:
+        'Everything in Foundations, plus advanced modules and all scenario packs across five product categories.',
+      features: JSON.stringify({
+        bullets: [
+          'All 8 modules (~30 hours)',
+          'Every scenario pack: kitchen, electronics, garden, fitness, beauty',
+          'All downloadable resources and templates',
+          'Live class recordings library',
+          'Priority badge progression',
+        ],
+        includesLiveClasses: false,
+        includesOneOnOne: false,
+      }),
+      sortOrder: 2,
+    },
+    {
+      slug: 'ultimate-transformation',
+      name: 'Ultimate Transformation',
+      tier: CourseTier.ULTIMATE_TRANSFORMATION,
+      pricePhp: 999900, // ₱9,999.00
+      description:
+        'Everything in Mastery, plus weekly live classes with Ryan and a monthly 1-on-1 portfolio review.',
+      features: JSON.stringify({
+        bullets: [
+          'All 8 modules + early-access new content',
+          'Weekly live classes with Ryan',
+          '1-on-1 portfolio review every month',
+          'Private community channel',
+          'Priority certificate review',
+          'Custom resource requests',
+        ],
+        includesLiveClasses: true,
+        includesOneOnOne: true,
+        monthlySupportHours: 2,
+      }),
+      sortOrder: 3,
+    },
+  ];
+
+  for (const tier of tiers) {
+    await prisma.pricingTier.upsert({
+      where: { slug: tier.slug },
+      update: {
+        name: tier.name,
+        description: tier.description,
+        pricePhp: tier.pricePhp,
+        features: tier.features,
+        sortOrder: tier.sortOrder,
+        isActive: true,
+      },
+      create: tier,
+    });
+  }
+
+  console.log(`  ✓ pricing tiers: ${tiers.length}`);
+}
+
+async function upsertBadges(): Promise<void> {
+  const badges = [
+    {
+      slug: 'first-lesson',
+      title: 'First Steps',
+      description: 'Completed your first lesson.',
+      icon: 'BookOpen',
+      category: BadgeCategory.ENGAGEMENT,
+      tier: BadgeTier.BRONZE,
+      xpReward: 25,
+      criteria: JSON.stringify({
+        type: 'module_complete',
+        threshold: 1,
+      }),
+      order: 1,
+    },
+    {
+      slug: 'quiz-ace',
+      title: 'Quiz Ace',
+      description: 'Scored 100% on a quiz.',
+      icon: 'Trophy',
+      category: BadgeCategory.MASTERY,
+      tier: BadgeTier.SILVER,
+      xpReward: 50,
+      criteria: JSON.stringify({
+        type: 'quiz_score',
+        threshold: 100,
+      }),
+      order: 2,
+    },
+    {
+      slug: 'campaign-builder-master',
+      title: 'Campaign Builder Master',
+      description: 'Completed all Campaign Builder scenarios with a passing score.',
+      icon: 'Rocket',
+      category: BadgeCategory.MASTERY,
+      tier: BadgeTier.GOLD,
+      xpReward: 150,
+      criteria: JSON.stringify({
+        type: 'tool_sessions',
+        threshold: 5,
+        scope: { toolType: 'CAMPAIGN_BUILDER' },
+      }),
+      order: 3,
+    },
+    {
+      slug: 'streak-7',
+      title: 'Week Warrior',
+      description: 'Logged in 7 days in a row.',
+      icon: 'Flame',
+      category: BadgeCategory.STREAK,
+      tier: BadgeTier.SILVER,
+      xpReward: 75,
+      criteria: JSON.stringify({
+        type: 'streak_days',
+        threshold: 7,
+      }),
+      order: 4,
+    },
+    {
+      slug: 'xp-1000',
+      title: 'Thousandaire',
+      description: 'Earned 1,000 XP total.',
+      icon: 'Sparkle',
+      category: BadgeCategory.XP_MILESTONE,
+      tier: BadgeTier.GOLD,
+      xpReward: 100,
+      criteria: JSON.stringify({
+        type: 'xp_threshold',
+        threshold: 1000,
+      }),
+      order: 5,
+    },
+  ];
+
+  for (const badge of badges) {
+    await prisma.badge.upsert({
+      where: { slug: badge.slug },
+      update: {
+        title: badge.title,
+        description: badge.description,
+        icon: badge.icon,
+        category: badge.category,
+        tier: badge.tier,
+        xpReward: badge.xpReward,
+        criteria: badge.criteria,
+        order: badge.order,
+        isPublished: true,
+      },
+      create: badge,
+    });
+  }
+
+  console.log(`  ✓ badges: ${badges.length}`);
+}
+
+async function main(): Promise<void> {
+  console.log('Seeding AMPH Academy v2...\n');
+
+  await upsertAdminUser();
+  await upsertPricingTiers();
+  await upsertBadges();
+
+  console.log('\nSeed complete.');
+  console.log(`\nSign in with: ${process.env.ADMIN_EMAIL ?? '[email protected]'}`);
+  console.log(`Default password: ${process.env.ADMIN_PASSWORD ?? 'ChangeMe123!'}`);
+  console.log('(Change the password after first sign-in.)');
+}
+
+main()
+  .catch((e: unknown) => {
+    console.error('Seed failed:', e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

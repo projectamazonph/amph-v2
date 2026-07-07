@@ -23,6 +23,7 @@
     "prisma:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "prisma:seed": "tsx prisma/seed.ts",
+    "gen:secret": "tsx scripts/gen-jwt-secret.ts",
     "format": "prettier --write \"**/*.{ts,tsx,md,json,yaml,yml}\"",
     "prepare": "husky || true"
   },
