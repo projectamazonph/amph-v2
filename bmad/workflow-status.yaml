@@ -2,7 +2,7 @@ project:
   name: "AMPH Academy v2"
   level: 3
   initialized: "2026-07-07T15:43:00Z"
-  last_updated: "2026-07-07T16:30:00Z"
+  last_updated: "2026-07-07T18:30:00Z"
 
 current_phase: 4
 current_workflow: "sprint_planning"
@@ -71,7 +71,7 @@ phases:
         completed_at: "2026-07-07"
       stories:
         total: 55
-        completed: 6
+        completed: 12
         in_progress: 0
         story_list:
           - "STORY-001-scaffold"
@@ -80,60 +80,18 @@ phases:
           - "STORY-004-prisma-migration"
           - "STORY-005-auth"
           - "STORY-006-admin-rbac"
-          - "STORY-007-campaign-builder-engine"
-          - "STORY-008-bid-elevator-engine"
-          - "STORY-009-str-triage-engine"
+          - "STORY-007-campaign-builder"
+          - "STORY-008-bid-elevator"
+          - "STORY-009-str-triage"
           - "STORY-010-tool-ui"
           - "STORY-011-tool-session-persistence"
-          - "STORY-012-course-module-lesson-pages"
-          - "STORY-013-quiz-system"
-          - "STORY-014-progress-tracking"
-          - "STORY-015-curriculum-seed"
-          - "STORY-016-tier-gating"
-          - "STORY-017-badge-system"
-          - "STORY-018-certificate-generation"
-          - "STORY-019-live-classes-student"
-          - "STORY-020-gamification-fixtures"
-          - "STORY-021-xp-level-streak"
-          - "STORY-022-pricing-tier-seed"
-          - "STORY-023-paymongo-integration"
-          - "STORY-024-checkout-flow"
-          - "STORY-025-enrollment-creation"
-          - "STORY-026-payment-admin-list"
-          - "STORY-027-user-management"
-          - "STORY-028-course-module-lesson-admin"
-          - "STORY-029-resource-upload"
-          - "STORY-030-tool-scenario-admin"
-          - "STORY-031-audit-analytics"
-          - "STORY-032-refund-request"
-          - "STORY-033-refund-approval"
-          - "STORY-034-receipt-pdf"
-          - "STORY-035-email-templates"
-          - "STORY-036-resend-integration"
-          - "STORY-037-eslint-no-ai-slop"
-          - "STORY-038-ui-copy-audit"
-          - "STORY-039-lesson-content-audit"
-          - "STORY-040-empty-states"
-          - "STORY-041-accessibility-audit"
-          - "STORY-042-vitest-setup"
-          - "STORY-043-unit-tests-lib"
-          - "STORY-044-integration-tests-actions"
-          - "STORY-045-playwright-setup"
-          - "STORY-046-coverage-enforcement"
-          - "STORY-047-sentry-setup"
-          - "STORY-048-structured-logging"
-          - "STORY-049-action-tracing"
-          - "STORY-050-lighthouse-ci"
-          - "STORY-051-alerting"
-          - "STORY-052-deploy-runbook"
-          - "STORY-053-backup-drill"
-          - "STORY-054-security-audit"
-          - "STORY-055-launch-checklist"
+          - "STORY-012-listing-audit"
+          - "STORY-013-keyword-research"
 
 metrics:
-  total_workflows: 12
-  completed_workflows: 9
-  progress_percentage: 75
+  total_workflows: 13
+  completed_workflows: 10
+  progress_percentage: 77
   estimated_stories: 55
-  completed_stories: 6
-  last_updated: "2026-07-07T16:45:00Z"
+  completed_stories: 12
+  last_updated: "2026-07-07T18:30:00Z"

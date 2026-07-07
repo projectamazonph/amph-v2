@@ -1,0 +1,22 @@
+.toolGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--space-4);
+}
+
+.toolLink {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.toolLink:hover {
+  text-decoration: none;
+}
+
+.toolHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}

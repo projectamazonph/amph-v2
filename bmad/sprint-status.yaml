@@ -1,8 +1,8 @@
 sprint:
-  number: 1
-  name: "Foundation"
-  start_date: "2026-07-07"
-  end_date: "2026-07-13"
+  number: 2
+  name: "Tools"
+  start_date: "2026-07-14"
+  end_date: "2026-07-20"
   status: "completed"
 
 capacity:
@@ -11,53 +11,57 @@ capacity:
   buffer_points: 0
 
 stories:
-  - id: "STORY-001"
-    title: "Scaffold Next.js 16"
+  - id: "STORY-007"
+    title: "Campaign Builder engine (SP + SB + SD + BTV), 5 SP scenarios, 5 BTV scenarios"
     points: 1
     status: "completed"
-    sprint: 1
-    epic: "Foundation"
+    sprint: 2
+    epic: "Tools"
     owner: "Ryan"
+    notes: "User requested Campaign Builder mirror Amazon Campaign Manager UI. Engine rewritten with CampaignStructure matching Amazon columns. Added BTV (Sponsored TV) after user request — 5 BTV scenarios, BTV-specific scoring rubric (CPM, audience-based, end date required)."
 
-  - id: "STORY-002"
-    title: "Field Manual design tokens + dark mode"
+  - id: "STORY-008"
+    title: "Bid Elevator engine + 10 scenarios"
     points: 1
     status: "completed"
-    sprint: 1
-    epic: "Foundation"
+    sprint: 2
+    epic: "Tools"
     owner: "Ryan"
 
-  - id: "STORY-003"
-    title: "Shared UI component library"
+  - id: "STORY-009"
+    title: "STR Triage engine + 20 search terms"
+    points: 1
+    status: "completed"
+    sprint: 2
+    epic: "Tools"
+    owner: "Ryan"
+
+  - id: "STORY-010"
+    title: "Tool UI shell, scenario picker, runner pages"
     points: 1.5
     status: "completed"
-    sprint: 1
-    epic: "Foundation"
+    sprint: 2
+    epic: "Tools"
     owner: "Ryan"
+    notes: "Tool index, scenario picker, dynamic /tools/[tool]/[slug] runner. Runner components are stubs — full UIs (Campaign Manager wizard, Bid table editor, STR triager, Listing audit form, Keyword categorizer) ship in Sprint 3."
 
-  - id: "STORY-004"
-    title: "Prisma schema + migration + seed"
+  - id: "STORY-011"
+    title: "ToolSession persistence (save/resume/submit/grade)"
     points: 1
     status: "completed"
-    sprint: 1
-    epic: "Foundation"
+    sprint: 2
+    epic: "Tools"
     owner: "Ryan"
+    notes: "Server actions: startToolSession, saveToolSession, submitToolSession, loadToolSession, listRecentSessions. All 5 tool types wired in tools.ts."
 
-  - id: "STORY-005"
-    title: "JWT auth with jose + middleware"
-    points: 1
-    status: "completed"
-    sprint: 1
-    epic: "Foundation"
-    owner: "Ryan"
-
-  - id: "STORY-006"
-    title: "Admin layout + RBAC"
+  - id: "STORY-012"
+    title: "Listing Audit + Keyword Research tools"
     points: 0.5
     status: "completed"
-    sprint: 1
-    epic: "Foundation"
+    sprint: 2
+    epic: "Tools"
     owner: "Ryan"
+    notes: "User added Listing Audit and Keyword Research mid-sprint. Both shipped with engines, 5 scenarios each, scoring rubric. Story compressed to 0.5 pts since engines follow the established pattern."
 
 burndown:
   - day: 0
@@ -71,7 +75,10 @@ velocity_history:
   - sprint: 1
     points: 6
     completed_date: "2026-07-07"
+  - sprint: 2
+    points: 6
+    completed_date: "2026-07-07"
 
 completion_percentage: 100
 remaining_points: 0
-last_updated: "2026-07-07T16:45:00Z"
+last_updated: "2026-07-07T18:30:00Z"

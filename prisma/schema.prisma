@@ -857,6 +857,8 @@ enum ToolType {
   CAMPAIGN_BUILDER
   BID_ELEVATOR
   STR_TRIAGE
+  LISTING_AUDIT
+  KEYWORD_RESEARCH
 }
 
 enum BadgeCategory {
