@@ -8,6 +8,8 @@
  */
 
 import { PrismaClient, Prisma } from '@prisma/client';
+import * as Enums from './enums';
+export { Enums };
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;

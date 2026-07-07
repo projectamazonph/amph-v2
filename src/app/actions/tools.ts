@@ -16,7 +16,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
 import { createSafeAction, type ActionResult } from '@/lib/validation';
-import type { ToolType } from '@prisma/client';
+import { type ToolType } from '@/lib/enums';
 
 import { gradeCampaignDraft } from '@/engine/campaign-builder/engine';
 import { getScenarioById as getCbScenario } from '@/engine/campaign-builder/scenarios';

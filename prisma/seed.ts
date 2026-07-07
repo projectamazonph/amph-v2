@@ -4,12 +4,19 @@
  * Creates:
  *  - 1 admin user (email from ADMIN_EMAIL env, password "ChangeMe123!")
  *  - 3 PricingTiers (PPC Foundations / Accelerated Mastery / Ultimate Transformation)
- *  - 5 Badges with full enum fields (per Architect A2)
+ *  - 5 Badges with full enum fields
  *
  * To reset and re-seed: pnpm prisma migrate reset (drops + recreates DB)
  */
 
-import { PrismaClient, CourseTier, BadgeCategory, BadgeTier } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import {
+  UserRole,
+  UserStatus,
+  CourseTier,
+  BadgeCategory,
+  BadgeTier,
+} from '../src/lib/enums';
 import { randomBytes, scryptSync } from 'node:crypto';
 
 const prisma = new PrismaClient();
@@ -29,16 +36,16 @@ async function upsertAdminUser(): Promise<void> {
     where: { email },
     update: {
       emailVerified: new Date(),
-      role: 'ADMIN',
-      status: 'ACTIVE',
+      role: UserRole.ADMIN,
+      status: UserStatus.ACTIVE,
     },
     create: {
       email,
       name: 'Ryan Dabao',
       emailVerified: new Date(),
       passwordHash: hashPassword(password),
-      role: 'ADMIN',
-      status: 'ACTIVE',
+      role: UserRole.ADMIN,
+      status: UserStatus.ACTIVE,
     },
   });
 
@@ -51,7 +58,7 @@ async function upsertPricingTiers(): Promise<void> {
       slug: 'ppc-foundations',
       name: 'PPC Foundations',
       tier: CourseTier.PPC_FOUNDATIONS,
-      pricePhp: 299900, // ₱2,999.00 in centavos
+      pricePhp: 299900, // PHP 2,999.00 in centavos
       description:
         'Five core modules. The basics of Amazon advertising — campaign structure, bid logic, search term triage.',
       features: JSON.stringify({
@@ -71,7 +78,7 @@ async function upsertPricingTiers(): Promise<void> {
       slug: 'accelerated-mastery',
       name: 'Accelerated Mastery',
       tier: CourseTier.ACCELERATED_MASTERY,
-      pricePhp: 599900, // ₱5,999.00
+      pricePhp: 599900, // PHP 5,999.00
       description:
         'Everything in Foundations, plus advanced modules and all scenario packs across five product categories.',
       features: JSON.stringify({
@@ -91,7 +98,7 @@ async function upsertPricingTiers(): Promise<void> {
       slug: 'ultimate-transformation',
       name: 'Ultimate Transformation',
       tier: CourseTier.ULTIMATE_TRANSFORMATION,
-      pricePhp: 999900, // ₱9,999.00
+      pricePhp: 999900, // PHP 9,999.00
       description:
         'Everything in Mastery, plus weekly live classes with Ryan and a monthly 1-on-1 portfolio review.',
       features: JSON.stringify({
@@ -118,11 +125,21 @@ async function upsertPricingTiers(): Promise<void> {
         name: tier.name,
         description: tier.description,
         pricePhp: tier.pricePhp,
+        tier: tier.tier,
         features: tier.features,
         sortOrder: tier.sortOrder,
         isActive: true,
       },
-      create: tier,
+      create: {
+        slug: tier.slug,
+        name: tier.name,
+        description: tier.description,
+        pricePhp: tier.pricePhp,
+        tier: tier.tier,
+        features: tier.features,
+        sortOrder: tier.sortOrder,
+        isActive: true,
+      },
     });
   }
 

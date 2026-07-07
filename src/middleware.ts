@@ -30,14 +30,14 @@ interface TokenPayload {
   exp: number;
 }
 
-async function verifyEdgeToken(token: string): Promise<TokenPayload | null> {
+function verifyEdgeToken(token: string): TokenPayload | null {
   try {
     const { payload } = await jwtVerify(token, getSecret(), { algorithms: ['HS256'] });
-    if (
-      typeof payload.sub !== 'string' ||
-      typeof payload.email !== 'string' ||
-      (payload.role !== 'STUDENT' && payload.role !== 'INSTRUCTOR' && payload.role !== 'ADMIN')
-    ) {
+    const role = payload.role;
+    if (typeof payload.sub !== 'string' || typeof payload.email !== 'string') {
+      return null;
+    }
+    if (role !== 'STUDENT' && role !== 'INSTRUCTOR' && role !== 'ADMIN') {
       return null;
     }
     return payload as TokenPayload;

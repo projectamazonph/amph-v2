@@ -9,7 +9,7 @@ import { SCENARIOS as BE_SCENARIOS } from './bid-elevator/scenarios';
 import { SCENARIOS as STR_SCENARIOS } from './str-triage/scenarios';
 import { SCENARIOS as LA_SCENARIOS } from './listing-audit/scenarios';
 import { SCENARIOS as KR_SCENARIOS } from './keyword-research/scenarios';
-import type { ToolType } from '@prisma/client';
+import type { ToolType } from '@/lib/enums';
 
 export type ToolSlug = 'campaign-builder' | 'bid-elevator' | 'str-triage' | 'listing-audit' | 'keyword-research';
 

@@ -1,0 +1,24 @@
+.resultCard {
+  text-align: center;
+}
+
+.scoreCircle {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-4xl);
+  font-weight: 700;
+  margin: 0 auto var(--space-4);
+  color: white;
+}
+
+.scoreCircle[data-passed="true"] {
+  background: var(--success);
+}
+
+.scoreCircle[data-passed="false"] {
+  background: var(--danger);
+}

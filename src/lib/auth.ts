@@ -17,7 +17,7 @@ import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { db } from './db';
-import type { Role } from '@prisma/client';
+import { type UserRole } from './enums';
 
 const AUTH_COOKIE = 'amph_auth';
 const TOKEN_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
@@ -62,7 +62,7 @@ export function verifyPassword(password: string, stored: string): boolean {
 export interface SessionPayload extends JWTPayload {
   sub: string;        // user id
   email: string;
-  role: Role;
+  role: UserRole;
   name: string | null;
 }
 
@@ -119,7 +119,7 @@ export interface SessionUser {
   id: string;
   email: string;
   name: string | null;
-  role: Role;
+  role: UserRole;
 }
 
 export async function getSession(): Promise<SessionUser | null> {
