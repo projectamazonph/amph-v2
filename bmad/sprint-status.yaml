@@ -1,73 +1,57 @@
 sprint:
-  number: 2
-  name: "Tools"
-  start_date: "2026-07-14"
-  end_date: "2026-07-20"
-  status: "completed"
+  number: 3
+  name: "Curriculum (partial)"
+  start_date: "2026-07-07"
+  end_date: "2026-07-13"
+  status: "in_progress"
 
 capacity:
   planned_points: 6
-  velocity: 6
+  velocity: 3
   buffer_points: 0
 
 stories:
-  - id: "STORY-007"
-    title: "Campaign Builder engine (SP + SB + SD + BTV), 5 SP scenarios, 5 BTV scenarios"
+  - id: "STORY-014"
+    title: "Import AMPH-Academy v1 content (31 MDX lessons + 5 quizzes + 30 questions)"
     points: 1
     status: "completed"
-    sprint: 2
-    epic: "Tools"
+    sprint: 3
+    epic: "Curriculum"
     owner: "Ryan"
-    notes: "User requested Campaign Builder mirror Amazon Campaign Manager UI. Engine rewritten with CampaignStructure matching Amazon columns. Added BTV (Sponsored TV) after user request — 5 BTV scenarios, BTV-specific scoring rubric (CPM, audience-based, end date required)."
+    notes: "scripts/import-amph-content.ts pulls from /storage/.../AMPH-Academy/project/content. Idempotent upsert by slug. Currency refactor: $USD → ₱PHP (e.g., $24.99 → ₱1,250 (about $24.99))."
 
-  - id: "STORY-008"
-    title: "Bid Elevator engine + 10 scenarios"
-    points: 1
-    status: "completed"
-    sprint: 2
-    epic: "Tools"
-    owner: "Ryan"
-
-  - id: "STORY-009"
-    title: "STR Triage engine + 20 search terms"
-    points: 1
-    status: "completed"
-    sprint: 2
-    epic: "Tools"
-    owner: "Ryan"
-
-  - id: "STORY-010"
-    title: "Tool UI shell, scenario picker, runner pages"
-    points: 1.5
-    status: "completed"
-    sprint: 2
-    epic: "Tools"
-    owner: "Ryan"
-    notes: "Tool index, scenario picker, dynamic /tools/[tool]/[slug] runner. Runner components are stubs — full UIs (Campaign Manager wizard, Bid table editor, STR triager, Listing audit form, Keyword categorizer) ship in Sprint 3."
-
-  - id: "STORY-011"
-    title: "ToolSession persistence (save/resume/submit/grade)"
-    points: 1
-    status: "completed"
-    sprint: 2
-    epic: "Tools"
-    owner: "Ryan"
-    notes: "Server actions: startToolSession, saveToolSession, submitToolSession, loadToolSession, listRecentSessions. All 5 tool types wired in tools.ts."
-
-  - id: "STORY-012"
-    title: "Listing Audit + Keyword Research tools"
+  - id: "STORY-015"
+    title: "Schema fix: enums → String + app-layer enums.ts"
     points: 0.5
     status: "completed"
-    sprint: 2
-    epic: "Tools"
+    sprint: 3
+    epic: "Curriculum"
     owner: "Ryan"
-    notes: "User added Listing Audit and Keyword Research mid-sprint. Both shipped with engines, 5 scenarios each, scoring rubric. Story compressed to 0.5 pts since engines follow the established pattern."
+    notes: "Prisma SQLite does not support enums. Removed 20 enums from schema.prisma, created src/lib/enums.ts with const-object pattern. Updated all Sprint 1-2 imports."
+
+  - id: "STORY-016"
+    title: "Course/Module/Lesson pages (MDX render, navigation, progress tracking)"
+    points: 1
+    status: "completed"
+    sprint: 3
+    epic: "Curriculum"
+    owner: "Ryan"
+    notes: "/dashboard, /dashboard/courses/[slug], /dashboard/courses/[slug]/lessons/[slug]. src/lib/mdx.ts is a lightweight markdown→HTML renderer (headings, paragraphs, bold/italic, code, lists, blockquotes)."
+
+  - id: "STORY-017"
+    title: "Quiz system (attempt tracking, scoring, retry logic, XP bonus)"
+    points: 0.5
+    status: "completed"
+    sprint: 3
+    epic: "Curriculum"
+    owner: "Ryan"
+    notes: "Server-side scoring in submitQuizAction. Bonus XP for passing. Result screen with score circle and pass/fail copy. Auto-completes lesson on pass."
 
 burndown:
   - day: 0
-    ideal_remaining: 6
-    actual_remaining: 6
-  - day: 7
+    ideal_remaining: 3
+    actual_remaining: 3
+  - day: 1
     ideal_remaining: 0
     actual_remaining: 0
 
@@ -78,7 +62,10 @@ velocity_history:
   - sprint: 2
     points: 6
     completed_date: "2026-07-07"
+  - sprint: 3
+    points: 3
+    completed_date: "2026-07-07"
 
-completion_percentage: 100
-remaining_points: 0
-last_updated: "2026-07-07T18:30:00Z"
+completion_percentage: 50
+remaining_points: 3
+last_updated: "2026-07-07T20:00:00Z"

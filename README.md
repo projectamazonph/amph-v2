@@ -11,30 +11,36 @@ Three courses. One outcome: the VA becomes the Amazon ads specialist clients ret
 | Sprint | Status | Stories |
 |--------|--------|---------|
 | **Sprint 1** — Foundation | ✅ Complete (2026-07-07) | 6 / 6 |
-| Sprint 2 — Tools | ⏳ Next | 5 / 5 |
-| Sprint 3 — Curriculum | Backlog | 5 / 5 |
-| Sprint 4 — Gamification | Backlog | 5 / 5 |
-| Sprint 5 — Payments | Backlog | 5 / 5 |
-| Sprint 6 — Admin backend | Backlog | 5 / 5 |
-| Sprint 7 — Refunds + email | Backlog | 5 / 5 |
-| Sprint 8 — Polish | Backlog | 5 / 5 |
-| Sprint 9 — Tests | Backlog | 5 / 5 |
-| Sprint 10 — Observability | Backlog | 5 / 5 |
-| Sprint 11 — Launch | Backlog | 4 / 4 |
-| **Total** | **6 / 55 stories (10.9%)** | |
+| **Sprint 2** — Tools (5 engines + fixtures) | ✅ Complete (2026-07-07) | 6 / 6 |
+| **Sprint 3** — Curriculum (partial) | 🟡 In progress (3 / 6 pts) | 4 / 5 |
+| **Sprint 4** — Tool UIs | ⏳ Next | 0 / 5 |
+| Sprint 5 — Gamification | Backlog | 0 / 3 |
+| Sprint 6 — Payments | Backlog | 0 / 4 |
+| Sprint 7 — Admin | Backlog | 0 / 4 |
+| Sprint 8 — Refunds + Email | Backlog | 0 / 3 |
+| Sprint 9 — Polish | Backlog | 1 / 5 (no-ai-slop done) |
+| Sprint 10 — Tests | Backlog | 0 / 5 |
+| Sprint 11 — Observability | Backlog | 0 / 5 |
+| Sprint 12 — Launch | Backlog | 0 / 4 |
+| **Total** | **17 / 55 stories (31%)** | |
 
 | Layer | Status |
 |-------|--------|
 | Architecture (16 ADRs) | ✅ Complete — `docs/decisions.md` |
 | Database schema (25 models) | ✅ Complete — `prisma/schema.prisma` |
 | Design system (Field Manual) | ✅ Complete — `src/styles/globals.css` |
-| UI component library (7 components) | ✅ Complete — `src/components/ui/` |
+| UI component library (7 components + admin shell) | ✅ Complete — `src/components/ui/` |
 | JWT auth + RBAC | ✅ Complete — `src/lib/auth.ts` + `src/middleware.ts` |
+| 5 tool engines + 30 scenarios + grading | ✅ Complete — `src/engine/` |
+| Tool session persistence (save/resume/submit) | ✅ Complete — `src/app/actions/tools.ts` |
+| AMPH v1 content imported (31 lessons, 5 quizzes) | ✅ Complete — `scripts/import-amph-content.ts` |
+| Curriculum pages (dashboard, course, lesson, quiz) | ✅ Complete — `src/app/(dashboard)/` |
 | Voice + copy guide | ✅ Spec complete — `docs/voice-guide.md` |
-| Business layer (PayMongo) | ⏳ Spec complete, code in Sprint 5 — `docs/business-layer.md` |
-| Admin panel (full surface) | ⏳ Layout only, full panels in Sprint 6 — `docs/admin-backend.md` |
-| Tests | ❌ Not started (Sprint 9) |
-| Observability | ❌ Not started (Sprint 10) |
+| 5 tool interactive UIs | ⏳ Stubbed — full UIs in Sprint 4 |
+| Business layer (PayMongo) | ⏳ Spec complete, code in Sprint 6 — `docs/business-layer.md` |
+| Admin panel (full surface) | ⏳ Layout only, full panels in Sprint 7 — `docs/admin-backend.md` |
+| Tests | ❌ Not started (Sprint 10) |
+| Observability | ❌ Not started (Sprint 11) |
 
 This is a **greenfield rebuild**. v1 lives at `github.com/projectamazonph/AMPH-Academy` and is frozen. No code, schema, or commits from v1 carry over. Every architectural decision is made fresh.
 
@@ -250,7 +256,7 @@ Every component imports a `.module.css` file that uses `var(--token)` references
 
 ## Sprint Status
 
-Sprint 1 is complete. The foundation is ready:
+Sprints 1-3 shipped the foundation, all 5 tool engines + scenarios, content import, and curriculum pages.
 
 - Next.js 16 scaffold with TypeScript strict
 - Field Manual design system (60+ tokens, full dark mode)
@@ -258,9 +264,13 @@ Sprint 1 is complete. The foundation is ready:
 - Full 25-model Prisma schema migrated and seeded
 - JWT auth with HttpOnly cookies, 7-day TTL
 - Edge middleware with RBAC for `/admin/*` and `/dashboard/*`
-- Empty admin dashboard showing user/course/badge/tier counts
+- 5 tool engines with 30 scenarios (Campaign Builder SP/SB/SD/BTV, Bid Elevator, STR Triage, Listing Audit, Keyword Research)
+- Tool session persistence (save/resume/submit/grade)
+- AMPH v1 content imported (1 course, 9 modules, 31 lessons, 5 quizzes, 30 questions)
+- Curriculum pages: dashboard, course detail, lesson reader, quiz
+- 1 admin + 3 pricing tiers + 5 badges seeded
 
-**Next: Sprint 2 — Interactive Tools.** Campaign Builder, Bid Elevator, Search Term Triage engines + UI + fixtures.
+**Next: Sprint 4 — Tool UIs.** Replace the 5 stub tool runners with real interactive UIs (Campaign Builder wizard, Bid Elevator table editor, STR Triage triager, Listing Audit form, Keyword Research categorizer).
 
 See `docs/sprint-plan.md` for the full roadmap and `bmad/sprint-status.yaml` for current state.
 
