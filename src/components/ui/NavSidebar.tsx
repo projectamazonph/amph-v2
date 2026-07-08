@@ -18,6 +18,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/admin/badges', label: 'Badges', icon: 'Trophy' },
   { href: '/admin/live-classes', label: 'Live classes', icon: 'Calendar' },
   { href: '/admin/payments', label: 'Payments', icon: 'CreditCard' },
+  { href: '/admin/refunds', label: 'Refunds', icon: 'Receipt' },
   { href: '/admin/settings', label: 'Settings', icon: 'Gear' },
 ];
 

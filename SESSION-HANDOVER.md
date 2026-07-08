@@ -1,14 +1,14 @@
 # Session Handoff — AMPH Academy v2
 
-**Session date:** 2026-07-07 to 2026-07-10 (Sprints 1–6 partial — Sprint 5 closed + Sprint 6 STORY-026 + STORY-027 shipped)
-**Last commit:** d482aa9 feat(payments): STORY-027 — guest signup completion + grandfather seed
-**Repo:** github.com/projectamazonph/amph-v2 (PUSHED to main)
+**Session date:** 2026-07-07 to 2026-07-10 (Sprints 1–6 partial — Sprint 5 closed + Sprint 6 STORY-026 + STORY-027 + STORY-028 shipped)
+**Last commit:** feat(payments): STORY-028 — refund flow (student + admin)
+**Repo:** github.com/projectamazonph/amph-v2
 **Project path:** /storage/emulated/0/Hermes Projects/projects/amph-v2
 
 ## Current state — pick up here
 
-- **Sprint 6 (Payments):** 2/4 stories complete = **50%**
-- **Project total:** 27/55 stories = **49%**
+- **Sprint 6 (Payments):** 3/4 stories complete = **75%**
+- **Project total:** 28/55 stories = **51%**
 - **Pushed commits on main:** d482aa9, 532af3d, be1f6ce, fdfa8af, d2a4231, dcd819d, 1bc2c62
 - **TypeScript:** 0 errors (`pnpm typecheck`)
 - **AI-slop scan:** clean
@@ -56,14 +56,8 @@ grep "status:" bmad/sprint-status.yaml | head -10
 
 ## Next session: open work
 
-### Sprint 6 remaining (2 stories, 2 pts)
-1. **STORY-028** — Refund flow: student request page + admin approval + PayMongo `refundPayment()` call
-   - Library ready: `refundPayment()` exists in `src/lib/paymongo.ts`
-   - UI needed: `/dashboard/payments` request form, `/admin/payments` approval queue
-   - Soft-delete pattern: Payment.status → REFUNDED, Enrollment.status → REFUNDED, set `cancelledAt` + `cancellationReason: 'Refund processed'`
-   - Webhook handler `handlePaymentRefunded()` already in `src/lib/enrollment.ts`
-
-2. **STORY-029** — BIR-compliant receipt PDFs
+### Sprint 6 remaining (1 story, 1 pt)
+1. **STORY-029** — BIR-compliant receipt PDFs
    - `@react-pdf/renderer` template (similar pattern to `src/lib/cert-pdf.tsx`)
    - Sequential numbering: `BS #{number}-#{yyyy}` format
    - Store in Vercel Blob; downloadable from `/dashboard/payments`

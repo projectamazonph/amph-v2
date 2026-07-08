@@ -1,0 +1,137 @@
+.page {
+  max-width: 1024px;
+  margin: 0 auto;
+  padding: 32px 24px 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: var(--color-text-muted, #5a5a6e);
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.title {
+  font-family: var(--font-display, 'Space Grotesk', sans-serif);
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--color-text, #1a1a2e);
+}
+
+.subtitle {
+  font-size: 15px;
+  color: var(--color-text-muted, #5a5a6e);
+  margin: 0;
+  max-width: 640px;
+  line-height: 1.5;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 720px) {
+  .stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+.statValue {
+  font-family: var(--font-display, 'Space Grotesk', sans-serif);
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--color-text, #1a1a2e);
+  margin-top: 12px;
+}
+
+.empty {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rowLink {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.rowLink:hover .row {
+  border-color: var(--color-primary, #ff6b35);
+  transform: translateY(-1px);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.rowMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rowHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.rowTitle {
+  font-family: var(--font-display, 'Space Grotesk', sans-serif);
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--color-text, #1a1a2e);
+}
+
+.rowMeta {
+  font-size: 13px;
+  color: var(--color-text-muted, #5a5a6e);
+  margin: 0;
+}
+
+.rowReason {
+  font-size: 14px;
+  color: var(--color-text, #1a1a2e);
+  font-style: italic;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 600px;
+}
+
+.rowArrow {
+  font-size: 20px;
+  color: var(--color-text-muted, #5a5a6e);
+  flex-shrink: 0;
+}

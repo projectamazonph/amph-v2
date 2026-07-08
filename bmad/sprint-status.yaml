@@ -35,9 +35,13 @@ stories:
   - id: "STORY-028"
     title: "Refund flow — student request, admin approval, PayMongo refund call"
     points: 1
-    status: "pending"
+    status: "completed"
     sprint: 6
     epic: "Payments"
+    owner: "Ryan"
+    started_date: "2026-07-10"
+    completed_date: "2026-07-10"
+    notes: "Shipped in commit pending. Student-side: /dashboard/payments lists payments with refund eligibility (7-day window) + status badges, /dashboard/payments/[id]/request-refund form posts reason to createRefundRequestAction. Admin-side: /admin/refunds queue (FIFO, oldest first) with PROCESSED/REJECTED month counts, /admin/refunds/[id] detail with approve/reject inline forms. Library: src/lib/refunds.ts with isWithinRefundWindow / daysRemainingInWindow / hasBlockingRefundRequest / alreadyRefundedAmountPhp + listUserPayments / listPendingRefundRequests / getRefundRequestDetail. Actions: src/app/actions/refunds.ts — createRefundRequestAction (validates ownership, eligibility, no open request; computes full refund amount = payment.amountPhp - alreadyRefunded), approveRefundAction (PayMongo refundPayment() call, status PENDING→APPROVED→PROCESSED with FAILED branch on API error; idempotent on double-admin race via updateMany status guard), rejectRefundAction (PENDING→REJECTED, requires reviewer note ≥10 chars). Sidebar link added. Webhook handlePaymentRefunded() in src/lib/enrollment.ts remains the source of truth for Payment.status + Enrollment.status updates. Email confirmations stubbed for Sprint 8 (Resend). TypeScript 0 errors, AI-slop scan clean."
 
   - id: "STORY-029"
     title: "Receipt PDF — BIR-compliant sequential numbering + Vercel Blob storage"
@@ -68,9 +72,9 @@ velocity_history:
     points: 3.5
     completed_date: "2026-07-09"
   - sprint: 6
-    points: 2
+    points: 3
     completed_date: "2026-07-10"
 
-completion_percentage: 50
-remaining_points: 2
-last_updated: "2026-07-10T13:00:00Z"
+completion_percentage: 75
+remaining_points: 1
+last_updated: "2026-07-10T14:30:00Z"

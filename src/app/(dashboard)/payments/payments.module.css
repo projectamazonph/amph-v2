@@ -1,0 +1,142 @@
+.page {
+  max-width: 1024px;
+  margin: 0 auto;
+  padding: 32px 24px 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: var(--color-text-muted, #5a5a6e);
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.title {
+  font-family: var(--font-display, 'Space Grotesk', sans-serif);
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--color-text, #1a1a2e);
+}
+
+.subtitle {
+  font-size: 16px;
+  color: var(--color-text-muted, #5a5a6e);
+  margin: 0;
+  max-width: 640px;
+  line-height: 1.5;
+}
+
+.empty {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.emptyActions {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.rowMain {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.rowHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.rowTitle {
+  font-family: var(--font-display, 'Space Grotesk', sans-serif);
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--color-text, #1a1a2e);
+}
+
+.rowMeta {
+  font-size: 14px;
+  color: var(--color-text-muted, #5a5a6e);
+  margin: 0;
+}
+
+.refundNote,
+.refundedNote,
+.windowNote {
+  font-size: 13px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text-muted, #5a5a6e);
+}
+
+.windowNote {
+  color: var(--color-warning, #b45309);
+}
+
+.refundedNote {
+  color: var(--color-success, #16a34a);
+}
+
+.rowActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.lockedReason {
+  font-size: 13px;
+  color: var(--color-text-muted, #5a5a6e);
+  font-style: italic;
+}
+
+.bannerSuccess {
+  background: #f0fdf4;
+  border-color: #86efac;
+}
+
+.bannerError {
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+
+.bannerInfo {
+  background: #eff6ff;
+  border-color: #93c5fd;
+}

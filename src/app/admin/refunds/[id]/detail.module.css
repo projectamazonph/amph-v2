@@ -1,0 +1,233 @@
+.page {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 32px 24px 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.backLink {
+  font-size: 13px;
+  color: var(--color-text-muted, #5a5a6e);
+  text-decoration: none;
+  margin-bottom: 4px;
+}
+
+.backLink:hover {
+  color: var(--color-primary, #ff6b35);
+}
+
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: var(--color-text-muted, #5a5a6e);
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.title {
+  font-family: var(--font-display, 'Space Grotesk', sans-serif);
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--color-text, #1a1a2e);
+}
+
+.statusRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.requestedAt {
+  font-size: 13px;
+  color: var(--color-text-muted, #5a5a6e);
+}
+
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.amountGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+  padding: 0 4px;
+}
+
+@media (max-width: 720px) {
+  .amountGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.amountCell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.amountLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--color-text-muted, #5a5a6e);
+}
+
+.amountValue {
+  font-family: var(--font-display, 'Space Grotesk', sans-serif);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-text, #1a1a2e);
+}
+
+.amountValueSm {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text, #1a1a2e);
+}
+
+.reasonSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.reason {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--color-text, #1a1a2e);
+  padding: 16px 20px;
+  background: var(--color-surface-elevated, #f7f7fb);
+  border-left: 3px solid var(--color-primary, #ff6b35);
+  border-radius: 4px;
+  margin: 0;
+  font-style: italic;
+}
+
+.studentMeta {
+  font-size: 13px;
+  color: var(--color-text-muted, #5a5a6e);
+  margin: 8px 0 0;
+}
+
+.emailLink {
+  color: var(--color-primary, #ff6b35);
+  text-decoration: none;
+}
+
+.emailLink:hover {
+  text-decoration: underline;
+}
+
+.completedMeta {
+  font-size: 13px;
+  color: var(--color-text-muted, #5a5a6e);
+  margin: 0 0 12px;
+}
+
+.reviewerNotes {
+  font-size: 14px;
+  color: var(--color-text, #1a1a2e);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.failureReason {
+  font-size: 14px;
+  margin: 0;
+}
+
+.code {
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-size: 13px;
+  background: var(--color-surface-elevated, #f7f7fb);
+  padding: 2px 6px;
+  border-radius: 4px;
+  word-break: break-all;
+}
+
+.decisionActions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 4px 0;
+}
+
+.errorBanner {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text, #1a1a2e);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.required {
+  color: #dc2626;
+}
+
+.textarea {
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 8px;
+  background: var(--color-surface, #ffffff);
+  color: var(--color-text, #1a1a2e);
+  resize: vertical;
+  min-height: 80px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: var(--color-primary, #ff6b35);
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.15);
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--color-text-muted, #5a5a6e);
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
