@@ -10,6 +10,7 @@ import { SCENARIOS as STR_SCENARIOS } from './str-triage/scenarios';
 import { SCENARIOS as LA_SCENARIOS } from './listing-audit/scenarios';
 import { SCENARIOS as KR_SCENARIOS } from './keyword-research/scenarios';
 import type { ToolType } from '@/lib/enums';
+import type { CampaignBuilderScenario } from './campaign-builder/types';
 
 export type ToolSlug = 'campaign-builder' | 'bid-elevator' | 'str-triage' | 'listing-audit' | 'keyword-research';
 
@@ -29,11 +30,11 @@ export interface ToolMeta {
   scenarios: ScenarioMeta[];
 }
 
-const scenarioMetaFromCB = (s: typeof CB_SCENARIOS[number]): ScenarioMeta => ({
+const scenarioMetaFromCB = (s: CampaignBuilderScenario): ScenarioMeta => ({
   id: s.id,
   slug: s.slug,
   title: s.product.name,
-  category: s.product.category,
+  category: s.category,
   difficulty: 'intermediate',
 });
 
@@ -41,7 +42,7 @@ const scenarioMetaFromBE = (s: typeof BE_SCENARIOS[number]): ScenarioMeta => ({
   id: s.id,
   slug: s.slug,
   title: s.title,
-  category: s.product.category,
+  category: 'Bid Elevator',
   difficulty: 'intermediate',
 });
 

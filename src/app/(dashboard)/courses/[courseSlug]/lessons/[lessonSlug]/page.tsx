@@ -96,7 +96,7 @@ export default async function LessonPage({ params }: PageProps) {
   return (
     <main id="main-content" className="container" style={{ padding: 'var(--space-6) 0' }}>
       <Link
-        href={`/dashboard/courses/${courseSlug}` as never}
+        href={`/dashboard/courses/${courseSlug}`}
         style={{ color: 'var(--ink-500)', fontSize: 'var(--text-sm)' }}
       >
         ← {lesson.module.course.title}
@@ -121,7 +121,14 @@ export default async function LessonPage({ params }: PageProps) {
 
       <div className={styles.actions}>
         {!isComplete && (
-          <form action={markLessonCompleteAction.bind(null, { courseSlug, lessonSlug })}>
+          <form
+            action={
+              markLessonCompleteAction
+                .bind(null, { courseSlug, lessonSlug }) as unknown as (
+                formData: FormData
+              ) => Promise<void>
+            }
+          >
             <Button type="submit" variant="primary">
               <Icon name="Check" size="sm" />
               Mark as complete (+{lesson.xpReward} XP)
@@ -143,23 +150,25 @@ export default async function LessonPage({ params }: PageProps) {
               This lesson has a quiz. Pass with {lesson.quiz.passThreshold}% or higher to count this lesson as complete.
             </CardDescription>
           </CardHeader>
-          <Button as="a" href={`/dashboard/courses/${courseSlug}/lessons/${lessonSlug}/quiz` as never} variant="primary">
+          <Link
+            href={`/dashboard/courses/${courseSlug}/lessons/${lessonSlug}/quiz`}
+            className={styles.ctaPrimary}
+          >
             Take the quiz
-          </Button>
+          </Link>
         </Card>
       )}
 
       <nav className={styles.prevNext}>
         {prevLesson ? (
           <Link
-            href={`/dashboard/courses/${courseSlug}/lessons/${prevLesson.slug}` as never}
+            href={`/dashboard/courses/${courseSlug}/lessons/${prevLesson.slug}`}
             className={styles.prevLink}
           >
             <Icon name="CaretLeft" size="sm" />
             <div>
               <div className={styles.prevNextLabel}>Previous</div>
               <div className={styles.prevNextTitle}>
-                {prevLesson.moduleNumber ? `${prevLesson.lessonNumber}.` : ''}
                 {prevLesson.title}
               </div>
             </div>
@@ -167,13 +176,12 @@ export default async function LessonPage({ params }: PageProps) {
         ) : <div />}
         {nextLesson && (
           <Link
-            href={`/dashboard/courses/${courseSlug}/lessons/${nextLesson.slug}` as never}
+            href={`/dashboard/courses/${courseSlug}/lessons/${nextLesson.slug}`}
             className={styles.nextLink}
           >
             <div>
               <div className={styles.prevNextLabel}>Next</div>
               <div className={styles.prevNextTitle}>
-                {nextLesson.moduleNumber ? `${nextLesson.lessonNumber}.` : ''}
                 {nextLesson.title}
               </div>
             </div>

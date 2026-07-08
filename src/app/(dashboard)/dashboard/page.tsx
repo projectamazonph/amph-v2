@@ -133,9 +133,9 @@ export default async function DashboardPage() {
         <p style={{ color: 'var(--ink-500)', marginBottom: 'var(--space-4)' }}>
           Practice real Amazon Advertising Console workflows with synthetic data.
         </p>
-        <Button as="a" href="/dashboard/tools">
+        <Link href="/dashboard/tools" className={styles.ctaPrimary}>
           Open the tools
-        </Button>
+        </Link>
       </section>
     </main>
   );

@@ -120,6 +120,9 @@ export interface SessionUser {
   email: string;
   name: string | null;
   role: UserRole;
+  xp: number;
+  level: number;
+  streakDays: number;
 }
 
 export async function getSession(): Promise<SessionUser | null> {
@@ -129,11 +132,20 @@ export async function getSession(): Promise<SessionUser | null> {
   const payload = await verifyToken(token);
   if (!payload) return null;
 
+  // Fetch gamification fields from DB (not in JWT to keep token small)
+  const user = await db.user.findUnique({
+    where: { id: payload.sub },
+    select: { xp: true, level: true, streakDays: true },
+  });
+
   return {
     id: payload.sub,
     email: payload.email,
     name: payload.name,
     role: payload.role,
+    xp: user?.xp ?? 0,
+    level: user?.level ?? 1,
+    streakDays: user?.streakDays ?? 0,
   };
 }
 

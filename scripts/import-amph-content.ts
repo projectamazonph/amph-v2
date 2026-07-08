@@ -23,7 +23,8 @@
  * Usage:  pnpm tsx scripts/import-amph-content.ts
  */
 
-import { PrismaClient, CourseDifficulty } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import type { CourseDifficulty } from '../src/lib/enums';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -85,11 +86,12 @@ function parseMdx(content: string): { frontmatter: Record<string, string>; body:
   const match = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
   if (!match) return { frontmatter: {}, body: content };
 
-  const [, fm, body] = match;
+  const fm = match[1] ?? '';
+  const body = match[2] ?? content;
   const frontmatter: Record<string, string> = {};
   for (const line of fm.split('\n')) {
     const m = line.match(/^(\w+):\s*"?([^"]*?)"?\s*$/);
-    if (m) frontmatter[m[1]] = m[2];
+    if (m && m[1] && m[2] !== undefined) frontmatter[m[1]] = m[2];
   }
   return { frontmatter, body: body.trim() };
 }
@@ -215,7 +217,7 @@ async function importLessons(moduleIdByNumber: Map<number, string>): Promise<num
         console.warn(`  ! Skipping ${file} — cannot parse lesson number`);
         continue;
       }
-      const lessonNumber = parseInt(lessonNumberMatch[2], 10);
+      const lessonNumber = parseInt(lessonNumberMatch[2] ?? '1', 10);
 
       const moduleId = moduleIdByNumber.get(meta.moduleNumber);
       if (!moduleId) continue;

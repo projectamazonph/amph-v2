@@ -16,7 +16,6 @@ import type {
   CampaignBuilderScenario,
   CampaignBuilderGrade,
 } from './types';
-
 /**
  * Empty draft (used when starting a new session).
  */
@@ -36,6 +35,7 @@ export function emptyDraft(scenario: CampaignBuilderScenario): CampaignDraft {
     adGroupName: '',
     keywords: [],
     productTargets: [],
+    audiences: [],
   };
 }
 
@@ -220,11 +220,12 @@ export function prettyCampaignType(t: CampaignDraft['campaignType']): string {
     SPONSORED_PRODUCTS: 'Sponsored Products',
     SPONSORED_BRANDS: 'Sponsored Brands',
     SPONSORED_DISPLAY: 'Sponsored Display',
+    SPONSORED_TV: 'Sponsored TV',
   }[t];
 }
 
 export function prettyTargetingType(t: CampaignDraft['targetingType']): string {
-  return { MANUAL: 'Manual', AUTO: 'Auto' }[t];
+  return { MANUAL: 'Manual', AUTO: 'Auto', AUDIENCE: 'Audience' }[t];
 }
 
 export function prettyBidStrategy(s: CampaignDraft['bidStrategy']): string {
@@ -233,6 +234,8 @@ export function prettyBidStrategy(s: CampaignDraft['bidStrategy']): string {
     DYNAMIC_BIDS_DOWN_ONLY: 'Dynamic bids (down only)',
     DYNAMIC_BIDS_UP_AND_DOWN: 'Dynamic bids (up and down)',
     FIXED_BIDS: 'Fixed bids',
+    CPM_FIXED: 'CPM Fixed',
+    CPM_DYNAMIC: 'CPM Dynamic',
   }[s];
 }
 

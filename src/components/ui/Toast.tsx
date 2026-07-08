@@ -12,7 +12,7 @@ import styles from './Toast.module.css';
 
 export type ToastVariant = 'success' | 'error' | 'info' | 'warning';
 
-export interface Toast {
+export interface ToastItem {
   id: string;
   message: string;
   variant: ToastVariant;
@@ -26,6 +26,15 @@ interface ToastContextValue {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
+/**
+ * Namespace export — allows `import { Toast } from '...'; Toast.useToast()`.
+ * The actual toast *item* type is `ToastItem` (renamed to keep the
+ * Toast namespace free as a value, matching the pattern Ryan's existing
+ * form code (`SignInForm.tsx`, `SignUpForm.tsx`, `QuizFormClient.tsx`)
+ * already imports it as).
+ */
+export const Toast = { useToast } as const;
+
 export function useToast(): ToastContextValue {
   const ctx = useContext(ToastContext);
   if (!ctx) {
@@ -35,7 +44,7 @@ export function useToast(): ToastContextValue {
 }
 
 export function ToastProvider({ children }: { children: ReactNode }) {
-  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
 
   const dismiss = useCallback((id: string) => {
     setToasts((current) => current.filter((t) => t.id !== id));
@@ -69,7 +78,7 @@ function ToastViewport({
   toasts,
   onDismiss,
 }: {
-  toasts: Toast[];
+  toasts: ToastItem[];
   onDismiss: (id: string) => void;
 }) {
   if (typeof document === 'undefined') return null;

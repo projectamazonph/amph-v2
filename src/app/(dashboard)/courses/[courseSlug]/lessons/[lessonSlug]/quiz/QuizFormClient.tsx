@@ -52,8 +52,11 @@ export function QuizFormClient({
     }
   }
 
+  const wrappedAction = () =>
+    startTransition(() => handleSubmit(new FormData()));
+
   return (
-    <form action={() => startTransition(handleSubmit)}>
+    <form action={wrappedAction}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
         {questions.map((q) => (
           <Card key={q.id} padding="md">

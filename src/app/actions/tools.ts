@@ -17,6 +17,7 @@ import { db } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
 import { createSafeAction, type ActionResult } from '@/lib/validation';
 import { type ToolType } from '@/lib/enums';
+import { evaluateBadges } from '@/lib/badges';
 
 import { gradeCampaignDraft } from '@/engine/campaign-builder/engine';
 import { getScenarioById as getCbScenario } from '@/engine/campaign-builder/scenarios';
@@ -153,12 +154,42 @@ export const submitToolSession = createSafeAction(submitSessionSchema, async (da
     },
   });
 
+  // Award XP only on passed submissions — failing a tool is still practice, not
+  // progress. Bump lastActiveAt so the streak counter can move forward on the
+  // next login attempt.
+  if (grade.passed) {
+    await db.user.update({
+      where: { id: user.id },
+      data: {
+        xp: { increment: 30 },
+        lastActiveAt: new Date(),
+      },
+    });
+  } else {
+    await db.user.update({
+      where: { id: user.id },
+      data: { lastActiveAt: new Date() },
+    });
+  }
+
+  // Badge trigger fires only on a passing submission — the only criteria that
+  // references tool_sessions needs graded (passed) runs.
+  const badgeResult = grade.passed
+    ? await evaluateBadges(user.id, {
+        trigger: 'tool_submit',
+        toolType: session.toolType,
+        passed: true,
+      })
+    : { awarded: [], totalXpGained: 0 };
+
   return {
     sessionId: updated.id,
     totalScore: grade.totalScore,
     passed: grade.passed,
     criteriaResults: grade.criteriaResults as Array<{ criterionId: string; passed: boolean; score: number; feedback: string }>,
     overallFeedback: grade.overallFeedback,
+    newlyAwardedBadges: badgeResult.awarded,
+    xpAwarded: grade.passed ? 30 : 0,
   };
 });
 
@@ -198,7 +229,14 @@ export async function listRecentSessions(toolType?: ToolType): Promise<
       submittedAt: true,
     },
   });
-  return sessions;
+  return sessions.map((s) => ({
+    id: s.id,
+    toolType: s.toolType as ToolType,
+    scenarioId: s.scenarioId,
+    status: s.status,
+    score: s.score,
+    submittedAt: s.submittedAt,
+  }));
 }
 
 // Re-export ActionResult for callers

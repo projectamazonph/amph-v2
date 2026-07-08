@@ -1,0 +1,234 @@
+.page {
+  min-height: 100vh;
+  background: #fafafa;
+}
+
+.brandBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 32px;
+  background: #1a1a2e;
+  color: white;
+  border-bottom: 1px solid #2a2a3e;
+}
+
+.brand {
+  font-family: var(--font-display, 'Space Grotesk', sans-serif);
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: white;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.brandTag {
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.main {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 48px 24px 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.statusRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  flex-wrap: wrap;
+}
+
+.statusNote {
+  font-size: 13px;
+  color: #5a5a6e;
+  flex: 1;
+}
+
+.certificateFrame {
+  background: #fafaf7;
+  padding: 56px 48px;
+  border: 2px solid #1a1a2e;
+  box-shadow: 0 20px 60px rgba(26, 26, 46, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 6px;
+  text-align: center;
+  color: #5a5a6e;
+  margin-bottom: 8px;
+}
+
+.title {
+  font-family: var(--font-display, 'Space Grotesk', sans-serif);
+  font-size: 36px;
+  font-weight: 700;
+  text-align: center;
+  margin: 0 0 8px;
+  color: #1a1a2e;
+  letter-spacing: 1px;
+}
+
+.subtitle {
+  font-size: 13px;
+  text-align: center;
+  color: #3a3a4e;
+  margin: 0 0 36px;
+}
+
+.presentedTo {
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-align: center;
+  color: #5a5a6e;
+  margin: 0 0 8px;
+}
+
+.recipientName {
+  font-family: var(--font-display, 'Space Grotesk', sans-serif);
+  font-size: 28px;
+  font-weight: 700;
+  text-align: center;
+  color: #1a1a2e;
+  margin: 0 0 18px;
+}
+
+.divider {
+  width: 160px;
+  border: 0;
+  border-top: 0.5px solid #1a1a2e;
+  margin: 0 auto 18px;
+}
+
+.completionStatement {
+  font-size: 13px;
+  text-align: center;
+  color: #3a3a4e;
+  line-height: 1.6;
+  margin: 0 0 18px;
+  padding: 0 32px;
+}
+
+.courseTitle {
+  font-family: var(--font-display, 'Space Grotesk', sans-serif);
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+  color: #1a1a2e;
+  margin: 0 0 8px;
+}
+
+.courseMeta {
+  font-size: 11px;
+  text-align: center;
+  color: #5a5a6e;
+  margin: 0 0 48px;
+}
+
+.footer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  margin-top: 24px;
+}
+
+.footerCol {
+  padding: 0 16px;
+}
+
+.signatureLine {
+  border: 0;
+  border-top: 0.5px solid #1a1a2e;
+  margin: 0 0 8px;
+}
+
+.signatureName {
+  font-family: var(--font-display, 'Space Grotesk', sans-serif);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  color: #1a1a2e;
+  margin: 0 0 4px;
+}
+
+.signatureLabel {
+  font-size: 9px;
+  text-align: center;
+  color: #5a5a6e;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+.refLabel {
+  font-size: 8px;
+  color: #5a5a6e;
+  letter-spacing: 1px;
+  margin: 0 0 4px;
+}
+
+.refHash {
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  color: #1a1a2e;
+  margin: 0 0 4px;
+}
+
+.issuedDate {
+  font-size: 9px;
+  color: #5a5a6e;
+  margin: 0;
+}
+
+.cta {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.disclaimer {
+  font-size: 11px;
+  color: #5a5a6e;
+  text-align: center;
+  margin: 0;
+}
+
+.hashCode {
+  font-family: 'Courier New', monospace;
+  background: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #1a1a2e;
+  font-size: 10px;
+  word-break: break-all;
+}
+
+@media (max-width: 640px) {
+  .certificateFrame {
+    padding: 32px 20px;
+  }
+  .title {
+    font-size: 28px;
+  }
+  .recipientName {
+    font-size: 22px;
+  }
+  .footer {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}

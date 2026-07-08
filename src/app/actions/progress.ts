@@ -12,8 +12,9 @@ import { requireAuth } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createSafeAction, type ActionResult } from '@/lib/validation';
-import { ProgressStatus, AttemptStatus, EnrollmentStatus } from '@/lib/enums';
+import { ProgressStatus, AttemptStatus } from '@/lib/enums';
 import { evaluateCourseAccess } from '@/lib/tier-gate';
+import { evaluateBadges } from '@/lib/badges';
 
 const slugsSchema = z.object({
   courseSlug: z.string().min(1),
@@ -117,6 +118,12 @@ export const markLessonCompleteAction = createSafeAction(slugsSchema, async (dat
   revalidatePath(`/dashboard/courses/${data.courseSlug}`);
   revalidatePath(`/dashboard/courses/${data.courseSlug}/lessons/${data.lessonSlug}`);
   revalidatePath('/dashboard');
+
+  // Evaluate badges after the redirect-relevant side effects are durable.
+  // Idempotent — users who already have "First Steps" / "Thousandaire" won't
+  // get duplicates.
+  await evaluateBadges(user.id, { trigger: 'lesson_complete' });
+
   redirect(`/dashboard/courses/${data.courseSlug}/lessons/${data.lessonSlug}`);
 });
 
@@ -214,6 +221,12 @@ export const submitQuizAction = createSafeAction(submitQuizSchema, async (data) 
 
   revalidatePath(`/dashboard/courses/${data.courseSlug}/lessons/${data.lessonSlug}`);
   revalidatePath(`/dashboard/courses/${data.courseSlug}/lessons/${data.lessonSlug}/quiz`);
+
+  // Badge evaluation runs only if the quiz passed — quiz_score criteria is
+  // pass-gated to keep false positives out of the awarded-feed.
+  if (passed) {
+    await evaluateBadges(user.id, { trigger: 'quiz_submit', score, passed });
+  }
 
   return {
     score,

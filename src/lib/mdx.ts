@@ -86,7 +86,7 @@ export function renderLesson(markdown: string): string {
 
     // Headings
     const headingMatch = line.match(/^(#{1,4})\s+(.+)$/);
-    if (headingMatch) {
+    if (headingMatch && headingMatch[1] && headingMatch[2]) {
       flushParagraph();
       flushList();
       const level = headingMatch[1].length;
@@ -105,7 +105,7 @@ export function renderLesson(markdown: string): string {
 
     // Blockquote
     const blockquoteMatch = line.match(/^>\s*(.*)$/);
-    if (blockquoteMatch) {
+    if (blockquoteMatch && blockquoteMatch[1]) {
       flushParagraph();
       flushList();
       html.push(`<blockquote>${renderInline(blockquoteMatch[1])}</blockquote>`);
@@ -114,7 +114,7 @@ export function renderLesson(markdown: string): string {
 
     // Bullet list
     const listMatch = line.match(/^[-*]\s+(.+)$/);
-    if (listMatch) {
+    if (listMatch && listMatch[1]) {
       flushParagraph();
       if (!inList) {
         html.push('<ul>');

@@ -1,0 +1,107 @@
+.page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 32px 24px 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.header {
+  text-align: center;
+  padding: 24px 0;
+}
+
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: #5a5a6e;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0;
+  color: #1a1a2e;
+}
+
+.statusCard {
+  position: relative;
+  padding: 32px;
+}
+
+.progressBlock {
+  margin: 20px 0;
+}
+
+.progressRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #5a5a6e;
+  margin-bottom: 6px;
+}
+
+.progressBar {
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff6b35 0%, #f59e0b 100%);
+  border-radius: 999px;
+  transition: width 200ms ease;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.lessonList {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.lessonListTitle {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #5a5a6e;
+  margin: 0 0 12px;
+}
+
+.lessonItems {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lessonItems li {
+  font-size: 14px;
+  color: #1a1a2e;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+}
+
+.statusBadge {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+}

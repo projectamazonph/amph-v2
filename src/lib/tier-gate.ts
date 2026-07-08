@@ -1,5 +1,5 @@
 import { db } from './db';
-import { EnrollmentStatus, type CourseTier, CourseTier as CourseTierConst } from './enums';
+import { EnrollmentStatus, CourseTier, CourseTier as CourseTierConst } from './enums';
 
 /**
  * Tier ranking. Lower index = lower tier (more accessible).
@@ -128,6 +128,53 @@ export async function userCanAccessCourse(
 ): Promise<boolean> {
   const result = await evaluateCourseAccess(userId, courseSlug);
   return result.allowed;
+}
+
+/**
+ * Generic tier check that doesn't go through a course slug. Returns the user's
+ * highest active tier (or null if no active enrollment).
+ *
+ * Use this for cross-tier features like Live Classes where the gate is at
+ * the feature level, not the course level.
+ */
+export async function getUserHighestTier(
+  userId: string,
+): Promise<CourseTier | null> {
+  const enrollments = await db.enrollment.findMany({
+    where: {
+      userId,
+      status: EnrollmentStatus.ACTIVE,
+      deletedAt: null,
+    },
+    select: { tier: true },
+  });
+
+  let highestRank = -1;
+  let highest: CourseTier | null = null;
+  for (const e of enrollments) {
+    const rank = TIER_RANK[e.tier] ?? -1;
+    if (rank > highestRank) {
+      highestRank = rank;
+      highest = e.tier as CourseTier;
+    }
+  }
+  return highest;
+}
+
+/**
+ * Tier check for cross-tier features (Live Classes, masterminds, etc).
+ */
+export async function userMeetsTierRequirement(
+  userId: string,
+  requiredTier: CourseTier,
+): Promise<{ allowed: boolean; userTier: CourseTier | null }> {
+  const userTier = await getUserHighestTier(userId);
+  const userRank = TIER_RANK[userTier ?? CourseTierConst.PPC_FOUNDATIONS] ?? 0;
+  const requiredRank = TIER_RANK[requiredTier] ?? 0;
+  return {
+    allowed: userRank >= requiredRank,
+    userTier,
+  };
 }
 
 /**

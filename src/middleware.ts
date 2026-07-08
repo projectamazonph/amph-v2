@@ -30,7 +30,7 @@ interface TokenPayload {
   exp: number;
 }
 
-function verifyEdgeToken(token: string): TokenPayload | null {
+async function verifyEdgeToken(token: string): Promise<TokenPayload | null> {
   try {
     const { payload } = await jwtVerify(token, getSecret(), { algorithms: ['HS256'] });
     const role = payload.role;
@@ -40,7 +40,7 @@ function verifyEdgeToken(token: string): TokenPayload | null {
     if (role !== 'STUDENT' && role !== 'INSTRUCTOR' && role !== 'ADMIN') {
       return null;
     }
-    return payload as TokenPayload;
+    return payload as unknown as TokenPayload;
   } catch {
     return null;
   }

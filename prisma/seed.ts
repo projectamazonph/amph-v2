@@ -242,12 +242,83 @@ async function upsertBadges(): Promise<void> {
   console.log(`  ✓ badges: ${badges.length}`);
 }
 
+async function upsertLiveClasses(): Promise<void> {
+  // Skip seeding if no published course exists yet. The script runs after
+  // import-amph-content.ts so this should be safe, but guard anyway.
+  const course = await prisma.course.findFirst({
+    where: { isPublished: true, deletedAt: null },
+    select: { id: true },
+  });
+  if (!course) {
+    console.log('  • live classes: skipped (no published course)');
+    return;
+  }
+
+  // Seed two demo classes — one ~2 weeks out, one in the past with a recording.
+  const now = Date.now();
+  const upcoming = new Date(now + 14 * 24 * 60 * 60 * 1000);
+  upcoming.setUTCHours(13, 0, 0, 0); // 9pm Manila
+  const past = new Date(now - 7 * 24 * 60 * 60 * 1000);
+  past.setUTCHours(13, 0, 0, 0);
+
+  const classes = [
+    {
+      title: 'Weekly Office Hours — Bring Your Live Campaigns',
+      description:
+        'Drop into the working session with Ryan. We will screen-share your live Sponsored Products campaigns, review ACoS anomalies, and answer whatever is on your plate this week.',
+      scheduledAt: upcoming,
+      durationMinutes: 60,
+      meetingUrl: 'https://meet.google.com/demo-amph-office-hours',
+      instructorName: 'Ryan Dabao',
+      maxAttendees: 50,
+      isPublished: true,
+    },
+    {
+      title: 'Search Term Triage Workshop (Recorded)',
+      description:
+        'Working session on triaging 400+ search-term rows in the Amazon Ads console. Includes the 5-bucket action framework and a follow-up template for weekly maintenance.',
+      scheduledAt: past,
+      durationMinutes: 90,
+      recordingUrl: 'https://www.youtube.com/watch?v=demo-recording-amph',
+      instructorName: 'Ryan Dabao',
+      maxAttendees: 50,
+      isPublished: true,
+    },
+  ];
+
+  for (const klass of classes) {
+    // Use slug-anchored upsert via title match — slug isn't a column on the
+    // model so we anchor on (courseId, title) to keep idempotency.
+    const existing = await prisma.liveClass.findFirst({
+      where: {
+        courseId: course.id,
+        title: klass.title,
+        deletedAt: null,
+      },
+    });
+
+    if (existing) {
+      await prisma.liveClass.update({
+        where: { id: existing.id },
+        data: { ...klass, courseId: course.id },
+      });
+    } else {
+      await prisma.liveClass.create({
+        data: { ...klass, courseId: course.id },
+      });
+    }
+  }
+
+  console.log(`  ✓ live classes: ${classes.length}`);
+}
+
 async function main(): Promise<void> {
   console.log('Seeding AMPH Academy v2...\n');
 
   await upsertAdminUser();
   await upsertPricingTiers();
   await upsertBadges();
+  await upsertLiveClasses();
 
   console.log('\nSeed complete.');
   console.log(`\nSign in with: ${process.env.ADMIN_EMAIL ?? '[email protected]'}`);

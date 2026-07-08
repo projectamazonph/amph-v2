@@ -55,6 +55,8 @@ const SOFT_DELETE_MODELS = new Set([
   'Payment',
   'DiscountCode',
   'RefundRequest',
+  'ProcessedWebhook',
+  'Invoice',
   'TeamMember',
 ]);
 

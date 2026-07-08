@@ -42,10 +42,25 @@ import {
   Calendar,
   Clock,
   GraduationCap,
-  type IconProps as PhosphorIconProps,
+  ArrowRight,
+  Download,
+  Video,
+  Circle,
 } from '@phosphor-icons/react/dist/ssr';
 import clsx from 'clsx';
 import styles from './Icon.module.css';
+
+// Phosphor exports a type named `IconProps` from /dist/ssr. We alias it on
+// import to avoid clashing with our own exported IconProps below.
+type PhosphorIconProps = {
+  size?: number | string;
+  weight?: 'thin' | 'light' | 'regular' | 'bold' | 'fill' | 'duotone';
+  className?: string;
+  color?: string;
+  'aria-label'?: string;
+  role?: string;
+  [key: string]: unknown;
+};
 
 export type IconSize = 'sm' | 'md' | 'lg' | 'xl';
 
@@ -94,7 +109,11 @@ export type PhosphorIconName =
   | 'Receipt'
   | 'Calendar'
   | 'Clock'
-  | 'GraduationCap';
+  | 'GraduationCap'
+  | 'ArrowRight'
+  | 'Download'
+  | 'Video'
+  | 'Circle';
 
 const ICON_MAP: Record<PhosphorIconName, React.ComponentType<PhosphorIconProps>> = {
   House,
@@ -126,6 +145,10 @@ const ICON_MAP: Record<PhosphorIconName, React.ComponentType<PhosphorIconProps>>
   Calendar,
   Clock,
   GraduationCap,
+  ArrowRight,
+  Download,
+  Video,
+  Circle,
 };
 
 export function Icon({

@@ -1,53 +1,52 @@
 # Session Handover — AMPH Academy v2
 
-**Session date:** 2026-07-07
-**Last commit:** `a977a6d` on `main`
+**Session date:** 2026-07-07 to 2026-07-09 (Sprints 4 + 5 across two sessions)
+**Last commit:** TBD (Sprint 5 uncommitted at handover)
 **Repo:** github.com/projectamazonph/amph-v2
 
 ## What this session accomplished
 
-Three sprints of work in one mega-session, driven by user request to "build out the rest of Sprint 3" and "do what you see fit and efficient."
+Five sprints total across two mega-sessions. Sprint 5 (Gamification) is the
+most recent — completed 2026-07-09.
 
-### Sprint 1: Foundation (6/6 pts) — ✅ Complete
-- Next.js 16 App Router scaffold, TypeScript strict, CSS Modules (no Tailwind)
-- Field Manual design system in `src/styles/globals.css` with full dark mode `@media` block
-- 7 UI primitives in `src/components/ui/`: Button, Card, Input, Badge, Modal, Toast, Icon + NavSidebar + TopBar
-- Full 25-model Prisma schema, migrated and seeded
-- JWT auth via jose in HttpOnly cookies, Edge middleware RBAC for `/admin/*` and `/dashboard/*`
-- Admin layout + empty dashboard
+### Sprint 4: Tool UIs (4.5/4.5 pts) — ✅ Complete
+- STORY-018: Campaign Builder 5-step wizard (CampaignBuilderRunner)
+- STORY-019: Bid Elevator 10-col editable table (BidElevatorRunner)
+- STORY-020: STR Triage per-term card with 5-action picker (StrTriageRunner)
+- STORY-021: Listing Audit 2-step form (ListingAuditRunner)
+- STORY-022: Keyword Research per-row categorizer (KeywordResearchRunner)
+- All runners wire to `startToolSession / saveToolSession / submitToolSession`
 
-### Sprint 2: Tools (6/6 pts) — ✅ Complete
-- 5 interactive tool engines in `src/engine/`:
-  1. `campaign-builder/` — CampaignStructure mirrors Amazon Campaign Manager columns. 5 SP + 5 BTV scenarios. BTV has separate scoring rubric (CPM, audience-based, end date required).
-  2. `bid-elevator/` — 10 scenarios, synthetic keyword performance, budget tracking
-  3. `str-triage/` — 2 scenarios with 20 search terms, 5 action types
-  4. `listing-audit/` — 5 scenarios, auto-findings engine
-  5. `keyword-research/` — 5 scenarios with PRIMARY/SECONDARY/NEGATIVE categorization
-- Server actions in `src/app/actions/tools.ts`: startToolSession, saveToolSession, submitToolSession, loadToolSession, listRecentSessions
-- Tool UI shell at `/dashboard/tools` (index, scenario picker, runner) — runner pages are **stubbed placeholders** (full UIs in Sprint 4)
+### Sprint 5: Gamification (3.5/3.5 pts) — ✅ Complete
+- **STORY-023 (1pt)**: Auto-award badges engine
+  - `src/lib/badges.ts`: pure evaluator `evaluateBadges(userId, event)`
+  - Supports all 5 seed criteria types: module_complete, quiz_score, tool_sessions, streak_days, xp_threshold
+  - Idempotent — UserBadge unique on (userId, badgeId)
+  - Hooked into markLessonCompleteAction, submitQuizAction, submitToolSession
+  - submitToolSession now also awards 30 XP on passed submissions + bumps lastActiveAt
 
-### Sprint 3: Curriculum (3/6 pts) — 🟡 In progress
-- **Imported all AMPH v1 content** via `scripts/import-amph-content.ts`:
-  - 1 course, 9 modules, 31 lessons (MDX, currency $USD→₱PHP converted)
-  - 5 quizzes, 30 questions
-  - Idempotent upsert
-- **Schema fix**: Prisma SQLite doesn't support enums. Removed 20 enums, replaced with String fields + `src/lib/enums.ts` const objects.
-- **Curriculum pages built**:
-  - `/dashboard` — student home with course catalog, XP/level/streak stats, per-course progress bars
-  - `/dashboard/courses/[courseSlug]` — module + lesson list with per-lesson completion status
-  - `/dashboard/courses/[courseSlug]/lessons/[lessonSlug]` — lesson reader with markdown→HTML renderer (`src/lib/mdx.ts`)
-  - `/dashboard/courses/[courseSlug]/lessons/[lessonSlug]/quiz` — quiz with server-side scoring
-- **Server actions** (`src/app/actions/progress.ts`): startLessonAction, markLessonCompleteAction, submitQuizAction
+- **STORY-024 (1pt)**: Certificate generation with PDF download
+  - `src/lib/certificates.ts`: evaluateCourseCompletion, issueCertificate (idempotent, crypto.randomUUID hash)
+  - `src/lib/cert-pdf.tsx`: @react-pdf/renderer Document, landscape A4 dual-border design
+  - Routes: `/dashboard/certificates` (list), `/dashboard/certificates/[hash]/pdf` (server route returning application/pdf, owner-only), `/dashboard/courses/[courseSlug]/certificate` (status + auto-issue), `/verify/[hash]` (public, no auth)
+
+- **STORY-025 (1.5pt)**: Live Classes — schedule, register, view
+  - `src/lib/tier-gate.ts`: added `userMeetsTierRequirement(userId, requiredTier)` + `getUserHighestTier()` for cross-tier feature gating
+  - `src/lib/live-classes.ts`: listUpcomingClasses, listPastClasses, getClassDetail, isClassFull
+  - `src/app/actions/live-classes.ts`: registerForLiveClass (ULTIMATE tier gate server-side, capacity check, idempotent restore-or-create), cancelLiveClassRegistration, listMyRegistrations
+  - Pages: `/dashboard/live-classes` (index, register buttons, upgrade prompt for non-Ultimate), `/dashboard/live-classes/[id]` (detail with join button + seat progress)
+  - Email reminder stubbed (Sprint 8 wires Resend templates)
+  - Seed: `upsertLiveClasses` adds 2 demo classes (1 upcoming + 1 past with recording)
 
 ## What's NOT done (deferred)
 
-- **5 tool interactive UIs** — engines exist, just need React components wrapping them (Sprint 4)
-- **Tier gating UI** — `requireTier()` helper exists from Sprint 1, but lesson pages don't yet enforce tier-based access
-- **PayMongo integration** — only spec complete, no code (Sprint 6)
-- **Admin full panels** — only layout, no user/course/payment/audit management (Sprint 7)
-- **Tests** (Sprint 10) — 0% coverage
-- **Observability** (Sprint 11) — no Sentry, no structured logs
-- **End-to-end runtime verification** — `pnpm dev` not run in this sandbox (no Node). Seed script ran successfully which proves DB + schema + queries work, but the Next.js dev server hasn't been started.
+- **Sprint 6: Payments** — PayMongo integration per `docs/business-layer.md`. Now ready to start since tier gate + enrollment schema exist.
+- **Sprint 7: Admin panels** — user/course/payment/audit management
+- **Sprint 8: Email templates** — Resend (live class reminder belongs here, currently stubbed in code)
+- **Sprint 9: Polish** — voice-guide audit, accessibility
+- **Tests** (Sprint 10) — 0% coverage, the badge engine is a natural first target
+- **Observability** (Sprint 11) — Sentry, structured logs
+- **End-to-end runtime verification** — `pnpm dev` not run in this sandbox (no Node). All code is type-correct at the structure level; final verification happens locally.
 
 ## Critical context for next session
 

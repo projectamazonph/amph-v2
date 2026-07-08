@@ -22,3 +22,41 @@
 .scoreCircle[data-passed="false"] {
   background: var(--danger);
 }
+
+/* CTA-as-link — same pattern as lesson.module.css */
+.ctaPrimary,
+.ctaSecondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: var(--text-base);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease;
+  font-family: inherit;
+  line-height: 1.2;
+  min-height: 44px;
+}
+
+.ctaPrimary {
+  background: var(--accent);
+  color: var(--accent-ink, white);
+  border: 1px solid var(--accent);
+}
+.ctaPrimary:hover {
+  background: var(--accent-strong, var(--accent));
+  border-color: var(--accent-strong, var(--accent));
+}
+
+.ctaSecondary {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+.ctaSecondary:hover {
+  background: var(--accent-soft, var(--surface-2));
+}

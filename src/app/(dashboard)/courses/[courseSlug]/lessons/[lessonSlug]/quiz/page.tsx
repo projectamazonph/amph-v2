@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { Card, CardHeader, CardTitle, CardDescription, Button, Badge } from '@/components/ui';
+import { Card, CardHeader, CardTitle, CardDescription, Badge } from '@/components/ui';
 import { Icon } from '@/components/ui/Icon';
 import { submitQuizAction } from '@/app/actions/progress';
 import { evaluateCourseAccess, listActivePricingTiers } from '@/lib/tier-gate';
@@ -65,7 +65,7 @@ export default async function QuizPage({ params, searchParams }: PageProps) {
     return (
       <main className="container" style={{ padding: 'var(--space-8) 0', maxWidth: '640px' }}>
         <Link
-          href={`/dashboard/courses/${courseSlug}/lessons/${lessonSlug}` as never}
+          href={`/dashboard/courses/${courseSlug}/lessons/${lessonSlug}`}
           style={{ color: 'var(--ink-500)', fontSize: 'var(--text-sm)' }}
         >
           ← Back to lesson
@@ -84,17 +84,26 @@ export default async function QuizPage({ params, searchParams }: PageProps) {
           </CardHeader>
           <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
             {passed ? (
-              <Button as="a" href={`/dashboard/courses/${courseSlug}/lessons/${lessonSlug}` as never} variant="primary">
+              <Link
+                href={`/dashboard/courses/${courseSlug}/lessons/${lessonSlug}`}
+                className={styles.ctaPrimary}
+              >
                 Back to lesson
-              </Button>
+              </Link>
             ) : (
               <>
-                <Button as="a" href={`/dashboard/courses/${courseSlug}/lessons/${lessonSlug}` as never} variant="primary">
+                <Link
+                  href={`/dashboard/courses/${courseSlug}/lessons/${lessonSlug}`}
+                  className={styles.ctaPrimary}
+                >
                   Review lesson
-                </Button>
-                <Button as="a" href={`/dashboard/courses/${courseSlug}/lessons/${lessonSlug}/quiz` as never} variant="secondary">
+                </Link>
+                <Link
+                  href={`/dashboard/courses/${courseSlug}/lessons/${lessonSlug}/quiz`}
+                  className={styles.ctaSecondary}
+                >
                   Try again
-                </Button>
+                </Link>
               </>
             )}
           </div>
@@ -107,7 +116,7 @@ export default async function QuizPage({ params, searchParams }: PageProps) {
   return (
     <main className="container" style={{ padding: 'var(--space-8) 0', maxWidth: '720px' }}>
       <Link
-        href={`/dashboard/courses/${courseSlug}/lessons/${lessonSlug}` as never}
+        href={`/dashboard/courses/${courseSlug}/lessons/${lessonSlug}`}
         style={{ color: 'var(--ink-500)', fontSize: 'var(--text-sm)' }}
       >
         ← Back to lesson
@@ -121,7 +130,17 @@ export default async function QuizPage({ params, searchParams }: PageProps) {
         </p>
       </header>
 
-      <form action={submitQuizAction.bind(null, { courseSlug, lessonSlug, answers: {}, timeSpentSeconds: 0 })}>
+      <form
+        action={
+          submitQuizAction
+            .bind(null, {
+              courseSlug,
+              lessonSlug,
+              answers: [],
+              timeSpentSeconds: 0,
+            }) as unknown as (formData: FormData) => Promise<void>
+        }
+      >
         <QuizFormClient
           courseSlug={courseSlug}
           lessonSlug={lessonSlug}

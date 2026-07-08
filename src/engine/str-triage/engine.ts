@@ -107,6 +107,7 @@ export function gradeStrDecisions(
   });
   const clearJunkCount = decisions.filter((d) => {
     const term = scenario.searchTerms.find((t) => t.id === d.searchTermId);
+    if (!term) return false;
     const refAction = scenario.referenceActions[term.id];
     return refAction === 'negate-exact' || refAction === 'negate-phrase';
   }).length;

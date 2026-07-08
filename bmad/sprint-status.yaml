@@ -1,67 +1,52 @@
 sprint:
-  number: 4
-  name: "Tool UIs"
-  start_date: "2026-07-08"
-  end_date: "2026-07-08"
-  status: "completed"
+  number: 5
+  name: "Gamification"
+  start_date: "2026-07-09"
+  end_date: "2026-07-10"
+  status: "in_progress"
 
 capacity:
-  planned_points: 4.5
-  velocity: 4.5
+  planned_points: 3.5
+  velocity: 0
   buffer_points: 0
 
 stories:
-  - id: "STORY-021"
-    title: "Listing Audit form UI"
-    points: 0.5
-    status: "completed"
-    sprint: 4
-    epic: "Tools"
-    owner: "Ryan"
-    notes: "src/components/tools/ListingAuditRunner.tsx. 2-step form: (1) flag issues with checkboxes per field (title/bullets/description/images/aplus/pricing/reviews), (2) revise the listing (title/bullets array with add/remove, description, image count, A+ toggle, price, review count, rating). Reuses startToolSession + saveToolSession + submitToolSession. ToolResult shows the grade breakdown."
-
-  - id: "STORY-022"
-    title: "Keyword Research categorizer UI"
-    points: 0.5
-    status: "completed"
-    sprint: 4
-    epic: "Tools"
-    owner: "Ryan"
-    notes: "src/components/tools/KeywordResearchRunner.tsx. Per-candidate row: keyword + relevance/volume/competition metric chips + optional notes input + 3-button priority picker (PRIMARY/SECONDARY/NEGATIVE). Live count summary at top (4 buckets). Submit blocked until every candidate is classified."
-
-  - id: "STORY-019"
-    title: "Bid Elevator table UI"
+  - id: "STORY-023"
+    title: "Auto-award badges engine"
     points: 1
     status: "completed"
-    sprint: 4
-    epic: "Tools"
+    sprint: 5
+    epic: "Gamification"
     owner: "Ryan"
-    notes: "src/components/tools/BidElevatorRunner.tsx. Per-keyword row in a 10-column table: keyword + match + current bid + impression/click/order/spend/sales/ACoS + editable new bid input. Highlight rows where ACoS exceeds target. Live summary card shows projected daily spend, budget headroom, count of bids changed. Warning when total new bids exceed the daily budget."
+    completed_date: "2026-07-09"
+    notes: "src/lib/badges.ts: evaluateBadges(userId, triggerEvent) evaluates Badge.criteria JSON against the database, awards matching UserBadge rows transactionally, returns {awarded, totalXpGained}. Supports all 5 seed criteria types: module_complete, quiz_score (pass-gated), tool_sessions (graded only), streak_days, xp_threshold. Idempotent — UserBadge unique on (userId, badgeId). Hooked into markLessonCompleteAction, submitQuizAction, and submitToolSession. submitToolSession now also awards 30 XP on passed submissions + bumps lastActiveAt for streak tracking."
 
-  - id: "STORY-020"
-    title: "STR Triage triager UI"
+  - id: "STORY-024"
+    title: "Certificate generation with PDF download"
     points: 1
     status: "completed"
-    sprint: 4
-    epic: "Tools"
+    sprint: 5
+    epic: "Gamification"
     owner: "Ryan"
-    notes: "src/components/tools/StrTriageRunner.tsx. Per-term card: search term + matched keyword + match type + 8-cell performance grid + 5-action picker (keep/optimize-bid/pause/negate-exact/negate-phrase). Conditional subfields: optimize-bid reveals new-bid input; negate-* reveals negative-keyword input (defaulted to the term). Live count summary at top. Submit blocked while any term is pending."
+    completed_date: "2026-07-09"
+    notes: "src/lib/certificates.ts: evaluateCourseCompletion (completed/total), issueCertificate (idempotent, crypto.randomUUID() verificationHash). src/lib/cert-pdf.tsx: @react-pdf/renderer Document — landscape A4, dual border, recipient block, course block, Ryan signature line, certificate no (AMPH-XXXXXXXX from hash), verify URL. Routes: /dashboard/certificates (list), /dashboard/certificates/[hash]/pdf (server route returning application/pdf, owner-only), /dashboard/courses/[courseSlug]/certificate (status + auto-issue on visit), /verify/[hash] (public verify page, no auth)."
 
-  - id: "STORY-018"
-    title: "Campaign Builder wizard UI"
+  - id: "STORY-025"
+    title: "Live Classes — schedule, register, view"
     points: 1.5
     status: "completed"
-    sprint: 4
-    epic: "Tools"
+    sprint: 5
+    epic: "Gamification"
     owner: "Ryan"
-    notes: "src/components/tools/CampaignBuilderRunner.tsx. 5-step wizard with stepper indicator: campaign settings (name, type as card picker filtered by scenario's allowedCampaignTypes, start/end date, daily budget) -> bidding (strategy from allowedBidStrategies + default bid) -> ad group (name) -> targets (keywords + product targets as add/remove rows) OR audiences (BTV swap) -> review (full draft display with warnings). Per-step validation gates Next button. BTV scenario switches the targets step to an audiences step and resets the bid strategy to CPM_FIXED. Reuses startToolSession + saveToolSession + submitToolSession; engine unchanged."
+    completed_date: "2026-07-09"
+    notes: "src/lib/tier-gate.ts: added userMeetsTierRequirement(userId, requiredTier) + getUserHighestTier() — generic check used for cross-tier features, not just courses. src/lib/live-classes.ts: listUpcomingClasses, listPastClasses, getClassDetail (joins registration count + user state), isClassFull. src/app/actions/live-classes.ts: registerForLiveClass (ULTIMATE tier gate server-side, capacity check, idempotent restore-or-create), cancelLiveClassRegistration, listMyRegistrations. Email reminder stubbed (Sprint 8). Pages: /dashboard/live-classes (index, tier badge, register buttons, past recordings grid, upgrade prompt), /dashboard/live-classes/[id] (detail with join live, recording when past, seat progress bar). Seed: upsertLiveClasses inserts 2 demo classes (1 upcoming + 1 past with recording)."
 
 burndown:
   - day: 0
-    ideal_remaining: 4.5
-    actual_remaining: 4.5
+    ideal_remaining: 3.5
+    actual_remaining: 3.5
   - day: 1
-    ideal_remaining: 0
+    ideal_remaining: 1.75
     actual_remaining: 0
 
 velocity_history:
@@ -77,7 +62,10 @@ velocity_history:
   - sprint: 4
     points: 4.5
     completed_date: "2026-07-08"
+  - sprint: 5
+    points: 3.5
+    completed_date: "2026-07-09"
 
 completion_percentage: 100
 remaining_points: 0
-last_updated: "2026-07-08T22:00:00Z"
+last_updated: "2026-07-09T18:00:00Z"

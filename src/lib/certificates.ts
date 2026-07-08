@@ -1,0 +1,188 @@
+/**
+ * Certificate domain logic — read-only assessment + idempotent issuance.
+ *
+ * A certificate is issued when every lesson in the course is COMPLETED for
+ * the given user (across all published modules). Issuing returns the active
+ * Certificate row (or the existing one if already issued — never duplicates).
+ */
+
+import 'server-only';
+
+import { randomUUID } from 'node:crypto';
+import { db } from './db';
+
+/**
+ * Total lesson count for a course, filtered to published modules and
+ * non-deleted lessons.
+ */
+export async function getCourseLessonCount(courseId: string): Promise<number> {
+  return db.lesson.count({
+    where: {
+      deletedAt: null,
+      module: {
+        courseId,
+        isPublished: true,
+        deletedAt: null,
+      },
+    },
+  });
+}
+
+/**
+ * Lessons in the course that the user has marked COMPLETED.
+ */
+export async function getCompletedLessonsInCourse(
+  userId: string,
+  courseId: string,
+): Promise<number> {
+  return db.lessonProgress.count({
+    where: {
+      userId,
+      status: 'COMPLETED',
+      lesson: {
+        module: {
+          courseId,
+          isPublished: true,
+          deletedAt: null,
+        },
+        deletedAt: null,
+      },
+    },
+  });
+}
+
+/**
+ * Course completion summary for a user.
+ */
+export interface CourseCompletionSummary {
+  courseId: string;
+  isComplete: boolean;
+  completedLessons: number;
+  totalLessons: number;
+  progressPercent: number;
+}
+
+/**
+ * Returns true if the user has completed every published lesson in the course.
+ */
+export async function evaluateCourseCompletion(
+  userId: string,
+  courseId: string,
+): Promise<CourseCompletionSummary> {
+  const [completed, total] = await Promise.all([
+    getCompletedLessonsInCourse(userId, courseId),
+    getCourseLessonCount(courseId),
+  ]);
+  const progressPercent = total === 0 ? 100 : Math.round((completed / total) * 100);
+  return {
+    courseId,
+    isComplete: total > 0 && completed >= total,
+    completedLessons: completed,
+    totalLessons: total,
+    progressPercent,
+  };
+}
+
+export interface IssuedCertificate {
+  id: string;
+  verificationHash: string;
+  courseId: string;
+  userId: string;
+  issuedAt: Date;
+  alreadyExisted: boolean;
+}
+
+/**
+ * Issue a certificate for `userId` + `courseId` if the course is fully complete.
+ * Idempotent — if an active Certificate already exists, returns it unchanged
+ * with `alreadyExisted: true`. Returns `null` if the course is not yet
+ * complete or the certificate has been revoked (revoked certs are
+ * re-issuable).
+ */
+export async function issueCertificate(
+  userId: string,
+  courseId: string,
+): Promise<IssuedCertificate | null> {
+  const completion = await evaluateCourseCompletion(userId, courseId);
+  if (!completion.isComplete) return null;
+
+  const existing = await db.certificate.findFirst({
+    where: {
+      userId,
+      courseId,
+      status: 'ACTIVE',
+      deletedAt: null,
+    },
+    orderBy: { issuedAt: 'desc' },
+  });
+
+  if (existing) {
+    return {
+      id: existing.id,
+      verificationHash: existing.verificationHash,
+      courseId: existing.courseId,
+      userId: existing.userId,
+      issuedAt: existing.issuedAt,
+      alreadyExisted: true,
+    };
+  }
+
+  const created = await db.certificate.create({
+    data: {
+      userId,
+      courseId,
+      status: 'ACTIVE',
+      verificationHash: randomUUID(),
+      metadata: JSON.stringify({
+        completedLessons: completion.completedLessons,
+        totalLessons: completion.totalLessons,
+      }),
+    },
+  });
+
+  return {
+    id: created.id,
+    verificationHash: created.verificationHash,
+    courseId: created.courseId,
+    userId: created.userId,
+    issuedAt: created.issuedAt,
+    alreadyExisted: false,
+  };
+}
+
+/**
+ * Get a certificate by its public verification hash, joined with course + user
+ * info for display. Safe to call from public verify pages — no auth required.
+ */
+export async function getCertificateByVerificationHash(verificationHash: string): Promise<{
+  id: string;
+  verificationHash: string;
+  status: string;
+  issuedAt: Date;
+  revokedAt: Date | null;
+  revokedReason: string | null;
+  user: { name: string; image: string | null };
+  course: { title: string; description: string; estimatedHours: number };
+} | null> {
+  const cert = await db.certificate.findUnique({
+    where: { verificationHash, deletedAt: null },
+    include: {
+      user: { select: { name: true, image: true } },
+      course: { select: { title: true, description: true, estimatedHours: true } },
+    },
+  });
+  if (!cert) return null;
+  return {
+    id: cert.id,
+    verificationHash: cert.verificationHash,
+    status: cert.status,
+    issuedAt: cert.issuedAt,
+    revokedAt: cert.revokedAt,
+    revokedReason: cert.revokedReason,
+    user: {
+      name: cert.user.name ?? 'Student',
+      image: cert.user.image,
+    },
+    course: cert.course,
+  };
+}

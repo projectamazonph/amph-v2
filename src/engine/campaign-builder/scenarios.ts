@@ -292,6 +292,52 @@ export const SCENARIOS: CampaignBuilderScenario[] = [
         'Down-only bidding is the safer choice for a beauty launch — you do not want to overpay on clicks during the learning phase. The product target list covers competitors and complementary products (anti-aging serums, dark-spot correctors) — capturing intent where the buyer is already in category.',
     },
   },
+
+  // -------------------------------------------------------------------------
+  // SPONSORED TV (BTV) — Awareness campaign
+  // -------------------------------------------------------------------------
+  {
+    id: 'cb-btv-001',
+    slug: 'btv-kitchen-air-fryer',
+    category: 'kitchen',
+    product: {
+      asin: 'B0KITCH001',
+      name: 'Smart Air Fryer 6L with App Control',
+      category: 'Kitchen',
+      aov: 4500,
+      targetAcos: 0.50,
+      monthlyRevenue: 450000,
+    },
+    brief:
+      'You are launching a new smart air fryer with app control. AOV is ₱4,500, target ACoS is 50% (BTV runs higher ACoS — awareness is the goal, not direct response). Monthly revenue goal is ₱450,000. Build a Sponsored TV campaign to drive top-of-funnel awareness.',
+    constraints: {
+      minKeywords: 0,
+      minProductTargets: 0,
+      minDailyBudget: 2000,
+      maxDailyBudget: 15000,
+      allowedCampaignTypes: ['SPONSORED_TV'],
+      allowedBidStrategies: ['CPM_FIXED', 'CPM_DYNAMIC'],
+      requireEndDate: true,
+      minAudienceSegments: 2,
+    },
+    reference: {
+      name: 'Smart Air Fryer — BTV Awareness',
+      campaignType: 'SPONSORED_TV',
+      targetingType: 'AUDIENCE',
+      bidStrategy: 'CPM_FIXED',
+      dailyBudget: 5000,
+      defaultBid: 150,
+      adGroupName: 'Air Fryer — Lifestyle Audience',
+      keywords: [],
+      productTargets: [],
+      audiences: [
+        { category: 'LIFESTYLE', details: { segment: 'home_cooking_enthusiasts' } },
+        { category: 'IN_MARKET', details: { segment: 'kitchen_appliances' } },
+      ],
+      explanation:
+        'BTV is for top-of-funnel awareness, not direct response. CPM Fixed gives predictable cost per 1000 impressions. Audience targeting (Lifestyle + In-Market) reaches shoppers interested in home cooking and kitchen appliances. Minimum 2 audience segments ensures enough reach for Amazon to optimize. End date is required — awareness bursts should have a defined flight window.',
+    },
+  },
 ];
 
 export function getScenarioBySlug(slug: string): CampaignBuilderScenario | undefined {
@@ -301,3 +347,8 @@ export function getScenarioBySlug(slug: string): CampaignBuilderScenario | undef
 export function getScenarioById(id: string): CampaignBuilderScenario | undefined {
   return SCENARIOS.find((s) => s.id === id);
 }
+
+/** All Sponsored TV (BTV) scenarios — separate export for the tool registry. */
+export const BTV_SCENARIOS = SCENARIOS.filter(
+  (s) => s.reference.campaignType === 'SPONSORED_TV'
+);

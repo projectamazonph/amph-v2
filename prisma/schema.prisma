@@ -693,6 +693,7 @@ model Payment {
   pricingTier     PricingTier      @relation(fields: [pricingTierId], references: [id])
   enrollment      Enrollment?      @relation(fields: [enrollmentId], references: [id])
   checkoutSession CheckoutSession? @relation(fields: [checkoutSessionId], references: [id])
+  invoice         Invoice?
   refundRequests  RefundRequest[]
 
   @@index([userId])
@@ -745,7 +746,7 @@ model RefundRequest {
   paymentId       String
   reason          String
   amountPhp       Int
-  status String @default("PENDING")
+  status String   @default("PENDING")
   reviewedById    String?
   reviewedAt      DateTime?
   reviewerNotes   String?
@@ -764,6 +765,60 @@ model RefundRequest {
   @@index([userId])
   @@index([status])
   @@index([paymentId])
+  @@index([deletedAt])
+}
+
+// ============================================================================
+// PROCESSED WEBHOOKS (idempotency log for PayMongo webhook replays)
+// ============================================================================
+
+model ProcessedWebhook {
+  id              String   @id @default(cuid())
+  // PayMongo event id (data.id from webhook payload). Unique → idempotency.
+  paymongoEventId String   @unique
+  eventType       String
+  // Resource type the event is about ("checkout_session", "payment", etc).
+  resourceType    String?
+  resourceId      String?
+  // Raw response from the handler — kept for debugging failed idempotent retries.
+  processingResult String?
+  httpStatus      Int      @default(200)
+  processedAt     DateTime @default(now())
+  createdAt       DateTime @default(now())
+
+  @@index([eventType, processedAt])
+  @@index([resourceType, resourceId])
+  @@index([processedAt])
+}
+
+// ============================================================================
+// INVOICES (BIR-compliant sequential numbering for receipts)
+// ============================================================================
+
+model Invoice {
+  id           String   @id @default(cuid())
+  // Sequential number formatted as zero-padded 5-digit string ("00001", "00002").
+  number       String   @unique
+  paymentId    String   @unique
+  userId       String
+  // BIR-required fields.
+  businessTin  String   @default("000-000-000-000")
+  businessName String   @default("AMPH Academy")
+  businessAddress String @default("Philippines")
+  // Amounts stored as centavos.
+  grossAmountCentavos Int
+  vatAmountCentavos   Int
+  netAmountCentavos   Int
+  // Optional PDF URL once generated in Sprint 8 (Resend + @react-pdf).
+  pdfUrl       String?
+  issuedAt     DateTime @default(now())
+  deletedAt    DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  payment Payment @relation(fields: [paymentId], references: [id])
+
+  @@index([userId, issuedAt])
   @@index([deletedAt])
 }
 
