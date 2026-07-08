@@ -180,11 +180,11 @@ Velocity: S1=6, S2=6, S3=6, S4=4.5, S5=3.5, S6=4. Slip-trigger (3 consecutive sp
 
 ---
 
-## Done So Far (29/29 in Sprints 1-6, 53% of 55-story plan)
+## Done So Far (33/55 in Sprints 1–7, 60% of plan)
 
-Sprints 1-6 shipped: Foundation, Tools, Curriculum, Tool UIs, Gamification, and Payments (PayMongo + enrollment + refunds + receipt PDFs).
+Sprints 1–7 shipped: Foundation, Tools, Curriculum, Tool UIs, Gamification, Payments (PayMongo + enrollment + refunds + receipt PDFs), Admin Panel (dashboard + user management + course admin + tool scenario registry + analytics).
 
-The remaining 33 stories (Sprints 5-12) are organized into 8 thematic sprints. Each sprint is 1 week of work at the current ~6-pt velocity.
+The remaining 22 stories (Sprints 8–12) are organized into 5 thematic sprints. Each sprint is 1 week of work at the current ~6-pt velocity.
 
 ## Notes on Scope Changes from Original Plan
 

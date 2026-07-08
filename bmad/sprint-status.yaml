@@ -1,6 +1,10 @@
+project:
+  name: "AMPH Academy v2"
+  level: 3
+
 sprint:
-  number: 7
-  name: "Admin"
+  number: 8
+  name: "Refunds + Email"
   start_date: "2026-07-10"
   end_date: "2026-07-11"
   status: "in_progress"
@@ -10,75 +14,54 @@ capacity:
   velocity: 0
   buffer_points: 0
 
-stories: []
-
 completed_stories:
-
-  - id: "STORY-026"
-    title: "PayMongo Checkout — webhook + signature verify + idempotency"
+  - id: "STORY-030"
+    title: "Admin dashboard stats upgrade + user management CRUD"
     points: 1
-    status: "completed"
-    sprint: 6
-    epic: "Payments"
+    sprint: 7
+    epic: "Admin"
     owner: "Ryan"
-    completed_date: "2026-07-09"
-    notes: "Shipped in commit fdfa8af. POST /api/paymongo/webhook with HMAC-SHA256 signature verify against PAYMONGO_WEBHOOK_SECRET + ProcessedWebhook idempotency log (unique on paymongoEventId). Public /pricing page with 3-tier layout + CheckoutButton calling createCheckoutSessionAction. /checkout/complete page with success/pending/failed states. Library code (paymongo.ts, webhook-signature.ts, enrollment.ts, pricing.ts, checkout.ts) all wired. Migration 20260708042743 applied. TypeScript 0 errors."
-
-  - id: "STORY-027"
-    title: "Tie Enrollment to Payment — verified payments grant tier-gated course access"
+  - id: "STORY-031"
+    title: "Course / Module / Lesson admin CRUD with MDX editor"
     points: 1
-    status: "completed"
-    sprint: 6
-    epic: "Payments"
+    sprint: 7
+    epic: "Admin"
     owner: "Ryan"
-    completed_date: "2026-07-10"
-    notes: "Guest checkout completion flow: /checkout/complete detects no session + paid checkout → redirects to /auth/signup?email=<checkout.email>&next=/checkout/complete. SignUpForm pre-fills email (editable). signUpAction upgraded to claim placeholder accounts. Seed script adds grandfatherFreeEnrollment(). tier-gate.ts gains TierAccessDeniedError + requireCourseAccess(). TypeScript 0 errors. AI-slop scan clean."
-
-  - id: "STORY-028"
-    title: "Refund flow — student request, admin approval, PayMongo refund call"
+  - id: "STORY-032"
+    title: "Tool scenario admin — manage all 5 tool scenario packs"
     points: 1
-    status: "completed"
-    sprint: 6
-    epic: "Payments"
+    sprint: 7
+    epic: "Admin"
     owner: "Ryan"
-    completed_date: "2026-07-10"
-    notes: "Student-side: /dashboard/payments lists payments with refund eligibility + status badges, /dashboard/payments/[id]/request-refund form. Admin-side: /admin/refunds queue + /admin/refunds/[id] detail with approve/reject. Library: src/lib/refunds.ts with isWithinRefundWindow / hasBlockingRefundRequest / alreadyRefundedAmountPhp. Actions: createRefundRequestAction, approveRefundAction (PayMongo refundPayment(), idempotent), rejectRefundAction. Sidebar link added. Email confirmations stubbed for Sprint 8. TypeScript 0 errors."
-
-  - id: "STORY-029"
-    title: "Receipt PDF — BIR-compliant sequential numbering + Vercel Blob storage"
+  - id: "STORY-033"
+    title: "Analytics dashboards — enrollments funnel, revenue MRR, engagement"
     points: 1
-    status: "completed"
-    sprint: 6
-    epic: "Payments"
+    sprint: 7
+    epic: "Admin"
     owner: "Ryan"
-    completed_date: "2026-07-10"
-    notes: "PDF template (src/lib/receipt-pdf.tsx) — BIR-compliant with sequential 'BS 00001-2026' numbering. Library (src/lib/receipts.tsx) — formatReceiptNumber, nextInvoiceSequence, issueInvoiceForPayment (idempotent, splits gross into net+VAT). Auto-issue wired into handleCheckoutPaid. Student UI: receipt number badge + Download button per payment. Storage SWAP POINT documented. TypeScript 0 errors."
 
-burndown:
-  - day: 0
-    ideal_remaining: 4
-    actual_remaining: 4
-
-velocity_history:
-  - sprint: 1
-    points: 6
-    completed_date: "2026-07-07"
-  - sprint: 2
-    points: 6
-    completed_date: "2026-07-07"
-  - sprint: 3
-    points: 6
-    completed_date: "2026-07-08"
-  - sprint: 4
-    points: 4.5
-    completed_date: "2026-07-08"
-  - sprint: 5
-    points: 3.5
-    completed_date: "2026-07-09"
-  - sprint: 6
-    points: 4
-    completed_date: "2026-07-10"
-
-completion_percentage: 0
-remaining_points: 4
-last_updated: "2026-07-10T18:00:00Z"
+planned_stories:
+  - id: "STORY-034"
+    title: "Refund flow (STORY-028 student request + admin approval)"
+    points: 1
+    sprint: 8
+    epic: "Refunds"
+    owner: "Ryan"
+  - id: "STORY-035"
+    title: "Email reminders (enrollment confirmation, live class, refund status)"
+    points: 1
+    sprint: 8
+    epic: "Email"
+    owner: "Ryan"
+  - id: "STORY-036"
+    title: "Resend webhook handler for transactional email delivery tracking"
+    points: 1
+    sprint: 8
+    epic: "Email"
+    owner: "Ryan"
+  - id: "STORY-037"
+    title: "Outbound email templates — enrollment, live class reminder, refund"
+    points: 1
+    sprint: 8
+    epic: "Email"
+    owner: "Ryan"

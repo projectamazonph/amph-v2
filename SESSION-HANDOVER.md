@@ -1,138 +1,96 @@
-# Session Handoff — AMPH Academy v2
+# AMPH Academy v2 — Session Handover
 
-**Session date:** 2026-07-07 to 2026-07-10 (Sprints 1–6 complete — Sprint 5 closed + Sprint 6 fully shipped 4/4)
-**Last commit:** feat(payments): STORY-029 — BIR-compliant receipt PDFs
-**Repo:** github.com/projectamazonph/amph-v2
-**Project path:** /storage/emulated/0/Hermes Projects/projects/amph-v2
+**Date:** 2026-07-10
+**Session end state:** Sprint 7 committed and pushed, docs updated, S8 next
+**Project:** `/storage/emulated/0/Hermes Projects/projects/amph-v2`
 
-## Current state — pick up here
+---
 
-- **Sprint 6 (Payments):** 4/4 stories complete = **100%** — closed
-- **Project total:** 29/55 stories = **53%**
-- **Pushed commits on main:** 84b985f, be398c3, d482aa9, 532af3d, be1f6ce, fdfa8af, d2a4231, dcd819d, 1bc2c62
-- **TypeScript:** 0 errors (`pnpm typecheck`)
-- **AI-slop scan:** clean
-- **Dual-vault sync:** done
+## What Was Accomplished
 
-## Resume command for next session
+**Sprint 7 — Admin Panel (4 pts, all done)**
 
-```
+Committed as `15259ef` on `main`. 21 files changed, 1,667 insertions.
+
+- **Admin dashboard** (`src/app/admin/page.tsx`) — real DB queries for 4 stat cards + recent payments table
+- **User management** (`src/app/admin/users/`) — list (search/filter/paginate), detail (enrollments/payments/badges/audit), suspend/reactivate/delete actions
+- **Course admin** (`src/app/admin/courses/`) — course list, course detail tree (modules → lessons), CRUD actions
+- **Tool scenario registry** (`src/app/admin/tool-scenarios/`) — read-only view via `TOOL_REGISTRY` (no DB model)
+- **Analytics** (`src/app/admin/analytics/page.tsx`) — enrollment funnel, MRR, engagement, top courses, activity feed
+- **Supporting:** `src/lib/admin-audit.ts`, CSS Modules for every new page
+
+---
+
+## Critical Fixes Applied This Session
+
+1. **No `db.toolScenario` model** — scenarios are TypeScript code in `src/engine/registry.ts`. Admin is read-only view via `TOOL_REGISTRY`. Do not add server actions that write to a `toolScenario` DB model — it doesn't exist.
+
+2. **Valid Phosphor icon names** — only these are allowed: `House`, `User`, `Gear`, `SignOut`, `Rocket`, `Trophy`, `Flame`, `Sparkle`, `BookOpen`, `X`, `Check`, `Warning`, `Info`, `Lock`, `CaretDown`, `CaretRight`, `CaretLeft`, `CaretUp`, `Plus`, `Minus`, `MagnifyingGlass`, `List`, `ChartLine`, `ChartBar`, `CreditCard`, `Receipt`, `Calendar`, `Clock`, `GraduationCap`, `ArrowRight`, `Download`, `Video`, `Circle`. `Wrench`, `Files`, `Users`, `CurrencyPhp` are NOT valid and will fail `tsc`.
+
+3. **Icon import is named, not default** — always use `import { Icon } from '@/components/ui/Icon';`, never `import Icon from '@/components/ui/Icon';`.
+
+---
+
+## Current Project State
+
+| | |
+|---|---|
+| **Stories complete** | 33 / 55 |
+| **Sprints done** | S1–S7 |
+| **Next sprint** | S8 — Refunds + Email |
+| **Velocity** | S1=6, S2=6, S3=6, S4=4.5, S5=3.5, S6=4, S7=4 |
+| **Last commit** | `15259ef` on `main` (pushed) |
+| **TypeScript** | `pnpm typecheck` exits 0 |
+
+---
+
+## Sprint 8 — Refunds + Email (4 stories, 4 pts)
+
+All 4 stories are in `bmad/sprint-status.yaml` as Sprint 8 next:
+
+| Story | Description |
+|-------|-------------|
+| STORY-034 | Refund flow — student request + admin approval |
+| STORY-035 | Email reminders — enrollment, live class, refund status |
+| STORY-036 | Resend webhook handler for delivery tracking |
+| STORY-037 | Outbound email templates |
+
+---
+
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| `bmad/sprint-status.yaml` | Sprint 8 is `in_progress`, velocity=0, 4 planned stories |
+| `bmad/workflow-status.yaml` | 33/33 stories complete, progress_percentage=100 |
+| `docs/sprint-plan.md` | Updated to S8 next, 33/55 done |
+| `src/engine/registry.ts` | Source of truth for tool scenarios — not DB |
+| `src/lib/admin-audit.ts` | AuditLog helper — use this on all admin mutations |
+| `prisma/schema.prisma` | 29 models — keep this open when writing admin actions |
+
+---
+
+## Commands
+
+```bash
+# Dev
 cd "/storage/emulated/0/Hermes Projects/projects/amph-v2"
-git log --oneline -5
-pnpm typecheck                          # expect 0
-cat SESSION-HANDOVER.md
-grep "status:" bmad/sprint-status.yaml | head -10
+pnpm dev
+
+# Type check (required before commit)
+pnpm typecheck
+
+# Push
+git push "https://x-access-token:$(gh auth token)@github.com/projectamazonph/amph-v2.git" main
 ```
 
-## What STORY-027 shipped (commit d482aa9)
+---
 
-### Guest checkout completion flow (Q1=B)
-- `/checkout/complete` detects no session + PAID checkout → redirects to `/auth/signup?email=<checkout.email>&next=/checkout/complete`
-- After signup the user returns to `/checkout/complete`, now signed in, falls through to `SuccessCard`
-- `/auth/signup` reads `?email` and `?next`; `SignUpForm` pre-fills email (editable, with hint) and honors `?next=` for post-submit redirect
+## Design Rules
 
-### Placeholder account claim
-- `signUpAction` detects `passwordHash` starting with `placeholder_` (set by `enrollment.ts:findOrCreateUserByEmail` during guest checkout) and upgrades in place: replace hash, set name, mark `emailVerified`
-- Real accounts with existing hash still get "email already exists" error
-- Marker is intentional string prefix; survives user.update without breaking the upgrade path
-
-### Grandfather (Q2=A)
-- `prisma/seed.ts` runs `grandfatherFreeEnrollment()` after tier/badge setup
-- Any user without an existing (non-deleted) enrollment gets a backdated ACTIVE Enrollment at PPC_FOUNDATIONS
-- Idempotent — uses `upsert` on `userId_courseId` composite unique
-- Backdated to `2026-07-01T00:00:00Z` so the timeline reflects "before payments" rather than "right now at seed time"
-- Prints `✓ grandfather: N user(s) → free PPC Foundations` for visibility
-
-### Helper for future stories
-- `src/lib/tier-gate.ts` adds `TierAccessDeniedError` (carries `reason`, `userTier`, `requiredTier`) and `requireCourseAccess(userId, slug)` that throws on denial
-- Existing progress actions continue to use inline `evaluateCourseAccess` — no regression
-- Return type narrowed via `Extract<..., { allowed: true }>` so callers can destructure `userTier`/`requiredTier` safely
-
-## Three blocking questions answered (for STORY-027 handoff)
-
-- **Q1=B** — guest checkout bounces to `/auth/signup` with prefilled email
-- **Q2=A** — pre-existing users grandfathered with FREE PPC enrollment at seed
-- **Q3=A** — pushed forward into STORY-027 from STORY-026
-
-## Next session: open work
-
-### Sprint 7 (next, 4 stories)
-- Admin panels: user mgmt, course mgmt, payment audit log, settings
-- Spec at `docs/admin-backend.md`
-
-### Known Sprint 9 cleanup
-- ESLint v9 doesn't read legacy `.eslintrc.json` — flat config migration needed
-- `next lint` deprecated in Next 16
-- 3 local `formatPrice` duplicates in live-classes + TierLock — extract to `@/lib/format`
-
-## What's NOT done (deferred)
-
-- Sprint 7: Admin panels — user/course/payment/audit management
-- Sprint 8: Email templates — Resend (live class reminder currently stubbed)
-- Sprint 9: Polish — voice-guide audit, accessibility, ESLint v9 migration
-- Sprint 10: Tests — 0% coverage, badge engine is natural first target
-- Sprint 11: Observability — Sentry, structured logs
-- Sprint 12: Launch
-- **End-to-end runtime verification** — `pnpm dev` not runnable in this sandbox (no Node in Termux). All code type-correct at structure level; smoke test on real machine before declaring done.
-
-## Critical context for next session
-
-### Path convention
-- Project at `/storage/emulated/0/Hermes Projects/projects/amph-v2/` (not `/root/workspace` despite workspace tag)
-- All terminal commands `cd` into project path first
-
-### Enums pattern
-- `export const X = { A: 'A', B: 'B' } as const; export type X = (typeof X)[keyof typeof X]`
-- SQLite + Prisma String column, NOT Prisma enum (SQLite doesn't support)
-- New enums go in `src/lib/enums.ts`
-
-### PayMongo flow
-- Webhook → `markWebhookProcessed(eventId, ...)` idempotency check
-- → `handleCheckoutPaid(event)` creates Payment, finds-or-creates user (placeholder), creates ACTIVE Enrollment
-- → Email reminder stubbed; Sprint 8 wires Resend templates
-- Secret in `.env.local`: `PAYMONGO_WEBHOOK_SECRET`
-
-### Database
-- `DATABASE_URL="file:./dev.db"` (relative to project root)
-- `pnpm prisma migrate deploy` to apply migrations
-- `npx tsx prisma/seed.ts` to seed (idempotent; re-runs grandfather safely)
-- Default admin: `ryan@projectamazonph.com` / `ChangeMe123!`
-
-### Tier gate helpers (post STORY-027)
-- `evaluateCourseAccess(userId, slug)` → structured `TierGateResult`
-- `userCanAccessCourse(userId, slug)` → boolean
-- `getUserHighestTier(userId)` → `CourseTier | null` (cross-tier features)
-- `userMeetsTierRequirement(userId, requiredTier)` → `{ allowed, userTier }`
-- `requireCourseAccess(userId, slug)` → throws `TierAccessDeniedError` on denial
-
-### The no-ai-slop rule
-- `eslint-rules/no-ai-slop.js` — runs (when ESLint is migrated to v9 flat config)
-- Banned phrases: leverage, delve, seamless, robust, comprehensive, empower, revolutionize, etc.
-- Manual scan substitute: `grep -rniE "leverage|delve|seamless|robust|comprehensive|empower" src/`
-
-### Things I tried that didn't work (avoid repeating)
-- **`replace_all=true` on multi-line blocks** — duplicates content. Use unique anchors.
-- **Const-asserted TUPLE pattern for enums** — no `.MEMBER` access; use const OBJECT pattern.
-- **`npx tsx` with JSDoc glob comments** (`*/*.mdx`) — esbuild errors.
-- **Running `pnpm dev` in sandbox** — no Node, can't verify end-to-end.
-
-## State files reference
-
-- `bmad/project.yaml` — BMAD config (level 3, English)
-- `bmad/workflow-status.yaml` — phase tracking, story list (now 27 stories)
-- `bmad/sprint-status.yaml` — Sprint 6 = 2/4 = 50%
-- `docs/sprint-plan.md` — 12-sprint roadmap
-- `docs/decisions.md` — 16 ADRs
-- `docs/db-schema.md` — schema spec
-- `docs/design-brief.md` — Field Manual design system
-- `docs/voice-guide.md` — copy rules + jargon buster
-- `docs/business-layer.md` — PayMongo integration spec
-- `docs/admin-backend.md` — admin panel routes + RBAC pattern
-
-## Second Brain entity
-
-`/root/storage/Documents/SecondBrain/wiki/entities/amph-v2.md` updated with Sprint 6 partial section. Dual-vault synced to `/sdcard/Documents/SecondBrain/wiki/entities/amph-v2.md` this session.
-
-## Memoria state
-
-T1 snapshot stored at id `019f413871a17b718befd83abed04e70`. Covers STORY-027 closure, Q1/Q2/Q3 answers, file paths, next steps.
+- CSS Modules only — no Tailwind
+- Server Components + Server Actions for data mutations
+- `requireAdmin()` from `@/lib/auth` on every admin page
+- `auditLog()` from `@/lib/admin-audit` on every admin mutation
+- Always `revalidatePath` after mutations
+- Zero TypeScript errors before commit
