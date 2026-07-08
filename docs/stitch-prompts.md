@@ -764,3 +764,751 @@ After generating each screen in Stitch:
 5. **Test** — Verify against the design brief anti-AI-slop checklist
 
 The Stitch output is the **visual starting point**, not the final product. We adapt the design to our CSS Module system, component library, and server-side data flow.
+
+---
+
+## SCREEN 19: CAMPAIGN BUILDER — FULL WIZARD
+
+```
+Generate a multi-step wizard UI for building Amazon ad campaigns in "AMPH Academy".
+
+Layout: Full-width with student sidebar, main content area.
+
+1. SIDEBAR: Same as student dashboard (with "Tools" active)
+
+2. MAIN CONTENT:
+   - Breadcrumb: "← Tools" + "Campaign Builder"
+   - Scenario brief card (white, border, padding 24px):
+     - Badge: "Brief" (info)
+     - Title: "Launch a Sponsored Products campaign for wireless earbuds"
+     - Description: "Build a complete SP campaign with manual targeting, exact + phrase keywords, and a ₱500/day budget."
+     - Allowed info: "Allowed campaign types: Sponsored Products · Sponsored Brands" + "Allowed bid strategies: DYNAMIC_BIDS_DOWN_ONLY · FIXED_BIDS"
+
+   - STEP INDICATOR (horizontal, 5 steps):
+     Circles connected by lines. Steps: "Campaign" → "Bidding" → "Ad group" → "Targets" → "Review"
+     Current step: filled #FF6B35 circle with white number
+     Completed: filled #0E7C3A circle with white checkmark
+     Upcoming: outlined #D4D4D4 circle with gray number
+     Labels below circles (0.75rem, current step bold)
+
+   - STEP CONTENT (white card, padding 32px):
+     
+     Step 1 — Campaign settings:
+     - Campaign name: text input (label above, placeholder "e.g. Bamboo Cutting Board — Exact Match")
+     - Campaign type: 4 selectable cards in a 2x2 grid:
+       a. "Sponsored Products" — "Keyword + product targeting. The Amazon default." (selected: #FF6B35 border)
+       b. "Sponsored Brands" — "Top-of-search banner with brand creative."
+       c. "Sponsored Display" — "On-Amazon + off-Amazon display ads."
+       d. "Sponsored TV" — "Prime Video, Twitch, streaming apps. CPM-based."
+       Disabled cards: 50% opacity, "Not in scenario" label
+     - Start date: date input
+     - End date: date input with "(required)" hint
+     - Daily budget: number input with ₱ prefix, hint "Allowed: ₱300 – ₱2,000"
+     - Targeting type: select dropdown ("Manual" / "Auto")
+     
+     Step 2 — Bidding:
+     - Bid strategy: select dropdown (filtered by scenario constraints)
+     - Default bid: number input with ₱ prefix
+     
+     Step 3 — Ad group:
+     - Ad group name: text input (default "Ad Group 1")
+     
+     Step 4 — Targets (non-BTV):
+     - Keywords section:
+       - "Add at least 3 keywords" heading
+       - Keyword rows: each row has text input + match type select (Broad/Phrase/Exact) + bid input ₱ + remove button
+       - "+ Add keyword" ghost button
+     - Product targets section:
+       - "Add at least 1 product target" heading
+       - ASIN input + bid input + remove button
+       - "+ Add product target" ghost button
+     
+     Step 4 — Audiences (BTV only):
+     - Audience category: select (In-Market / Lifestyle / Interests / Lookalike / Contextual)
+     - Audience details: key-value pair inputs
+     - "+ Add audience" ghost button
+     
+     Step 5 — Review:
+     - Summary of all settings in a definition list:
+       Campaign name, Type, Budget, Bid strategy, Default bid, Ad group, Keywords count, Product targets count
+     - "Submit campaign" primary button
+
+   - NAVIGATION (bottom of card):
+     - Left: "Back" secondary button (disabled on step 1)
+     - Right: "Continue to [next step] →" primary button
+
+   - Error state: red text below the card
+```
+
+---
+
+## SCREEN 20: BID ELEVATOR — KEYWORD TABLE
+
+```
+Generate a bid optimization table UI for "AMPH Academy" Bid Elevator tool.
+
+Layout: Full-width with student sidebar, main content.
+
+1. SIDEBAR: Same as student dashboard (with "Tools" active)
+
+2. MAIN CONTENT:
+   - Breadcrumb: "← Tools" + "Bid Elevator"
+   
+   - Scenario header card (white, border, padding 24px):
+     - Badge: "Bid Elevator" (info)
+     - Title: "Reduce ACoS on a high-spend electronics campaign"
+     - Context: "Your wireless earbuds campaign is spending ₱800/day but ACoS is 45%. Target ACoS is 25%. Adjust bids to bring spend in line."
+     - 4 stat boxes in a row:
+       a. "Daily budget" → "₱1,000" (JetBrains Mono)
+       b. "Current daily spend" → "₱800"
+       c. "Target ACoS" → "25.0%"
+       d. "Rounds remaining" → "2"
+
+   - KEYWORD TABLE (white card, full width):
+     Table header row: Keyword | Match | Current bid | Impr | Clicks | Orders | Spend | Sales | ACoS | New bid
+     8-10 keyword rows with real data:
+     - "wireless earbuds" | Exact | ₱25 | 12,450 | 312 | 18 | ₱6,240 | ₱18,000 | 34.7% | [input ₱20]
+     - "bluetooth earbuds" | Phrase | ₱30 | 8,200 | 185 | 8 | ₱4,625 | ₱8,000 | 57.8% | [input ₱18]
+     - "wireless headphones" | Broad | ₱15 | 22,100 | 442 | 3 | ₱5,304 | ₱3,000 | 176.8% | [input ₱5]
+     - "earbuds for iphone" | Exact | ₱20 | 5,600 | 140 | 22 | ₱2,800 | ₱22,000 | 12.7% | [input ₱22]
+     - "cheap earbuds" | Phrase | ₱18 | 15,300 | 306 | 2 | ₱4,590 | ₱2,000 | 229.5% | [input ₱3]
+     - etc.
+   
+     Table styling:
+     - 40px row height, left-aligned text, right-aligned numbers
+     - Header: bottom border only, #737373 text, 0.875rem
+     - JetBrains Mono for all numeric/bid values
+     - ACoS column: red text (#B91C1C) if above target ACoS, green (#0E7C3A) if below
+     - Changed rows: subtle left border #FF6B35 or background wash #FFE5D9
+     - New bid column: number input with ₱ prefix, compact style
+
+   - BUDGET PREVIEW BAR (white card, padding 16px):
+     - Left: "Projected daily spend" + value (JetBrains Mono)
+     - Center: "Budget headroom" + value (green if positive, red if negative)
+     - Right: "Bids changed" + "3 / 10"
+     - If over budget: warning message with Warning icon "Total new bids exceed the daily budget. Trim the high-ACoS keywords."
+
+   - SUBMIT ROW:
+     - "Submit bids" primary button
+     - Hint text: "Tip: the engine compares your new bid against the reference for each keyword. A bid within ±20% of reference is full credit."
+```
+
+---
+
+## SCREEN 21: SEARCH TERM TRIAGE — CARD-BASED TRIAGE
+
+```
+Generate a search term triage UI for "AMPH Academy" STR Triage tool.
+
+Layout: Full-width with student sidebar, main content.
+
+1. SIDEBAR: Same as student dashboard (with "Tools" active)
+
+2. MAIN CONTENT:
+   - Breadcrumb: "← Tools" + "Search Term Triage"
+   
+   - Scenario header card (white, border, padding 24px):
+     - Badge: "Search terms" (info)
+     - Title: "Clean up a broad match campaign for kitchen products"
+     - Context: "Your Sponsored Products campaign is getting irrelevant clicks. Triage 20 search terms — keep the winners, pause the losers, negate the junk."
+     - 3 stat boxes: Daily budget ₱500 | Current spend ₱420 | Target ACoS 30%
+
+   - SUMMARY BAR (white card, padding 16px, horizontal):
+     5 stat cells in a row:
+     - "Keep" → 0 (green #0E7C3A)
+     - "Optimize" → 0 (blue #1E40AF)
+     - "Pause" → 0 (gray #737373)
+     - "Negate" → 0 (amber #B45309)
+     - "Pending" → 20 / 20 (red if > 0)
+
+   - SEARCH TERM CARDS (vertical stack, one card per term):
+     Each card (white, border, padding 20px):
+     - TOP ROW:
+       - Left: search term in monospace (JetBrains Mono, e.g. "best cheap kitchen knife set")
+       - Below term: match type badge (Broad/Phrase/Exact) + "via [matched keyword]" in #737373
+       - Right: metric chips in a row:
+         Impr: 3,200 | Clicks: 85 | CTR: 2.6% | Spend: ₱1,275 | CPC: ₱15 | Orders: 0 | Sales: ₱0 | ACoS: —
+     
+     - ACTION ROW (5 buttons in a horizontal group):
+       - "Keep" (ghost, default)
+       - "Optimize bid" (ghost, default)
+       - "Pause" (ghost, default)
+       - "Negate exact" (ghost, default)
+       - "Negate phrase" (ghost, default)
+       Selected button: filled with variant color (Keep=green wash, Optimize=blue wash, Pause=gray wash, Negate=amber wash)
+     
+     - SUB-FIELD (appears conditionally):
+       - If "Optimize bid": number input "New bid (₱)" with ₱ prefix
+       - If "Negate exact/phrase": text input "Negative keyword to add" pre-filled with the search term
+     
+     - Card border-left changes color based on decision: green=keep, blue=optimize, gray=pause, amber=negate, default=no decision
+
+   - SUBMIT ROW:
+     - "Submit triage (15 / 20)" primary button (disabled if pending > 0)
+     - Error if pending: "Triage all 5 remaining search term(s) before submitting."
+     - Hint: "Tip: ACoS above target + zero orders is a negate. Decent ACoS + a few orders is optimize-bid. Anything converting strongly is keep."
+```
+
+---
+
+## SCREEN 22: LISTING AUDIT — FLAG + REVISE
+
+```
+Generate a listing audit UI for "AMPH Academy" Listing Audit tool.
+
+Layout: Full-width with student sidebar, main content.
+
+1. SIDEBAR: Same as student dashboard (with "Tools" active)
+
+2. MAIN CONTENT:
+   - Breadcrumb: "← Tools" + "Listing Audit"
+   
+   - CURRENT LISTING card (white, border, padding 24px):
+     - Badge: "Current listing" (info)
+     - Title: "Bamboo Cutting Board — Premium Kitchen Essential"
+     - Subtitle: "Kitchen · ASIN B08N5WRWNW · AOV ₱1,200"
+     - Definition list (label-value pairs, 2-column grid):
+       Title: "Bamboo Cutting Board — Premium Kitchen Essential"
+       Bullets (3/5): "1. 100% organic bamboo..." / "2. Knife-friendly surface..." / "3. Easy to clean..."
+       Description: "High-quality bamboo cutting board..."
+       Images: 3
+       A+ content: No
+       Price: ₱1,200
+       Reviews: 47 · 4.2★
+
+   - STEP 1 — FLAG ISSUES card (white, border, padding 24px):
+     - Heading: "Step 1 — flag the issues"
+     - Description: "Check every field you think has a problem."
+     - 7 checkbox items in a vertical list:
+       Each item: checkbox + severity icon (Check green / Warning amber / X red) + field name (bold) + description
+       - [ ] Title — "Needs work — Missing brand name in title"
+       - [ ] Bullets — "Critical issue — Only 3 of 5 bullets used"
+       - [ ] Description — "Looks good — Description is complete"
+       - [ ] Images — "Critical issue — Only 3 images, minimum 5 recommended"
+       - [ ] A+ content — "Needs work — No A+ content installed"
+       - [ ] Pricing — "Looks good — Price is competitive"
+       - [ ] Reviews — "Needs work — Only 47 reviews, need 100+ for social proof"
+     Checked state: background wash matching severity color
+
+   - STEP 2 — REVISE LISTING card (white, border, padding 24px):
+     - Heading: "Step 2 — revise the listing"
+     - Description: "Edit the fields you think need fixing."
+     - Form fields:
+       - Title: text input (full width, max 200 chars)
+       - Bullets: up to 5 text inputs with remove (X) button + "Add bullet" ghost button
+       - Description: textarea (4 rows, max 2000 chars)
+       - Image count: number input (0-9)
+       - Has A+ content: checkbox
+       - Price: number input with ₱ prefix
+       - Review count: number input
+       - Average rating: number input (0-5, step 0.1)
+
+   - SUBMIT ROW:
+     - "Submit listing" primary button
+     - Hint: "Tip: the engine compares your selection against the reference findings."
+```
+
+---
+
+## SCREEN 23: KEYWORD RESEARCH — CATEGORIZATION
+
+```
+Generate a keyword research categorization UI for "AMPH Academy" Keyword Research tool.
+
+Layout: Full-width with student sidebar, main content.
+
+1. SIDEBAR: Same as student dashboard (with "Tools" active)
+
+2. MAIN CONTENT:
+   - Breadcrumb: "← Tools" + "Keyword Research"
+   
+   - Seed term card (white, border, padding 24px):
+     - Badge: "Seed term" (info)
+     - Title: "bamboo cutting board" (JetBrains Mono)
+     - Subtitle: "Premium Bamboo Kitchen Set · Kitchen & Dining"
+     - Instruction: "Categorize each candidate keyword as Primary (target first), Secondary (worth bidding on), or Negative (irrelevant — add to the negative list)."
+
+   - SUMMARY BAR (white card, padding 16px):
+     5 stat cells: Primary 0 | Secondary 0 | Negative 0 | Unclassified 15 | Total 15
+
+   - KEYWORD CANDIDATE LIST (white card, vertical stack):
+     Each candidate (border-bottom separator):
+     - Left column:
+       - Keyword text (Space Grotesk 500): "bamboo cutting board large"
+       - Metric chips in a row:
+         Relevance: 92% | Volume: 78% | Competition: 45%
+         (Each chip: label in #737373, value in JetBrains Mono)
+       - Optional note input: "Optional note (e.g. why you flagged it as negative)"
+     - Right column:
+       - 3 radio buttons in a group: "Primary" | "Secondary" | "Negative"
+       - Selected: filled with variant color (Primary=green, Secondary=blue, Negative=amber)
+       - Unselected: ghost/outlined
+
+     15 keyword candidates:
+     - "bamboo cutting board large" (Relevance: 92%, Volume: 78%, Competition: 45%)
+     - "wooden cutting board" (Relevance: 65%, Volume: 85%, Competition: 72%)
+     - "plastic cutting mat" (Relevance: 12%, Volume: 60%, Competition: 55%)
+     - "kitchen knife set" (Relevance: 35%, Volume: 90%, Competition: 80%)
+     - "bamboo cheese board" (Relevance: 78%, Volume: 42%, Competition: 30%)
+     - etc.
+
+   - SUBMIT ROW:
+     - "Submit categorization" primary button (disabled if unclassified > 0)
+     - Error if unclassified: "Classify all 5 remaining keyword(s) before submitting."
+     - Hint: "Tip: relevance + volume is a starting heuristic, not a rule. A high-volume keyword that's only 5% relevant is a negative."
+```
+
+---
+
+## SCREEN 24: TOOL RESULT / GRADING SCREEN
+
+```
+Generate a grading result screen for "AMPH Academy" tools.
+
+Layout: Full-width with student sidebar, centered content.
+
+1. SIDEBAR: Same as student dashboard (with "Tools" active)
+
+2. MAIN CONTENT (max-width 640px, centered):
+   - Score display (large, centered):
+     - Number: "85" (Space Grotesk 700, 4rem)
+     - Label: "/ 100" (#737373)
+     - Below: "Passed!" badge (success, green) or "Not quite" badge (danger, red)
+   
+   - Overall feedback card (white, border, padding 24px):
+     - "Campaign Builder — Launch a wireless earbuds SP campaign"
+     - Feedback text: "Strong campaign structure. Your keyword selection covers the main search terms well. The bid strategy matches the scenario constraints. Two areas to improve: add one more product target, and consider phrase match for the broad keywords."
+   
+   - CRITERIA BREAKDOWN (vertical stack):
+     Each criterion (border-bottom separator):
+     - Left: criterion name + passed/failed icon
+     - Right: score "18 / 20" (JetBrains Mono)
+     - Below: feedback text (#404040, 0.875rem)
+     
+     Example criteria:
+     - ✓ Campaign type correct (20/20)
+     - ✓ Budget within range (20/20)
+     - ✓ Bid strategy appropriate (18/20) — "FIXED_BIDS works but DYNAMIC_BIDS_DOWN_ONLY is more common for new SP campaigns"
+     - ✓ Keyword count meets minimum (15/20) — "Add one more keyword to reach the scenario minimum of 4"
+     - ✗ Product targets (12/20) — "Only 1 product target. The scenario recommends 2+ for SP campaigns"
+   
+   - ACTIONS:
+     - "Try again" secondary button (left)
+     - "Back to tools →" ghost link (right)
+```
+
+---
+
+## SCREEN 25: ADMIN — USERS LIST
+
+```
+Generate a user management list page for "AMPH Academy" admin panel.
+
+Layout: Full-width with admin sidebar, main content.
+
+1. ADMIN SIDEBAR (240px, white, border-right):
+   - Top: "AMPH Academy" + "Admin" badge
+   - Nav: Dashboard (active: no), Users (active: yes, #FF6B35), Courses, Content, Payments, Refunds, Live Classes, Badges, Resources, Analytics, Settings, Audit Log
+   - Each item: Phosphor icon + label
+
+2. MAIN CONTENT (padding 32px, #FAFAF7):
+   - Header row:
+     - Left: "Users" (h1) + "127 total" (#737373)
+     - Right: "Add user" primary button (ghost style — secondary)
+   
+   - FILTER BAR:
+     - Search input (magnifying glass icon, placeholder "Search by name or email...")
+     - Filter dropdown: "All roles" / "Students" / "Instructors" / "Admins"
+     - Filter dropdown: "All statuses" / "Active" / "Suspended" / "Deleted"
+     - Date range: "From" date + "To" date
+   
+   - USERS TABLE (white card, full width):
+     Columns: ☐ (checkbox) | Name | Email | Role | Level | XP | Joined | Status | ⋮ (actions)
+     10 rows with realistic data:
+     - ☐ "Juan Dela Cruz" | "juan@email.com" | Student badge | "4" | "2,450" | "Jun 15, 2026" | Active (green) | ⋮
+     - ☐ "Maria Santos" | "maria@email.com" | Student | "7" | "8,200" | "May 20, 2026" | Active | ⋮
+     - ☐ "Ryan Dabao" | "ryan@projectamazonph.com" | Admin (info badge) | "1" | "0" | "Jul 1, 2026" | Active | ⋮
+     - ☐ "Ana Reyes" | "ana@email.com" | Student | "2" | "890" | "Jul 5, 2026" | Active | ⋮
+     - ☐ "Pedro Cruz" | "pedro@email.com" | Student | "1" | "150" | "Jul 8, 2026" | Suspended (danger) | ⋮
+     - etc.
+     
+     Table styling:
+     - 40px rows, left-aligned text, right-aligned numbers
+     - Header: bottom border only, #737373
+     - Checkbox column: 40px width
+     - Actions column: three-dot menu (ghost button)
+     - Hover row: #F4F3EE wash
+   
+   - BULK ACTIONS BAR (appears when items selected):
+     - "12 users selected" label
+     - "Export CSV" ghost button
+     - "Suspend" ghost button (danger text)
+     - "Delete" ghost button (danger text)
+   
+   - PAGINATION:
+     - "Showing 1–10 of 127" (#737373)
+     - "← Previous" "Next →" buttons (secondary, disabled as needed)
+     - Page numbers: 1 2 3 ... 13
+```
+
+---
+
+## SCREEN 26: ADMIN — USER DETAIL
+
+```
+Generate a user detail page for "AMPH Academy" admin panel.
+
+Layout: Full-width with admin sidebar, main content.
+
+1. ADMIN SIDEBAR: Same (with "Users" active)
+
+2. MAIN CONTENT:
+   - Breadcrumb: "Users / Maria Santos"
+   
+   - Header row:
+     - Left: "Maria Santos" (h1) + metadata: "maria@email.com • Student • Active since May 2026"
+     - Right: "Edit" secondary button + "Suspend" ghost button (danger text) + "Delete" ghost button (danger text)
+   
+   - TABS:
+     [Overview] [Enrollments] [Progress] [Activity]
+     Active tab: #FF6B35 bottom border, bold text
+   
+   - TAB CONTENT (Overview):
+     - Stats row (4 cards):
+       a. "Level 7" + "Current level"
+       b. "8,200" + "Total XP"
+       c. "45" + "Day streak"
+       d. "2" + "Courses enrolled"
+     
+     - Account info card:
+       Email verified: Yes (green badge)
+       Last active: July 10, 2026 at 3:45 PM
+       Role: Student
+       Status: Active
+   
+   - TAB CONTENT (Enrollments):
+     - Table: Course | Tier | Enrolled | Status | Amount
+     - "PPC Foundations" | "PPC Foundations" | "Jun 1, 2026" | "Active" | "₱2,999"
+     - "Accelerated Mastery" | "Accelerated Mastery" | "Jul 5, 2026" | "Active" | "₱5,999"
+   
+   - TAB CONTENT (Progress):
+     - Course progress bars with lesson completion
+     - Badges earned list
+     - Certificates list
+   
+   - TAB CONTENT (Activity):
+     - Audit log entries for this user
+     - Table: Action | Details | Timestamp
+     - "Enrolled in PPC Foundations" | "Payment ₱2,999 via GCash" | "Jun 1, 2026 10:15 AM"
+     - "Completed Lesson 1.3" | "Sponsored Products: Your First Campaign Type" | "Jun 3, 2026 11:20 PM"
+```
+
+---
+
+## SCREEN 27: ADMIN — COURSES LIST
+
+```
+Generate a course management list page for "AMPH Academy" admin panel.
+
+Layout: Full-width with admin sidebar, main content.
+
+1. ADMIN SIDEBAR: Same (with "Courses" active)
+
+2. MAIN CONTENT:
+   - Header: "Courses" (h1) + "Create course" primary button
+   
+   - COURSE CARDS (vertical stack, not grid):
+     Each course (white card, border, padding 24px):
+     - Top row: Course title (h3) + Status badge ("Published" green / "Draft" warning) + Difficulty badge
+     - Description text (#404040)
+     - Stats row: "9 modules" · "31 lessons" · "127 enrollments" · "₱2,999"
+     - Actions: "Edit" secondary button + "View" ghost link + "Manage modules" ghost link
+   
+   - Three courses:
+     1. "PPC Foundations" — Published · Beginner · 9 modules, 31 lessons, 127 enrollments, ₱2,999
+     2. "Accelerated Mastery" — Published · Intermediate · 12 modules, 45 lessons, 89 enrollments, ₱5,999
+     3. "Ultimate Transformation" — Published · Advanced · 15 modules, 60 lessons, 34 enrollments, ₱9,999
+```
+
+---
+
+## SCREEN 28: ADMIN — COURSE EDIT (Modules & Lessons)
+
+```
+Generate a course editor page for "AMPH Academy" admin panel.
+
+Layout: Full-width with admin sidebar, main content.
+
+1. ADMIN SIDEBAR: Same (with "Courses" active)
+
+2. MAIN CONTENT:
+   - Breadcrumb: "Courses / PPC Foundations"
+   
+   - Header: "PPC Foundations" (h1) + "Edit" button + "Published" badge + "Preview" ghost link
+   
+   - TABS: [Overview] [Modules] [Lessons] [Pricing]
+   
+   - TAB CONTENT (Modules):
+     - Module list (vertical, drag-to-reorder handle on left):
+       Each module:
+       - Drag handle (⠿ icon) + Module number + Title + lesson count + "Edit" ghost button + "Delete" ghost button (danger)
+       - "Module 1: Understanding Amazon Ads" · 4 lessons · Edit · Delete
+       - "Module 2: Your First Campaign" · 3 lessons · Edit · Delete
+       - "Module 3: Keyword Research" · 4 lessons · Edit · Delete
+       - etc.
+     
+     - "+ Add module" ghost button at bottom
+   
+   - TAB CONTENT (Lessons — for Module 1):
+     - Module heading: "Module 1: Understanding Amazon Ads"
+     - Lesson list:
+       Each lesson row:
+       - Lesson number + Title + Status badge (Published/Draft) + "Edit" ghost button
+       - "1.1 What Is Amazon Advertising?" · Published · Edit
+       - "1.2 Sponsored Products vs Sponsored Brands" · Published · Edit
+       - "1.3 Your First Campaign Type" · Published · Edit
+       - "1.4 Common Mistakes to Avoid" · Draft · Edit
+     
+     - "+ Add lesson" ghost button
+```
+
+---
+
+## SCREEN 29: ADMIN — PAYMENTS LIST
+
+```
+Generate a payment operations page for "AMPH Academy" admin panel.
+
+Layout: Full-width with admin sidebar, main content.
+
+1. ADMIN SIDEBAR: Same (with "Payments" active)
+
+2. MAIN CONTENT:
+   - Header: "Payments" (h1) + stats: "₱284,500 total revenue" · "23 transactions" · "3 refunds"
+   
+   - FILTER BAR:
+     - Search: "Search by student or transaction ID..."
+     - Filter: "All tiers" / "PPC Foundations" / "Accelerated Mastery" / "Ultimate"
+     - Filter: "All statuses" / "Paid" / "Refunded" / "Pending"
+     - Date range
+   
+   - PAYMENTS TABLE:
+     Columns: Student | Tier | Amount | Method | Date | Status | ⋮
+     Rows:
+     - "Juan D." | "Accelerated Mastery" | "₱5,999" | "GCash" | "Jul 10, 2026" | Paid (green) | ⋮
+     - "Maria S." | "PPC Foundations" | "₱2,999" | "Maya" | "Jul 10, 2026" | Paid | ⋮
+     - "Ana R." | "Ultimate" | "₱9,999" | "Credit Card" | "Jul 9, 2026" | Paid | ⋮
+     - "Pedro C." | "PPC Foundations" | "₱2,999" | "GCash" | "Jul 8, 2026" | Refunded (danger) | ⋮
+     - etc.
+   
+   - Pagination
+```
+
+---
+
+## SCREEN 30: ADMIN — REFUNDS LIST + DETAIL
+
+```
+Generate a refund management page for "AMPH Academy" admin panel.
+
+Layout: Full-width with admin sidebar, main content.
+
+1. ADMIN SIDEBAR: Same (with "Refunds" active)
+
+2. MAIN CONTENT:
+   - Header: "Refunds" (h1) + "5 pending" warning badge + "12 processed"
+   
+   - REFUNDS TABLE:
+     Columns: Student | Tier | Amount | Reason | Requested | Status | ⋮
+     Rows:
+     - "Pedro C." | "PPC Foundations" | "₱2,999" | "Course didn't match expectations" | "Jul 9, 2026" | Pending (warning) | ⋮
+     - "Lisa M." | "Accelerated Mastery" | "₱5,999" | "Can't afford the payment" | "Jul 8, 2026" | Pending | ⋮
+     - "Jose R." | "PPC Foundations" | "₱2,999" | "Duplicate purchase" | "Jul 5, 2026" | Approved (green) | ⋮
+     - "Ana B." | "Ultimate" | "₱9,999" | "Changed my mind" | "Jul 3, 2026" | Denied (danger) | ⋮
+
+3. REFUND DETAIL (when clicking a row):
+   - Breadcrumb: "Refunds / Pedro Cruz"
+   - Student info: "Pedro Cruz • pedro@email.com"
+   - Payment info: "PPC Foundations • ₱2,999 • Paid July 8, 2026 via GCash"
+   - Reason: "Course didn't match expectations. I thought it would cover Sponsored Brands in depth."
+   - Requested: "July 9, 2026 at 2:15 PM"
+   
+   - DECISION FORM:
+     - "Approve" primary button (green) + "Deny" secondary button (danger)
+     - Admin notes textarea: "Add notes about this decision..."
+     - If approving: "Refund amount: ₱2,999" + confirmation checkbox "I confirm this refund should be processed via PayMongo"
+```
+
+---
+
+## SCREEN 31: ADMIN — ANALYTICS DASHBOARD
+
+```
+Generate an analytics dashboard for "AMPH Academy" admin panel.
+
+Layout: Full-width with admin sidebar, main content.
+
+1. ADMIN SIDEBAR: Same (with "Analytics" active)
+
+2. MAIN CONTENT:
+   - Header: "Analytics" (h1) + date range selector: "Last 30 days" / "Last 7 days" / "All time"
+   
+   - SUB-NAV: [Enrollments] [Engagement] [Content] [Revenue]
+   
+   - ENROLLMENTS TAB:
+     - Funnel visualization (horizontal bars):
+       Visits: 2,450 → Signups: 312 (12.7%) → Paid: 127 (40.7%) → Active: 89 (70.1%)
+       Each stage: label, count, percentage, horizontal bar (width proportional)
+     
+     - Tier breakdown:
+       PPC Foundations: 67 (53%) | Accelerated Mastery: 42 (33%) | Ultimate: 18 (14%)
+       Horizontal stacked bar chart
+   
+   - REVENUE TAB:
+     - MRR card: "₱284,500" (total revenue)
+     - Revenue by tier (bar chart):
+       PPC Foundations: ₱200,933
+       Accelerated Mastery: ₱251,958
+       Ultimate: ₱179,982
+     - Refund rate: "2.4%" (green, below 5% target)
+     - Recent transactions list (last 5)
+   
+   - CONTENT TAB:
+     - Module completion rates (bar chart):
+       Module 1: 89% | Module 2: 72% | Module 3: 65% | Module 4: 58% | Module 5: 45%
+     - Drop-off points: "Module 4 → 5 has the biggest drop (58% → 45%)"
+     - Average time per lesson: "8.2 minutes"
+```
+
+---
+
+## SCREEN 32: ADMIN — BADGES MANAGEMENT
+
+```
+Generate a badge management page for "AMPH Academy" admin panel.
+
+Layout: Full-width with admin sidebar, main content.
+
+1. ADMIN SIDEBAR: Same (with "Badges" active)
+
+2. MAIN CONTENT:
+   - Header: "Badges" (h1) + "Create badge" primary button
+   
+   - BADGE CARDS (grid: repeat(auto-fit, minmax(280px, 1fr))):
+     Each badge card (white, border, padding 24px):
+     - Badge icon (48x48, colored circle with Phosphor icon)
+     - Badge name (h3): "Campaign Builder"
+     - Description: "Build 3 complete campaign structures"
+     - Criteria: "Complete 3 Campaign Builder scenarios with passing score"
+     - Tier: "PPC Foundations" badge
+     - Earned by: "89 students"
+     - Actions: "Edit" ghost button + "Delete" ghost button (danger)
+   
+   - 5 seeded badges:
+     1. "Campaign Builder" — "Build 3 complete campaign structures" — 89 earned
+     2. "Bid Master" — "Complete 5 Bid Elevator scenarios" — 67 earned
+     3. "STR Expert" — "Triage 50+ search terms correctly" — 45 earned
+     4. "Listing Pro" — "Audit and revise 3 product listings" — 34 earned
+     5. "Keyword Wizard" — "Categorize 100+ keywords accurately" — 23 earned
+```
+
+---
+
+## SCREEN 33: ADMIN — LIVE CLASSES MANAGEMENT
+
+```
+Generate a live class management page for "AMPH Academy" admin panel.
+
+Layout: Full-width with admin sidebar, main content.
+
+1. ADMIN SIDEBAR: Same (with "Live Classes" active)
+
+2. MAIN CONTENT:
+   - Header: "Live Classes" (h1) + "Schedule class" primary button
+   
+   - UPCOMING CLASSES:
+     Table: Title | Date | Time | Registrations | Status | ⋮
+     - "Campaign Optimization Workshop" | "Jul 17, 2026" | "7:00 PM PST" | "12 / 30" | Upcoming (info) | ⋮
+     - "Keyword Research Deep Dive" | "Jul 24, 2026" | "7:00 PM PST" | "8 / 30" | Upcoming | ⋮
+   
+   - PAST CLASSES:
+     Table: Title | Date | Attendees | Recording | ⋮
+     - "Sponsored Brands Masterclass" | "Jul 10, 2026" | "18" | "View recording" | ⋮
+     - "Q3 Strategy Session" | "Jul 3, 2026" | "22" | "View recording" | ⋮
+```
+
+---
+
+## SCREEN 34: ADMIN — SETTINGS
+
+```
+Generate a settings page for "AMPH Academy" admin panel.
+
+Layout: Full-width with admin sidebar, main content.
+
+1. ADMIN SIDEBAR: Same (with "Settings" active)
+
+2. MAIN CONTENT:
+   - Header: "Settings" (h1)
+   
+   - SUB-NAV: [Branding] [Pricing] [Email] [Integrations]
+   
+   - BRANDING TAB:
+     - Logo upload area (dashed border, 200x80px)
+     - Primary color: color picker (#FF6B35)
+     - App name: "AMPH Academy" text input
+     - Tagline: "Amazon advertising training for Filipino VAs" textarea
+   
+   - PRICING TAB:
+     - Tier editor (3 cards):
+       Each tier:
+       - Tier name (read-only)
+       - Price input: ₱ [2,999]
+       - Features textarea (one per line)
+       - "Save changes" button per tier
+     - Warning: "Price changes only affect new purchases. Existing enrollments keep their original price."
+   
+   - EMAIL TAB:
+     - Sender name: "AMPH Academy"
+     - Sender email: "noreply@amphacademy.ph"
+     - Template previews: Welcome, Payment confirmation, Refund approved
+   
+   - INTEGRATIONS TAB:
+     - PayMongo: API key input (masked), Webhook secret input (masked), "Test connection" button
+     - Sentry: DSN input, "Test connection" button
+     - Status indicators: green dot = connected, red dot = not configured
+```
+
+---
+
+## SCREEN 35: ADMIN — AUDIT LOG
+
+```
+Generate an audit log page for "AMPH Academy" admin panel.
+
+Layout: Full-width with admin sidebar, main content.
+
+1. ADMIN SIDEBAR: Same (with "Audit Log" active)
+
+2. MAIN CONTENT:
+   - Header: "Audit Log" (h1) + "Export CSV" ghost button
+   
+   - FILTER BAR:
+     - Search: "Search by action or entity..."
+     - Filter: "All actions" / "user.*" / "course.*" / "payment.*" / "refund.*"
+     - Filter: "All actors" (dropdown of admin users)
+     - Date range
+   
+   - AUDIT TABLE:
+     Columns: Timestamp | Actor | Action | Entity | Details | IP
+     Rows:
+     - "Jul 10, 3:45 PM" | "Ryan D." | "user.suspend" | "User: Pedro Cruz" | "Reason: TOS violation" | "192.168.1.1"
+     - "Jul 10, 2:15 PM" | "Ryan D." | "refund.approve" | "Payment: pay_xxx" | "₱2,999 refunded via GCash" | "192.168.1.1"
+     - "Jul 10, 1:30 PM" | "System" | "enrollment.create" | "User: Ana R." | "PPC Foundations, ₱2,999" | "—"
+     - "Jul 9, 11:00 AM" | "Ryan D." | "course.publish" | "Course: PPC Foundations" | "Status: draft → published" | "192.168.1.1"
+   
+   - Timestamp: JetBrains Mono, #737373
+   - Actor: name + role badge
+   - Action: monospace, color-coded by namespace (user=info, payment=success, refund=warning, course=default)
+   - Pagination
+```
