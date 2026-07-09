@@ -18,3 +18,5 @@ export {
   type IconSize,
   type PhosphorIconName,
 } from './Icon';
+export { BottomNav } from './BottomNav';
+export type { BottomNavProps, BottomNavSlot } from './BottomNav.types';
