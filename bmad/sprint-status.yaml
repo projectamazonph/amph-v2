@@ -3,14 +3,14 @@ project:
   level: 3
 
 sprint:
-  number: 8
-  name: "Refunds + Email"
-  start_date: "2026-07-10"
-  end_date: "2026-07-11"
+  number: 9
+  name: "Polish + Mobile-First Refactor"
+  start_date: "2026-07-12"
+  end_date: "2026-07-13"
   status: "in_progress"
 
 capacity:
-  planned_points: 4
+  planned_points: 5
   velocity: 0
   buffer_points: 0
 
@@ -39,8 +39,6 @@ completed_stories:
     sprint: 7
     epic: "Admin"
     owner: "Ryan"
-
-planned_stories:
   - id: "STORY-034"
     title: "Refund flow (STORY-028 student request + admin approval)"
     points: 1
@@ -65,3 +63,49 @@ planned_stories:
     sprint: 8
     epic: "Email"
     owner: "Ryan"
+
+planned_stories:
+  - id: "STORY-038"
+    title: "Design-system audit + token purge pass"
+    points: 1
+    sprint: 9
+    epic: "Polish"
+    owner: "Ryan"
+  - id: "STORY-039"
+    title: "Responsive breakpoint infrastructure + tokens module"
+    points: 1
+    sprint: 9
+    epic: "Mobile"
+    owner: "Ryan"
+  - id: "STORY-040"
+    title: "Mobile BottomNav shared component for student app"
+    points: 1
+    sprint: 9
+    epic: "Mobile"
+    owner: "Ryan"
+  - id: "STORY-041"
+    title: "Marketing + auth cluster: mobile-first refactor"
+    points: 1
+    sprint: 9
+    epic: "Mobile"
+    owner: "Ryan"
+  - id: "STORY-042"
+    title: "Student app shell + course flow + tools index: mobile-first refactor"
+    points: 1
+    sprint: 9
+    epic: "Mobile"
+    owner: "Ryan"
+
+sprint_8_notes: >
+  Sprint 8 closed 2026-07-11 (commit 1414754). Wired transactional emails (Resend + React Email):
+  enrollment confirmation on payment webhook, live class reminder on registration, refund status
+  notifications on request/approve/reject. Created /api/resend/webhook for delivery tracking.
+  Refund flow shipped end-to-end (student request → admin approve/reject → email + DB update).
+
+sprint_9_notes: >
+  Sprint 9 plan: 5 pts / 5 stories. Polish + mobile-first refactor. Closes design-system
+  debt (STORY-038 audit + Tailwind purge + ESLint rules), establishes responsive foundation
+  (STORY-039 tokens + breakpoints + helper classes), ships shared mobile shell
+  (STORY-040 BottomNav), then refactors 12 pages across marketing+auth (STORY-041) and
+  student-app (STORY-042) clusters. See docs/sprint-9/PLAN.md and docs/stories/STORY-03[8-9].md
+  through STORY-042.md for full story bodies.
