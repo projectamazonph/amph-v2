@@ -22,7 +22,7 @@ Field Manual. Dense, scannable, utilitarian. Off-white surface. Orange accent (#
 
 ## The Database
 
-PostgreSQL in production, SQLite in dev. Schema must be Postgres-compatible. Every mutable table has `deletedAt`, `createdById`, `updatedById`. See `docs/db-schema.md`.
+PostgreSQL (dev + production). Schema uses no SQLite-specific features. Every mutable table has `deletedAt`, `createdById`, `updatedById`. See `docs/db-schema.md`.
 
 ## The Business Layer
 

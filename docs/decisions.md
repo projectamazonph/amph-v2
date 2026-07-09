@@ -20,14 +20,14 @@ This document collects the ADRs that govern AMPH Academy's architecture. New ADR
 - Migration to microservices later is possible but expensive — defer until revenue justifies
 - **Revisit when:** Monthly active users > 10,000 OR team > 3 developers.
 
-## ADR-002: SQLite for Development, PostgreSQL for Production
+## ADR-002: PostgreSQL for All Environments
 
 **Status:** Accepted (2026-07-01)
 **Context:** AMPH Academy starts solo with low traffic. Postgres adds hosting cost and operational complexity.
-**Decision:** Use SQLite locally for fast iteration. Use Vercel Postgres in production for concurrent writes, automatic backups, and connection pooling.
+**Decision:** Use PostgreSQL everywhere (dev + production). Consistent environment eliminates provider-specific bugs. CI uses PostgreSQL service container, local dev uses local or remote PostgreSQL.
 **Consequences:**
-- Schema must be Postgres-compatible (no SQLite-specific features)
-- Use `prisma migrate dev` for SQLite, `prisma migrate deploy` for Postgres
+- Schema uses no SQLite-specific features
+- Use `prisma migrate dev` for local PostgreSQL, `prisma migrate deploy` for production
 - Local seed data is disposable — production data is the source of truth
 - Migration path: `provider = "postgresql"` in `schema.prisma` for production deploy
 - **Revisit when:** Monthly active users > 1,000 OR concurrent writes > 10/sec.

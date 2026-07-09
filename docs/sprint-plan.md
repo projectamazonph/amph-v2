@@ -17,7 +17,7 @@ Solo developer. Originally 11 sprints at 6 pts/sprint = 11 weeks. Actual: 8 spri
 | S7 | Admin | Full admin panel (users, courses, tools, analytics) | ✅ Complete | 4 / 4 |
 | S8 | Refunds + Email | Refund flow + Resend templates + webhook tracking | ✅ Complete (commit 1414754) | 4 / 4 |
 | S9 | Polish + Mobile | Token audit + Tailwind purge + responsive helpers + BottomNav + 12 pages mobile-first | ✅ Complete | 5 / 5 |
-| S10 | Tests + CI Hardening | Fix CI (SQLite), Vitest unit+integration, Playwright E2E, coverage enforcement | 🔄 In Progress | 5 / 5 planned |
+| S10 | Tests + CI Hardening | Fix CI (PostgreSQL schema aligned), Vitest unit+integration, Playwright E2E, coverage enforcement | 🔄 In Progress | 5 / 5 planned |
 | S11 | Observability | Sentry + structured logs + Lighthouse CI | Backlog | — |
 | S12 | Launch | Production deploy + backup drill + launch comms | Backlog | — |
 
@@ -66,7 +66,7 @@ Velocity: S1=6, S2=6, S3=6, S4=4.5, S5=3.5, S6=4, S7=4, S8=4, S9=5 planned. Slip
 | Story | Pts | Status | Description |
 |-------|-----|--------|-------------|
 | STORY-013: Content import | 1 | ✅ | `scripts/import-amph-content.ts`. 1 course, 9 modules, 31 lessons (MDX, $→₱), 5 quizzes, 30 questions. Idempotent upsert. |
-| STORY-014: Schema fix (enums→String) | 0.5 | ✅ | Prisma SQLite doesn't support enums. Migrated 20 enums to String + `src/lib/enums.ts` const objects. |
+| STORY-014: Schema fix (enums→String) | 0.5 | ✅ | Prisma with String fields (enums not used). Migrated 20 enums to String + `src/lib/enums.ts` const objects. |
 | STORY-015: Curriculum pages | 1 | ✅ | `/dashboard`, `/dashboard/courses/[slug]`, `/dashboard/courses/[slug]/lessons/[slug]`. MDX render in `src/lib/mdx.ts`. Progress tracking. |
 | STORY-016: Quiz system | 0.5 | ✅ | Server-side scoring, pass/fail result, bonus XP, auto-complete on pass. |
 | STORY-017: Tier gating (enroll-aware access) | 0.5 | ✅ | `src/lib/tier-gate.ts` evaluates course pricing-tier vs user's highest ACTIVE enrollment. `TierLock` component renders lock screen on lesson/quiz pages. Course index shows lock icon for each lesson under a locked course. Server actions `startLessonAction`, `markLessonCompleteAction`, `submitQuizAction` all enforce the gate. Tier-less courses stay free/always-accessible. Course import script now attaches the PPC Foundations tier by default. |
@@ -152,11 +152,11 @@ See [docs/sprint-9/PLAN.md](./sprint-9/PLAN.md) for the full plan. Per-story det
 
 ## Sprint 10: Tests + CI Hardening (5/5 pts planned) — 🔄 In Progress
 
-**Goal:** Fix CI pipeline (PostgreSQL→SQLite), establish real test coverage, Playwright E2E, enforce 70% threshold.
+**Goal:** Fix CI pipeline (schema switched to PostgreSQL), establish real test coverage, Playwright E2E, enforce 70% threshold.
 
 | Story | Pts | Description |
 |-------|-----|-------------|
-| STORY-043: CI fix + Playwright config | 1 | Remove PostgreSQL from CI, use SQLite. Add `playwright.config.ts`. |
+| STORY-043: CI fix + Playwright config | 1 | Schema switched to PostgreSQL, CI aligned. Add `playwright.config.ts`. |
 | STORY-044: Vitest unit tests — `src/lib` | 1.5 | Auth, validation, tier-gate, enums, format, pricing, badges. ≥70% line coverage. |
 | STORY-045: Server action integration tests | 1 | Auth, enrollment, tool session actions. Mocked Prisma. |
 | STORY-046: Playwright E2E — critical path | 1 | Signup → enroll → lesson → quiz. Chromium only. |

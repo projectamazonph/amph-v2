@@ -60,5 +60,5 @@ pnpm test:coverage -- --reporter=verbose 2>&1 | tail -30
 ## Pitfalls
 
 - `src/lib/auth.ts` uses `jose` for JWT — mock `jose.jwtVerify` not the real crypto
-- `tier-gate.ts` imports from `@/lib/db` — mock the db module, don't hit real SQLite
+- `tier-gate.ts` imports from `@/lib/db` — mock the db module, don't hit real database
 - `badges.ts` calls `db.userBadge.create` — mock to avoid unique constraint errors

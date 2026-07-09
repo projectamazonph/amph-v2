@@ -1064,7 +1064,7 @@ Every subsequent schema change follows ADR-012 (soft-delete), ADR-013 (soft-publ
 
 ## Backup and Restore
 
-- **Dev:** Daily SQLite backup to `~/.hermes/backups/amph-v2/`. 7-day retention.
+- **Dev:** Daily PostgreSQL backup (pg_dump) to `~/.hermes/backups/amph-v2/`. 7-day retention.
 - **Production:** Vercel Postgres automatic daily backups. 30-day retention.
 - **Quarterly restore drill:** Restore production backup to staging. Smoke test. Document findings.
 

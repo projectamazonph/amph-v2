@@ -327,7 +327,7 @@ Bulk operations are atomic: either all 12 succeed or none do. Use a Prisma trans
 ## Performance
 
 - All list queries paginated (default 50, max 200).
-- Search uses Postgres trigram or `LIKE '%query%'` for SQLite.
+- Search uses Postgres trigram or `LIKE '%query%'`.
 - Sort defaults to `createdAt DESC`.
 - Filter chips collapse on mobile.
 - Server components for initial render, client components for interactive filters.

@@ -22,7 +22,7 @@ Three courses. One outcome: the VA becomes the Amazon ads specialist clients ret
 | Sprint 10 — Tests | Backlog | 0 / 5 |
 | Sprint 11 — Observability | Backlog | 0 / 5 |
 | Sprint 12 — Launch | Backlog | 0 / 4 |
-| **Total** | **29 / 55 stories (53%)** | |
+| **Total** | **37 / 55 stories (67%)** | |
 
 | Layer | Status |
 |-------|--------|
@@ -75,7 +75,7 @@ A paid training platform where Filipino VAs learn Amazon advertising through str
 |-------|--------|-----|
 | Framework | Next.js 16 App Router | Server components, server actions, single deploy |
 | Language | TypeScript (strict) | Catch errors at compile time |
-| Database | PostgreSQL (prod) / SQLite (dev) | Managed in prod, fast local iteration |
+| Database | PostgreSQL (dev + prod) | Managed in prod, consistent local+prod environment |
 | ORM | Prisma | Type-safe queries, migrations |
 | Auth | JWT in HttpOnly cookies (jose) | Stateless, works with middleware |
 | Styling | CSS Modules + design tokens | No Tailwind. Per design-brief. |
@@ -256,7 +256,7 @@ Every component imports a `.module.css` file that uses `var(--token)` references
 
 ## Sprint Status
 
-**37/42 stories shipped across Sprints 1–8 (88% of plan).** Sprints 1–5 shipped the foundation, all 5 tool engines + 30 scenarios, content import, curriculum pages, quiz system, tier gating, the 5 interactive tool UIs, and the full gamification stack: auto-awarded badges, PDF certificates with public verification, and live classes with tier-gated registration. **Sprint 6 — Payments** (2026-07-10): STORY-026/027/028/029 — PayMongo checkout + webhook, enrollment + tier gating, refund flow engine, BIR-compliant receipt PDFs. **Sprint 7 — Admin** (2026-07-10): STORY-030/031/032/033 — admin dashboard + user management, course/module/lesson CRUD with MDX editor, tool scenario admin, analytics dashboards. **Sprint 8 — Refunds + Email** (2026-07-11, commit `1414754`): STORY-034/035/036/037 — admin refund approval UI, 3 Resend React Email templates, webhook handler with HMAC signature verification.
+**37/55 stories shipped across Sprints 1–8 (67% of plan).** Sprints 1–5 shipped the foundation, all 5 tool engines + 30 scenarios, content import, curriculum pages, quiz system, tier gating, the 5 interactive tool UIs, and the full gamification stack: auto-awarded badges, PDF certificates with public verification, and live classes with tier-gated registration. **Sprint 6 — Payments** (2026-07-10): STORY-026/027/028/029 — PayMongo checkout + webhook, enrollment + tier gating, refund flow engine, BIR-compliant receipt PDFs. **Sprint 7 — Admin** (2026-07-10): STORY-030/031/032/033 — admin dashboard + user management, course/module/lesson CRUD with MDX editor, tool scenario admin, analytics dashboards. **Sprint 8 — Refunds + Email** (2026-07-11, commit `1414754`): STORY-034/035/036/037 — admin refund approval UI, 3 Resend React Email templates, webhook handler with HMAC signature verification.
 
 **Next: Sprint 9 — Polish + Mobile.** Token audit + Tailwind purge, responsive breakpoint infrastructure, BottomNav shared component, mobile-first refactor of 12 student-facing pages. Plan at `docs/sprint-9/PLAN.md`. Stories at `docs/stories/STORY-038.md` through `STORY-042.md`.
 

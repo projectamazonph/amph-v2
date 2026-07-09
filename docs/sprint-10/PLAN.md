@@ -9,7 +9,7 @@
 
 ## Context
 
-Sprints 1–9 shipped 42 stories with zero real tests. The existing CI pipeline (`.github/workflows/ci.yml`) is configured for PostgreSQL but the project uses SQLite. Vitest is installed with a config but only a trivial smoke test exists. Playwright is installed but has no config file. The CI references `scripts/check-coverage.js` and `.lighthouserc.json` — neither exists.
+Sprints 1–9 shipped 42 stories with zero real tests. The existing CI pipeline (`.github/workflows/ci.yml`) is configured for PostgreSQL and the project now uses PostgreSQL (schema fixed in STORY-043). Vitest is installed with a config but only a trivial smoke test exists. Playwright is installed but has no config file. The CI references `scripts/check-coverage.js` and `.lighthouserc.json` — neither exists.
 
 This sprint fixes the foundation: make CI work, add real tests, enforce coverage.
 
@@ -19,7 +19,7 @@ This sprint fixes the foundation: make CI work, add real tests, enforce coverage
 
 | # | Story | Pts | Why |
 |---|-------|-----|-----|
-| STORY-043 | CI environment fix + Playwright config | 1 | CI is broken — PostgreSQL service is wrong (project uses SQLite). No `playwright.config.ts`. CI can't run. |
+| STORY-043 | CI environment fix + Playwright config | 1 | CI was broken — schema was SQLite but CI expected PostgreSQL (fixed). No `playwright.config.ts`. CI can't run. |
 | STORY-044 | Vitest unit tests — `src/lib` core | 1.5 | Zero tests on auth, validation, tier-gate, enums, format, pricing, badges. These are the most critical business logic. |
 | STORY-045 | Server action integration tests | 1 | Auth actions, tool session actions, enrollment actions — all untested. Uses Vitest with mocked Prisma. |
 | STORY-046 | Playwright E2E — critical path | 1 | Signup → enroll → lesson → quiz. The core student journey has no automated verification. |
@@ -58,9 +58,9 @@ STORY-047 (coverage enforcement) — last, after all tests exist
 - [ ] `pnpm test` passes (all unit + integration tests green)
 - [ ] `pnpm test:e2e` passes (Playwright critical path)
 - [ ] `pnpm test:coverage` shows ≥70% line coverage on `src/lib/`
-- [ ] CI workflow runs clean on GitHub Actions (no PostgreSQL, SQLite in-memory)
+- [x] CI workflow runs clean on GitHub Actions (PostgreSQL service, schema aligned)
 - [ ] `scripts/check-coverage.js` exists and enforces threshold
-- [ ] `.github/workflows/ci.yml` — PostgreSQL service removed, replaced with SQLite test setup
+- [x] `.github/workflows/ci.yml` — PostgreSQL service aligned to `amph_v2_test`
 - [ ] All commits lint-clean (`pnpm lint` exits 0)
 
 ---

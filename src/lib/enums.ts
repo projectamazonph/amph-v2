@@ -1,7 +1,7 @@
 /**
  * Application-layer enum values for AMPH Academy v2.
  *
- * Prisma with SQLite does not support native enums, so the schema uses
+ * Prisma with String fields (enums are not used in schema), so the schema uses
  * String columns for fields that conceptually hold enum values. The valid
  * values are constrained at the application layer via the const objects
  * and union types in this file. Use these throughout the app instead of
