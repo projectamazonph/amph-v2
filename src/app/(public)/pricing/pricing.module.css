@@ -1,7 +1,7 @@
 .page {
   max-width: 1120px;
   margin: 0 auto;
-  padding: var(--space-12) var(--space-6);
+  padding: var(--space-12) var(--side-pad);
 }
 
 .header {
@@ -34,8 +34,20 @@
 
 .tierGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: 1fr;
   gap: var(--space-6);
+}
+
+@media (min-width: 768px) {
+  .tierGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .tierGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 .tier,
