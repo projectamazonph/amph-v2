@@ -3,7 +3,7 @@
 // Day-1 design: no orgId, no legacy tables, all mutable tables have
 // deletedAt + createdById + updatedById (ADR-012, ADR-014).
 // Compound indexes on every hot read path.
-// SQLite for dev, PostgreSQL for production (no SQLite-specific features).
+// PostgreSQL — no SQLite-specific features used.
 
 generator client {
   provider      = "prisma-client-js"
@@ -11,22 +11,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-// AMPH Academy v2 — Prisma Schema
-// Source of truth: docs/db-schema.md
-// Day-1 design: no orgId, no legacy tables, all mutable tables have
-// deletedAt + createdById + updatedById (ADR-012, ADR-014).
-// Compound indexes on every hot read path.
-//
-// NOTE: SQLite does not support native enums (Prisma limitation).
-// Enums are stored as String columns; valid values are validated at the
-// application layer via TypeScript const-assertion unions in
-// src/lib/enums.ts. The 20 enum definitions removed from this schema
-// are mirrored in that file.
-
-
 
 // ============================================================================
 // USER & AUTH
@@ -41,14 +28,14 @@ model User {
   passwordHash  String? // null for OAuth-only
 
   // Gamification
-  role String @default("STUDENT")
-  xp            Int      @default(0)
-  level         Int      @default(1)
-  streakDays    Int      @default(0)
-  lastActiveAt  DateTime @default(now())
+  role         String   @default("STUDENT")
+  xp           Int      @default(0)
+  level        Int      @default(1)
+  streakDays   Int      @default(0)
+  lastActiveAt DateTime @default(now())
 
   // Soft-delete + audit (ADR-012)
-  status String @default("ACTIVE")
+  status        String    @default("ACTIVE")
   deletedAt     DateTime?
   deletedReason String?
   createdById   String?
@@ -123,29 +110,29 @@ model Session {
 // ============================================================================
 
 model Course {
-  id              String   @id @default(cuid())
-  slug            String   @unique
-  title           String
-  description     String
-  icon            String   @default("BookOpen")
-  difficulty String @default("FOUNDATIONS")
-  pricingTierId   String?
-  estimatedHours  Int      @default(10)
-  isPublished     Boolean  @default(false)
-  publishedAt     DateTime?
-  sortOrder       Int      @default(0)
-  deletedAt       DateTime?
-  createdById     String?
-  updatedById     String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String    @id @default(cuid())
+  slug           String    @unique
+  title          String
+  description    String
+  icon           String    @default("BookOpen")
+  difficulty     String    @default("FOUNDATIONS")
+  pricingTierId  String?
+  estimatedHours Int       @default(10)
+  isPublished    Boolean   @default(false)
+  publishedAt    DateTime?
+  sortOrder      Int       @default(0)
+  deletedAt      DateTime?
+  createdById    String?
+  updatedById    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  pricingTier   PricingTier?    @relation(fields: [pricingTierId], references: [id])
-  author        User?           @relation("CourseAuthor", fields: [createdById], references: [id])
-  modules       Module[]
-  enrollments   Enrollment[]
-  liveClasses   LiveClass[]
-  certificates  Certificate[]
+  pricingTier  PricingTier?  @relation(fields: [pricingTierId], references: [id])
+  author       User?         @relation("CourseAuthor", fields: [createdById], references: [id])
+  modules      Module[]
+  enrollments  Enrollment[]
+  liveClasses  LiveClass[]
+  certificates Certificate[]
 
   @@index([deletedAt])
   @@index([isPublished, sortOrder])
@@ -153,25 +140,25 @@ model Course {
 }
 
 model Module {
-  id              String   @id @default(cuid())
-  courseId        String
-  moduleNumber    Int
-  title           String
-  slug            String   @unique
-  description     String
-  icon            String   @default("FileText")
-  color           String   @default("orange")
-  order           Int
-  isPublished     Boolean  @default(false)
-  publishedAt     DateTime?
-  estimatedMinutes Int     @default(30)
-  deletedAt       DateTime?
-  createdById     String?
-  updatedById     String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id               String    @id @default(cuid())
+  courseId         String
+  moduleNumber     Int
+  title            String
+  slug             String    @unique
+  description      String
+  icon             String    @default("FileText")
+  color            String    @default("orange")
+  order            Int
+  isPublished      Boolean   @default(false)
+  publishedAt      DateTime?
+  estimatedMinutes Int       @default(30)
+  deletedAt        DateTime?
+  createdById      String?
+  updatedById      String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
-  course    Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course    Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
   lessons   Lesson[]
   progress  ModuleProgress[]
   resources Resource[]
@@ -182,27 +169,27 @@ model Module {
 }
 
 model Lesson {
-  id              String   @id @default(cuid())
-  moduleId        String
-  lessonNumber    Int
-  title           String
-  slug            String   @unique
-  content         String
-  excerpt         String?
-  type String @default("READING")
-  videoUrl        String?
-  estimatedMinutes Int     @default(10)
-  xpReward        Int      @default(50)
-  isPublished     Boolean  @default(false)
-  publishedAt     DateTime?
-  deletedAt       DateTime?
-  createdById     String?
-  updatedById     String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id               String    @id @default(cuid())
+  moduleId         String
+  lessonNumber     Int
+  title            String
+  slug             String    @unique
+  content          String
+  excerpt          String?
+  type             String    @default("READING")
+  videoUrl         String?
+  estimatedMinutes Int       @default(10)
+  xpReward         Int       @default(50)
+  isPublished      Boolean   @default(false)
+  publishedAt      DateTime?
+  deletedAt        DateTime?
+  createdById      String?
+  updatedById      String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
-  module   Module          @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  author   User?           @relation("LessonAuthor", fields: [createdById], references: [id])
+  module   Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  author   User?            @relation("LessonAuthor", fields: [createdById], references: [id])
   progress LessonProgress[]
   quiz     Quiz?
 
@@ -217,19 +204,19 @@ model Lesson {
 // ============================================================================
 
 model Enrollment {
-  id                 String   @id @default(cuid())
+  id                 String    @id @default(cuid())
   userId             String
   courseId           String
   pricingTierId      String
-  tier String
-  status String @default("ACTIVE")
-  enrolledAt         DateTime @default(now())
+  tier               String
+  status             String    @default("ACTIVE")
+  enrolledAt         DateTime  @default(now())
   completedAt        DateTime?
   cancelledAt        DateTime?
   cancellationReason String?
   deletedAt          DateTime?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   course      Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
@@ -245,18 +232,18 @@ model Enrollment {
 }
 
 model ModuleProgress {
-  id           String         @id @default(cuid())
+  id           String    @id @default(cuid())
   userId       String
   moduleId     String
   enrollmentId String?
-  status String @default("NOT_STARTED")
-  score        Int            @default(0)
-  xpEarned     Int            @default(0)
+  status       String    @default("NOT_STARTED")
+  score        Int       @default(0)
+  xpEarned     Int       @default(0)
   startedAt    DateTime?
   completedAt  DateTime?
   deletedAt    DateTime?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   module     Module      @relation(fields: [moduleId], references: [id], onDelete: Cascade)
@@ -269,17 +256,17 @@ model ModuleProgress {
 }
 
 model LessonProgress {
-  id               String         @id @default(cuid())
+  id               String    @id @default(cuid())
   userId           String
   lessonId         String
-  status String @default("NOT_STARTED")
-  score            Int            @default(0)
-  xpEarned         Int            @default(0)
-  timeSpentSeconds Int            @default(0)
+  status           String    @default("NOT_STARTED")
+  score            Int       @default(0)
+  xpEarned         Int       @default(0)
+  timeSpentSeconds Int       @default(0)
   completedAt      DateTime?
   deletedAt        DateTime?
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
@@ -294,19 +281,19 @@ model LessonProgress {
 // ============================================================================
 
 model Quiz {
-  id               String   @id @default(cuid())
-  lessonId         String   @unique
+  id               String    @id @default(cuid())
+  lessonId         String    @unique
   title            String
-  description      String   @default("")
-  passThreshold    Int      @default(70)
+  description      String    @default("")
+  passThreshold    Int       @default(70)
   timeLimitSeconds Int?
-  isPublished      Boolean  @default(false)
+  isPublished      Boolean   @default(false)
   publishedAt      DateTime?
   deletedAt        DateTime?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
-  lesson    Lesson        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lesson    Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   questions QuizQuestion[]
   attempts  QuizAttempt[]
 
@@ -315,20 +302,20 @@ model Quiz {
 }
 
 model QuizQuestion {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   quizId        String
   order         Int
   question      String
   optionA       String
   optionB       String
   optionC       String
-  optionD       String   @default("")
+  optionD       String    @default("")
   correctAnswer String
-  explanation   String   @default("")
-  points        Int      @default(1)
+  explanation   String    @default("")
+  points        Int       @default(1)
   deletedAt     DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
 
@@ -337,22 +324,22 @@ model QuizQuestion {
 }
 
 model QuizAttempt {
-  id               String        @id @default(cuid())
+  id               String    @id @default(cuid())
   userId           String
   quizId           String
   attemptNumber    Int
-  status String @default("IN_PROGRESS")
+  status           String    @default("IN_PROGRESS")
   answers          String
-  score            Int           @default(0)
-  correctCount     Int           @default(0)
-  totalQuestions   Int           @default(0)
-  xpEarned         Int           @default(0)
-  timeSpentSeconds Int           @default(0)
-  startedAt        DateTime      @default(now())
+  score            Int       @default(0)
+  correctCount     Int       @default(0)
+  totalQuestions   Int       @default(0)
+  xpEarned         Int       @default(0)
+  timeSpentSeconds Int       @default(0)
+  startedAt        DateTime  @default(now())
   completedAt      DateTime?
   deletedAt        DateTime?
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
@@ -368,23 +355,23 @@ model QuizAttempt {
 // ============================================================================
 
 model Badge {
-  id          String        @id @default(cuid())
-  slug        String        @unique
+  id          String    @id @default(cuid())
+  slug        String    @unique
   title       String
   description String
   icon        String
-  category String
-  tier String     @default("BRONZE")
-  xpReward    Int           @default(0)
+  category    String
+  tier        String    @default("BRONZE")
+  xpReward    Int       @default(0)
   criteria    String
-  order       Int           @default(0)
-  isSecret    Boolean       @default(false)
-  isPublished Boolean       @default(true)
+  order       Int       @default(0)
+  isSecret    Boolean   @default(false)
+  isPublished Boolean   @default(true)
   deletedAt   DateTime?
   createdById String?
   updatedById String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   author User?       @relation("BadgeAuthor", fields: [createdById], references: [id])
   awards UserBadge[]
@@ -396,13 +383,13 @@ model Badge {
 }
 
 model UserBadge {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String
   badgeId   String
-  xpEarned  Int      @default(0)
-  earnedAt  DateTime @default(now())
+  xpEarned  Int       @default(0)
+  earnedAt  DateTime  @default(now())
   deletedAt DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
@@ -413,19 +400,19 @@ model UserBadge {
 }
 
 model Certificate {
-  id               String            @id @default(cuid())
+  id               String    @id @default(cuid())
   userId           String
   courseId         String
-  status String @default("ACTIVE")
-  verificationHash String            @unique
+  status           String    @default("ACTIVE")
+  verificationHash String    @unique
   metadata         String?
-  issuedAt         DateTime          @default(now())
+  issuedAt         DateTime  @default(now())
   expiresAt        DateTime?
   revokedAt        DateTime?
   revokedReason    String?
   deletedAt        DateTime?
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   course Course @relation(fields: [courseId], references: [id])
@@ -441,27 +428,27 @@ model Certificate {
 // ============================================================================
 
 model LiveClass {
-  id                 String   @id @default(cuid())
+  id                 String    @id @default(cuid())
   courseId           String
   title              String
   description        String
-  instructorName     String   @default("Ryan Dabao")
+  instructorName     String    @default("Ryan Dabao")
   scheduledAt        DateTime
-  durationMinutes    Int      @default(60)
+  durationMinutes    Int       @default(60)
   meetingUrl         String?
   recordingUrl       String?
-  maxAttendees       Int      @default(50)
-  isPublished        Boolean  @default(false)
+  maxAttendees       Int       @default(50)
+  isPublished        Boolean   @default(false)
   cancelledAt        DateTime?
   cancellationReason String?
   deletedAt          DateTime?
   createdById        String?
   updatedById        String?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
-  course        Course                @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  author        User?                 @relation("LiveClassAuthor", fields: [createdById], references: [id])
+  course        Course                  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  author        User?                   @relation("LiveClassAuthor", fields: [createdById], references: [id])
   registrations LiveClassRegistration[]
 
   @@index([isPublished, scheduledAt])
@@ -471,14 +458,14 @@ model LiveClass {
 }
 
 model LiveClassRegistration {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   liveClassId  String
   userId       String
-  attended     Boolean  @default(false)
-  registeredAt DateTime @default(now())
+  attended     Boolean   @default(false)
+  registeredAt DateTime  @default(now())
   cancelledAt  DateTime?
   deletedAt    DateTime?
-  createdAt    DateTime @default(now())
+  createdAt    DateTime  @default(now())
 
   liveClass LiveClass @relation(fields: [liveClassId], references: [id], onDelete: Cascade)
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -494,19 +481,19 @@ model LiveClassRegistration {
 // ============================================================================
 
 model ToolSession {
-  id               String        @id @default(cuid())
+  id               String    @id @default(cuid())
   userId           String
-  toolType String
+  toolType         String
   scenarioId       String?
-  status String @default("IN_PROGRESS")
+  status           String    @default("IN_PROGRESS")
   state            String
-  score            Int           @default(0)
-  timeSpentSeconds Int           @default(0)
-  startedAt        DateTime      @default(now())
+  score            Int       @default(0)
+  timeSpentSeconds Int       @default(0)
+  startedAt        DateTime  @default(now())
   submittedAt      DateTime?
   deletedAt        DateTime?
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   results ToolResult[]
@@ -518,7 +505,7 @@ model ToolSession {
 }
 
 model ToolResult {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   sessionId    String
   step         Int
   prompt       String
@@ -526,9 +513,9 @@ model ToolResult {
   correct      String
   isCorrect    Boolean
   explanation  String
-  pointsEarned Int      @default(0)
+  pointsEarned Int       @default(0)
   deletedAt    DateTime?
-  createdAt    DateTime @default(now())
+  createdAt    DateTime  @default(now())
 
   session ToolSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
@@ -542,21 +529,21 @@ model ToolResult {
 // ============================================================================
 
 model Resource {
-  id          String       @id @default(cuid())
+  id          String    @id @default(cuid())
   moduleId    String?
   title       String
-  description String       @default("")
-  type String
+  description String    @default("")
+  type        String
   fileUrl     String
   fileSize    Int?
-  isPublished Boolean      @default(false)
+  isPublished Boolean   @default(false)
   publishedAt DateTime?
-  sortOrder   Int          @default(0)
+  sortOrder   Int       @default(0)
   deletedAt   DateTime?
   createdById String?
   updatedById String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   module Module? @relation(fields: [moduleId], references: [id])
   author User?   @relation("ResourceAuthor", fields: [createdById], references: [id])
@@ -572,19 +559,19 @@ model Resource {
 // ============================================================================
 
 model ContentDraft {
-  id           String      @id @default(cuid())
+  id           String    @id @default(cuid())
   lessonId     String?
   title        String
   content      String
-  status String @default("WORKING")
+  status       String    @default("WORKING")
   reviewNotes  String?
   reviewedById String?
   reviewedAt   DateTime?
   deletedAt    DateTime?
   createdById  String?
   updatedById  String?
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   author User? @relation("ContentDraftAuthor", fields: [createdById], references: [id])
 
@@ -599,19 +586,19 @@ model ContentDraft {
 // ============================================================================
 
 model PricingTier {
-  id               String     @id @default(cuid())
-  slug             String     @unique
-  name             String
-  description      String
-  pricePhp         Int
-  tier             String
-  features         String
-  sortOrder        Int        @default(0)
-  isActive         Boolean    @default(true)
+  id                String    @id @default(cuid())
+  slug              String    @unique
+  name              String
+  description       String
+  pricePhp          Int
+  tier              String
+  features          String
+  sortOrder         Int       @default(0)
+  isActive          Boolean   @default(true)
   paymongoProductId String?
-  deletedAt        DateTime?
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
+  deletedAt         DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   enrollments Enrollment[]
   courses     Course[]
@@ -625,19 +612,19 @@ model PricingTier {
 }
 
 model CheckoutSession {
-  id                  String   @id @default(cuid())
+  id                  String    @id @default(cuid())
   userId              String?
   email               String
   pricingTierId       String
-  status String @default("PENDING")
-  paymongoSourceId    String?  @unique
-  paymongoPaymentId   String?  @unique
-  paymongoCheckoutId  String?  @unique
+  status              String    @default("PENDING")
+  paymongoSourceId    String?   @unique
+  paymongoPaymentId   String?   @unique
+  paymongoCheckoutId  String?   @unique
   paymongoCheckoutUrl String?
   paymongoRedirectUrl String?
   amountPhp           Int
   discountCodeId      String?
-  discountAmount      Int      @default(0)
+  discountAmount      Int       @default(0)
   finalAmountPhp      Int
   expiresAt           DateTime
   paidAt              DateTime?
@@ -647,8 +634,8 @@ model CheckoutSession {
   userAgent           String?
   metadata            String?
   deletedAt           DateTime?
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   user         User?         @relation(fields: [userId], references: [id])
   pricingTier  PricingTier   @relation(fields: [pricingTierId], references: [id])
@@ -664,20 +651,20 @@ model CheckoutSession {
 }
 
 model Payment {
-  id                String   @id @default(cuid())
+  id                String    @id @default(cuid())
   userId            String
   pricingTierId     String
-  enrollmentId      String?  @unique
-  checkoutSessionId String?  @unique
-  paymongoPaymentId String?  @unique
+  enrollmentId      String?   @unique
+  checkoutSessionId String?   @unique
+  paymongoPaymentId String?   @unique
   paymongoSourceId  String?
   paymongoChargeId  String?
   amountPhp         Int
-  feePhp            Int      @default(0)
+  feePhp            Int       @default(0)
   netAmountPhp      Int
-  currency          String   @default("PHP")
-  method String
-  status String @default("PENDING")
+  currency          String    @default("PHP")
+  method            String
+  status            String    @default("PENDING")
   paidAt            DateTime?
   refundedAt        DateTime?
   refundAmountPhp   Int?
@@ -686,8 +673,8 @@ model Payment {
   invoiceUrl        String?
   metadata          String?
   deletedAt         DateTime?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   user            User             @relation(fields: [userId], references: [id])
   pricingTier     PricingTier      @relation(fields: [pricingTierId], references: [id])
@@ -704,23 +691,23 @@ model Payment {
 }
 
 model DiscountCode {
-  id             String   @id @default(cuid())
-  code           String   @unique
+  id             String    @id @default(cuid())
+  code           String    @unique
   description    String
-  type String
+  type           String
   value          Int
   maxUses        Int?
-  currentUses    Int      @default(0)
-  minPurchasePhp Int      @default(0)
+  currentUses    Int       @default(0)
+  minPurchasePhp Int       @default(0)
   startsAt       DateTime
   expiresAt      DateTime
-  isActive       Boolean  @default(true)
+  isActive       Boolean   @default(true)
   createdById    String
   deletedAt      DateTime?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  createdBy User             @relation(fields: [createdById], references: [id])
+  createdBy User              @relation(fields: [createdById], references: [id])
   tiers     DiscountTier[]
   checkouts CheckoutSession[]
 
@@ -741,26 +728,26 @@ model DiscountTier {
 }
 
 model RefundRequest {
-  id              String   @id @default(cuid())
-  userId          String
-  paymentId       String
-  reason          String
-  amountPhp       Int
-  status String   @default("PENDING")
-  reviewedById    String?
-  reviewedAt      DateTime?
-  reviewerNotes   String?
+  id               String    @id @default(cuid())
+  userId           String
+  paymentId        String
+  reason           String
+  amountPhp        Int
+  status           String    @default("PENDING")
+  reviewedById     String?
+  reviewedAt       DateTime?
+  reviewerNotes    String?
   paymongoRefundId String?
-  processedAt     DateTime?
-  failedAt        DateTime?
-  failureReason   String?
-  deletedAt       DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  processedAt      DateTime?
+  failedAt         DateTime?
+  failureReason    String?
+  deletedAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
-  user       User     @relation(fields: [userId], references: [id])
-  payment    Payment  @relation(fields: [paymentId], references: [id])
-  reviewedBy User?    @relation("RefundReviewer", fields: [reviewedById], references: [id])
+  user       User    @relation(fields: [userId], references: [id])
+  payment    Payment @relation(fields: [paymentId], references: [id])
+  reviewedBy User?   @relation("RefundReviewer", fields: [reviewedById], references: [id])
 
   @@index([userId])
   @@index([status])
@@ -773,18 +760,18 @@ model RefundRequest {
 // ============================================================================
 
 model ProcessedWebhook {
-  id              String   @id @default(cuid())
+  id               String   @id @default(cuid())
   // PayMongo event id (data.id from webhook payload). Unique → idempotency.
-  paymongoEventId String   @unique
-  eventType       String
+  paymongoEventId  String   @unique
+  eventType        String
   // Resource type the event is about ("checkout_session", "payment", etc).
-  resourceType    String?
-  resourceId      String?
+  resourceType     String?
+  resourceId       String?
   // Raw response from the handler — kept for debugging failed idempotent retries.
   processingResult String?
-  httpStatus      Int      @default(200)
-  processedAt     DateTime @default(now())
-  createdAt       DateTime @default(now())
+  httpStatus       Int      @default(200)
+  processedAt      DateTime @default(now())
+  createdAt        DateTime @default(now())
 
   @@index([eventType, processedAt])
   @@index([resourceType, resourceId])
@@ -796,25 +783,25 @@ model ProcessedWebhook {
 // ============================================================================
 
 model Invoice {
-  id           String   @id @default(cuid())
+  id                  String    @id @default(cuid())
   // Sequential number formatted as zero-padded 5-digit string ("00001", "00002").
-  number       String   @unique
-  paymentId    String   @unique
-  userId       String
+  number              String    @unique
+  paymentId           String    @unique
+  userId              String
   // BIR-required fields.
-  businessTin  String   @default("000-000-000-000")
-  businessName String   @default("AMPH Academy")
-  businessAddress String @default("Philippines")
+  businessTin         String    @default("000-000-000-000")
+  businessName        String    @default("AMPH Academy")
+  businessAddress     String    @default("Philippines")
   // Amounts stored as centavos.
   grossAmountCentavos Int
   vatAmountCentavos   Int
   netAmountCentavos   Int
   // Optional PDF URL once generated in Sprint 8 (Resend + @react-pdf).
-  pdfUrl       String?
-  issuedAt     DateTime @default(now())
-  deletedAt    DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  pdfUrl              String?
+  issuedAt            DateTime  @default(now())
+  deletedAt           DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   payment Payment @relation(fields: [paymentId], references: [id])
 
@@ -850,13 +837,13 @@ model AuditLog {
 // ============================================================================
 
 model TeamMember {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String
-  role String @default("MEMBER")
-  joinedAt  DateTime @default(now())
+  role      String    @default("MEMBER")
+  joinedAt  DateTime  @default(now())
   deletedAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -867,22 +854,3 @@ model TeamMember {
 // ============================================================================
 // ENUMS
 // ============================================================================
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

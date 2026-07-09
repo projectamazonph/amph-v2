@@ -6,20 +6,20 @@
 
 ## Goal
 
-Fix the CI pipeline so it actually runs against this codebase, and add Playwright configuration for E2E testing.
+Ensure CI runs PostgreSQL correctly (database name updated to `amph_v2_test`), and add Playwright configuration for E2E testing.
 
-## Why First
+## Context
 
-CI is currently broken — it provisions a PostgreSQL service but the project uses SQLite. No tests can be validated in CI until this is fixed. Playwright has no config file, so `pnpm test:e2e` fails.
+CI already had PostgreSQL service configured. The fix was: schema switched from SQLite to PostgreSQL, CI database name aligned to `amph_v2_test`, and `DATABASE_URL` updated in `.env` / `.env.local` / `.env.example`.
 
 ## Acceptance Criteria
 
-- [ ] `.github/workflows/ci.yml` — PostgreSQL service removed entirely
-- [ ] CI uses SQLite in-memory for Prisma (`DATABASE_URL="file:memory:"` or `file:./test.db`)
-- [ ] `DATABASE_URL` env var in CI points to SQLite, not PostgreSQL
+- [x] `prisma/schema.prisma` — provider is `postgresql` (not `sqlite`)
+- [x] `.env` / `.env.local` / `.env.example` — `DATABASE_URL` uses PostgreSQL connection string
+- [x] `.github/workflows/ci.yml` — PostgreSQL service with `amph_v2_test` database
 - [ ] `playwright.config.ts` exists at project root with:
   - `baseURL: 'http://localhost:3000'`
-  - Chromium-only (no Firefox/Safari needed at this stage)
+  - Chromium-only
   - Web server: `pnpm dev` with `url` check
   - Timeout: 30s per test
   - Retries: 1 on CI
@@ -28,24 +28,26 @@ CI is currently broken — it provisions a PostgreSQL service but the project us
 
 ## Files to Touch
 
-- `.github/workflows/ci.yml` — remove postgres service, fix DATABASE_URL
-- `playwright.config.ts` — new file
+- `prisma/schema.prisma` — ✅ done (provider = postgresql)
+- `.env` / `.env.local` / `.env.example` — ✅ done
+- `.github/workflows/ci.yml` — ✅ done (database name updated)
+- `playwright.config.ts` — new file (TODO)
 
 ## Verification
 
 ```bash
-# CI config validated
-cat .github/workflows/ci.yml | grep -c postgres  # should be 0
+# Schema validated
+pnpm prisma format --check && pnpm prisma validate
 
-# Playwright config exists and is valid
+# CI config has no SQLite references
+cat .github/workflows/ci.yml | grep -c sqlite  # should be 0
+
+# Playwright config exists
 npx playwright test --list 2>&1 | head -5
-
-# Full CI dry-run (local)
-pnpm test && pnpm lint && pnpm typecheck
 ```
 
 ## Pitfalls
 
-- CI DATABASE_URL must use `file:./test.db` not `file:memory:` — Prisma SQLite in-memory needs `?connection_limit=1` and doesn't work well with migrations in CI
-- `playwright.config.ts` `baseURL` must match what `pnpm dev` serves (port 3000)
-- Don't remove the `gitleaks` step — it's already working
+- PostgreSQL must be running locally or use a remote connection string
+- `prisma migrate dev` creates PostgreSQL-compatible migrations (no `AUTOINCREMENT`)
+- CI PostgreSQL service uses `test:test` credentials — match `DATABASE_URL`
