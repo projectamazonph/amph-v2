@@ -33,6 +33,7 @@ import {
   alreadyRefundedAmountPhp,
   PAYMONGO_REFUND_REASON,
 } from '@/lib/refunds';
+import { sendRefundStatusEmail } from '@/lib/email';
 
 // ---------------------------------------------------------------------------
 // Student: create refund request
@@ -64,6 +65,7 @@ export const createRefundRequestAction = createSafeAction<
       amountPhp: true,
       paidAt: true,
       status: true,
+      pricingTier: { select: { name: true } },
     },
   });
 
@@ -103,6 +105,20 @@ export const createRefundRequestAction = createSafeAction<
 
   revalidatePath('/dashboard/payments');
   revalidatePath('/admin/refunds');
+
+  const userData = await db.user.findUnique({
+    where: { id: user.id },
+    select: { email: true, name: true },
+  });
+
+  sendRefundStatusEmail({
+    to: userData!.email,
+    studentName: userData!.name ?? 'Student',
+    status: 'requested',
+    tierName: payment.pricingTier?.name ?? 'your course',
+    amountPhp: refundAmountPhp,
+    reason: data.reason.trim(),
+  }).catch(() => {});
 
   return { requestId: request.id };
 });
@@ -147,12 +163,14 @@ export async function approveRefundAction(
       id: true,
       status: true,
       amountPhp: true,
+      user: { select: { email: true, name: true } },
       payment: {
         select: {
           id: true,
           paymongoPaymentId: true,
           amountPhp: true,
           status: true,
+          pricingTier: { select: { name: true } },
         },
       },
     },
@@ -247,6 +265,15 @@ export async function approveRefundAction(
   revalidatePath(`/admin/refunds/${request.id}`);
   revalidatePath('/dashboard/payments');
 
+  sendRefundStatusEmail({
+    to: request.user.email,
+    studentName: request.user.name ?? 'Student',
+    status: 'approved',
+    tierName: request.payment.pricingTier?.name ?? 'your course',
+    amountPhp: request.amountPhp,
+    paymongoRefundId,
+  }).catch(() => {});
+
   return {
     success: true,
     data: { requestId: request.id, status: 'PROCESSED', paymongoRefundId },
@@ -290,6 +317,30 @@ export async function rejectRefundAction(
 
   if (result.count === 0) {
     return { success: false, error: 'Request is no longer pending.' };
+  }
+
+  const refundRequest = await db.refundRequest.findUnique({
+    where: { id: requestId },
+    select: {
+      amountPhp: true,
+      user: { select: { email: true, name: true } },
+      payment: {
+        select: {
+          pricingTier: { select: { name: true } },
+        },
+      },
+    },
+  });
+
+  if (refundRequest) {
+    sendRefundStatusEmail({
+      to: refundRequest.user.email,
+      studentName: refundRequest.user.name ?? 'Student',
+      status: 'rejected',
+      tierName: refundRequest.payment.pricingTier?.name ?? 'your course',
+      amountPhp: refundRequest.amountPhp,
+      reviewerNotes,
+    }).catch(() => {});
   }
 
   revalidatePath('/admin/refunds');

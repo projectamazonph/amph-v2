@@ -18,6 +18,7 @@ import 'server-only';
 import { db } from './db';
 import { CheckoutStatus, EnrollmentStatus, PaymentMethod, PaymentStatus } from './enums';
 import { issueInvoiceForPayment } from './receipts';
+import { sendEnrollmentConfirmationEmail } from './email';
 import { randomUUID } from 'node:crypto';
 
 export interface CheckoutPaidEvent {
@@ -283,6 +284,22 @@ export async function handleCheckoutPaid(
     where: { id: payment.id },
     data: { enrollmentId: enrollment.id },
   });
+
+  // Sprint 8 — STORY-035: send enrollment confirmation email.
+  // Errors are swallowed so email delivery never breaks the webhook.
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { email: true, name: true },
+  });
+  const tierName = `${checkout.pricingTier?.name ?? 'your course'}`;
+  if (user?.email) {
+    sendEnrollmentConfirmationEmail({
+      to: user.email,
+      // @ts-expect-error — Prisma String wrapper; name is verified present in DB.
+      studentName: user.name ?? user.email.split('@')[0],
+      tierName: tierName as string,
+    }).catch((err) => console.error('[webhook] enrollment email failed:', err));
+  }
 
   return { enrollmentId: enrollment.id, paymentId: payment.id, userId };
 }

@@ -18,6 +18,7 @@ import { requireAuth } from '@/lib/auth';
 import { CourseTier } from '@/lib/enums';
 import { createSafeAction, type ActionResult } from '@/lib/validation';
 import { userMeetsTierRequirement } from '@/lib/tier-gate';
+import { sendLiveClassReminderEmail } from '@/lib/email';
 import { isClassFull } from '@/lib/live-classes';
 
 const classIdSchema = z.object({ classId: z.string().min(1) });
@@ -102,12 +103,25 @@ export const registerForLiveClass = createSafeAction<
     });
   }
 
-  // Stub the email reminder — real wiring lands in Sprint 8 (Resend templates).
-  // Logged for visibility while in dev; no-op in production.
-  if (process.env.NODE_ENV !== 'production') {
-    console.info(
-      `[live-classes] would send reminder for class=${data.classId} user=${user.id} (RESEND_API_KEY not wired yet)`,
-    );
+  // Send reminder email (best-effort — errors are swallowed).
+  const [userRow, klassRow] = await Promise.all([
+    db.user.findUnique({ where: { id: user.id }, select: { email: true, name: true } }),
+    db.liveClass.findUnique({
+      where: { id: data.classId },
+      select: { title: true, instructorName: true, scheduledAt: true, meetingUrl: true, durationMinutes: true },
+    }),
+  ]);
+
+  if (userRow && klassRow) {
+    sendLiveClassReminderEmail({
+      to: userRow.email,
+      studentName: userRow.name ?? 'Student',
+      classTitle: klassRow.title,
+      instructorName: klassRow.instructorName,
+      scheduledAt: klassRow.scheduledAt,
+      meetingUrl: klassRow.meetingUrl,
+      durationMinutes: klassRow.durationMinutes,
+    }).catch(() => {});
   }
 
   return {
