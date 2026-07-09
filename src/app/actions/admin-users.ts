@@ -3,11 +3,17 @@
 import { db } from '@/lib/db';
 import { auditLog } from '@/lib/admin-audit';
 import { revalidatePath } from 'next/cache';
+import { requireAdmin } from '@/lib/auth';
+
+async function adminGuard() {
+  await requireAdmin();
+}
 
 export async function updateUserAction(
   userId: string,
   data: { name?: string; role?: 'ADMIN' | 'USER' }
 ) {
+  await adminGuard();
   const updated = await db.user.update({
     where: { id: userId },
     data: { name: data.name },
@@ -29,6 +35,7 @@ export async function updateUserAction(
 }
 
 export async function suspendUserAction(userId: string) {
+  await adminGuard();
   await db.user.update({
     where: { id: userId },
     data: { status: 'SUSPENDED' },
@@ -43,6 +50,7 @@ export async function suspendUserAction(userId: string) {
 }
 
 export async function reactivateUserAction(userId: string) {
+  await adminGuard();
   await db.user.update({
     where: { id: userId },
     data: { status: 'ACTIVE' },
@@ -57,6 +65,7 @@ export async function reactivateUserAction(userId: string) {
 }
 
 export async function deleteUserAction(userId: string) {
+  await adminGuard();
   await db.user.update({
     where: { id: userId },
     data: { status: 'DELETED', deletedAt: new Date() },

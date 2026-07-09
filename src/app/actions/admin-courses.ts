@@ -3,6 +3,11 @@
 import { db } from '@/lib/db';
 import { auditLog } from '@/lib/admin-audit';
 import { revalidatePath } from 'next/cache';
+import { requireAdmin } from '@/lib/auth';
+
+async function adminGuard() {
+  await requireAdmin();
+}
 
 export async function updateCourseAction(courseId: string, data: {
   title?: string;
@@ -10,6 +15,7 @@ export async function updateCourseAction(courseId: string, data: {
   isPublished?: boolean;
   sortOrder?: number;
 }) {
+  await adminGuard();
   await db.course.update({ where: { id: courseId }, data });
   await auditLog({ action: 'UPDATE_COURSE', entityType: 'Course', entityId: courseId, metadata: { fields: Object.keys(data) } });
   revalidatePath(`/admin/courses/${courseId}`);
@@ -20,6 +26,7 @@ export async function addModuleAction(courseId: string, data: {
   title: string;
   description?: string;
 }) {
+  await adminGuard();
   const lastModule = await db.module.findFirst({
     where: { courseId },
     orderBy: { moduleNumber: 'desc' },
