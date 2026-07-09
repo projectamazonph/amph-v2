@@ -237,8 +237,6 @@ completed_stories:
     sprint: 8
     epic: "Email"
     owner: "Ryan"
-
-planned_stories:
   - id: "STORY-038"
     title: "Design-system audit + token purge pass"
     points: 1
@@ -270,6 +268,8 @@ planned_stories:
     epic: "Mobile"
     owner: "Ryan"
 
+planned_stories: []
+
 sprint_8_notes: >
   Sprint 8 closed 2026-07-11 (commit 1414754). Wired transactional emails (Resend + React Email):
   enrollment confirmation on payment webhook, live class reminder on registration, refund status
@@ -277,9 +277,10 @@ sprint_8_notes: >
   Refund flow shipped end-to-end (student request → admin approve/reject → email + DB update).
 
 sprint_9_notes: >
-  Sprint 9 plan: 5 pts / 5 stories. Polish + mobile-first refactor. Closes design-system
-  debt (STORY-038 audit + Tailwind purge + ESLint rules), establishes responsive foundation
-  (STORY-039 tokens + breakpoints + helper classes), ships shared mobile shell
-  (STORY-040 BottomNav), then refactors 12 pages across marketing+auth (STORY-041) and
-  student-app (STORY-042) clusters. See docs/sprint-9/PLAN.md and docs/stories/STORY-03[8-9].md
-  through STORY-042.md for full story bodies.
+  Sprint 9 completed 2026-07-12. All 5 stories done: design system audit (email template
+  exception added to no-tailwind ESLint rule), responsive breakpoint infrastructure
+  (--bp-sm/md/lg/xl + --side-pad + --max-* in globals.css, 3 helper classes), BottomNav
+  component (4-slot, mobile-only, safe-area-inset), marketing+auth mobile-first refactor
+  (landing page rewrite, pricing grid, auth/checkout padding), student app shell refactor
+  (dashboard stats grid, tools grid, certificates/payments token fixes, BottomNav on
+  dashboard/tools). All pages render at 390px and 1280px. Lint clean. 7 commits.
