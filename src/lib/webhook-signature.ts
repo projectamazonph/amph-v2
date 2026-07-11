@@ -28,10 +28,7 @@ interface ParsedSignature {
  * Parse the comma-separated header into its parts. Robust to whitespace
  * and missing pieces — any missing required piece returns null fields.
  */
-function parseSignatureHeader(header: string | null): ParsedSignature {
-  if (!header) {
-    return { timestamp: null, testSignature: null, liveSignature: null };
-  }
+function parseSignatureHeader(header: string): ParsedSignature {
   const parts: Record<string, string> = {};
   for (const segment of header.split(',')) {
     const [k, v] = segment.split('=');

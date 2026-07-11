@@ -81,7 +81,8 @@ type ReadOp =
   | 'aggregate'
   | 'groupBy';
 
-function injectDeletedAtFilter(params: Record<string, unknown>): void {
+/** @visibleForTesting */
+export function injectDeletedAtFilter(params: Record<string, unknown>): void {
   if (!params) params = {};
   const where = (params.where as Record<string, unknown> | undefined) ?? {};
 
