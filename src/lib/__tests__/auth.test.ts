@@ -1,8 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { hashPassword, verifyPassword, signToken, verifyToken, AUTH_COOKIE_NAME, AUTH_TOKEN_TTL_SECONDS } from '@/lib/auth';
 
+// auth.ts imports db.ts at module level (PrismaClient). None of the tested
+// functions (hash, verify, sign, verify) touch the database — but the import
+// chain forces PrismaClient to initialise. We mock db to prevent that.
+vi.mock('@/lib/db', () => ({ db: {} }));
+
 describe('auth.ts', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     process.env.JWT_SECRET = 'test-secret-min-32-characters-long-aaaaaaaa';
   });
 

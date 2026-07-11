@@ -41,9 +41,9 @@ vi.mock('next/navigation', () => ({
   redirect: vi.fn(),
 }))
 
-// Mock getSession to return a test user - this is what requireAuth calls internally
 vi.mock('@/lib/auth', () => ({
   getSession: vi.fn().mockResolvedValue({ id: 'u1', email: 'test@test.com', name: 'Test', role: 'STUDENT', xp: 0, level: 1, streakDays: 0 }),
+  requireAuth: vi.fn().mockResolvedValue({ id: 'u1', email: 'test@test.com', name: 'Test', role: 'STUDENT', xp: 0, level: 1, streakDays: 0 }),
 }));
 
 import { db } from '@/lib/db';
@@ -51,7 +51,7 @@ import { saveToolSession, loadToolSession } from '@/app/actions/tools';
 
 describe('tool session actions', () => {
   beforeEach(() => {
-    vi.resetAllMocks();
+    vi.clearAllMocks();
     mockGetScenario.mockReturnValue({ id: 's1', name: 'Scenario 1' });
   });
 

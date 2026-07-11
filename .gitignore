@@ -64,5 +64,8 @@ prisma/dev.db
 prisma/dev.db-journal
 prisma/prisma/
 
+# CodeGraph (regeneratable index)
+.codegraph/
+
 # Local env (contains JWT_SECRET)
 .env
