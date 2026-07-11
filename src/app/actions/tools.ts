@@ -208,36 +208,5 @@ export async function loadToolSession(sessionId: string): Promise<unknown | null
   }
 }
 
-export async function listRecentSessions(toolType?: ToolType): Promise<
-  Array<{ id: string; toolType: ToolType; scenarioId: string | null; status: string; score: number; submittedAt: Date | null }>
-> {
-  const user = await requireAuth();
-  const sessions = await db.toolSession.findMany({
-    where: {
-      userId: user.id,
-      ...(toolType ? { toolType } : {}),
-      status: { in: ['SUBMITTED', 'GRADED'] },
-    },
-    orderBy: { submittedAt: 'desc' },
-    take: 10,
-    select: {
-      id: true,
-      toolType: true,
-      scenarioId: true,
-      status: true,
-      score: true,
-      submittedAt: true,
-    },
-  });
-  return sessions.map((s) => ({
-    id: s.id,
-    toolType: s.toolType as ToolType,
-    scenarioId: s.scenarioId,
-    status: s.status,
-    score: s.score,
-    submittedAt: s.submittedAt,
-  }));
-}
-
 // Re-export ActionResult for callers
 export type { ActionResult };

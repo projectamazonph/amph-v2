@@ -94,13 +94,13 @@ function scanFile(filePath: string): Violation[] {
   const lines = content.split('\n');
 
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
+    const line = lines[i]!;
     const lineNum = i + 1;
 
     // Check for Tailwind classes in className
     const classNameMatch = line.match(/className=["'`]([^"'`]*?)["'`]/);
     if (classNameMatch) {
-      const classes = classNameMatch[1].split(/\s+/);
+      const classes = classNameMatch[1]!.split(/\s+/);
       for (const cls of classes) {
         if (TAILWIND_REPLACEMENTS[cls]) {
           violations.push({

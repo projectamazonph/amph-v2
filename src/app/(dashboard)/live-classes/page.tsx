@@ -131,7 +131,7 @@ export default async function LiveClassesIndexPage() {
               </CardDescription>
             </CardHeader>
             <div className={styles.upgradeActions}>
-              <Link href="/upgrade">
+              <Link href="/pricing">
                 <Button variant="primary" leftIcon={<Icon name="ArrowRight" />}>
                   See the Ultimate tier
                 </Button>

@@ -166,8 +166,8 @@ describe('pricing.ts', () => {
       ]);
       const tiers = await getTierDisplay();
       expect(tiers).toHaveLength(1);
-      expect(tiers[0].slug).toBe('foundations');
-      expect(tiers[0].features).toEqual({ bullets: [] });
+      expect(tiers[0]!.slug).toBe('foundations');
+      expect(tiers[0]!.features).toEqual({ bullets: [] });
     });
 
     it('defaults to empty object when features is null', async () => {
@@ -175,7 +175,7 @@ describe('pricing.ts', () => {
         { id: 't1', slug: 'foundations', name: 'Foundations', description: 'x', pricePhp: 2999, tier: CourseTier.PPC_FOUNDATIONS, features: null, sortOrder: 0, isActive: true, deletedAt: null },
       ]);
       const tiers = await getTierDisplay();
-      expect(tiers[0].features).toEqual({});
+      expect(tiers[0]!.features).toEqual({});
     });
   });
 });

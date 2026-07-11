@@ -59,7 +59,7 @@ describe('tool session actions', () => {
     (db.toolSession.findUnique as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(null);
     const result = await saveToolSession({ sessionId: 'missing', state: {} });
     expect(result.success).toBe(false);
-    expect(result.error).toBe('Session not found.');
+    if (!result.success) expect(result.error).toBe('Session not found.');
   });
 
   it('saveToolSession rejects forbidden owner', async () => {
@@ -69,7 +69,7 @@ describe('tool session actions', () => {
     // getSession mock returns u1, but session has userId: 'other' -> Forbidden
     const result = await saveToolSession({ sessionId: 's1', state: {} });
     expect(result.success).toBe(false);
-    expect(result.error).toBe('Forbidden.');
+    if (!result.success) expect(result.error).toBe('Forbidden.');
   });
 
   it('loadToolSession returns null for missing session', async () => {

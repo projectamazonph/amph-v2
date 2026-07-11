@@ -22,7 +22,6 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { CheckoutStatus } from '@/lib/enums';
 import {
   createCheckoutSessionAtomic,
   validateDiscountCode,
@@ -30,9 +29,7 @@ import {
   type DiscountValidationResult,
 } from '@/lib/pricing';
 import {
-  isTestMode,
   createSource,
-  createPaymentFromSource,
   type CreateSourceInput,
   type PayMongoSource,
   PayMongoError,
@@ -40,7 +37,6 @@ import {
 import { getSession } from '@/lib/auth';
 import { createSafeAction, type ActionResult } from '@/lib/validation';
 import { z } from 'zod';
-import { redirect } from 'next/navigation';
 
 // ---------------------------------------------------------------------------
 // Input schema
@@ -187,66 +183,8 @@ export async function createCheckoutSessionAction(
   return {
     success: true as const,
     data: {
-      checkoutUrl: source.redirectUrl ?? '/checkout?error=no-url',
+      checkoutUrl: source.redirectUrl ?? '/pricing?error=checkout-failed',
       sessionId: checkoutSessionId,
     },
   };
 }
-
-// ---------------------------------------------------------------------------
-// Source attach (called by webhook, not client)
-// ---------------------------------------------------------------------------
-
-/**
- * Called by the webhook handler after receiving `source.chargeable` from
- * PayMongo. Converts a chargeable source into a paid Payment.
- *
- * This is NOT exposed to client code — do not call from components.
- */
-export async function attachSourceAction(
-  sourceId: string,
-): Promise<ActionResult<{ paymentId: string }>> {
-  const checkout = await db.checkoutSession.findFirst({
-    where: { paymongoSourceId: sourceId },
-    include: { pricingTier: true },
-  });
-  if (!checkout) {
-    return { success: false as const, error: 'Checkout session not found.' };
-  }
-
-  const input: Parameters<typeof createPaymentFromSource>[0] = {
-    amountCentavos: checkout.finalAmountPhp,
-    sourceId,
-    description: `${checkout.pricingTier.name} enrollment`,
-    metadata: {
-      pricingTierId: checkout.pricingTierId,
-      tierSlug: checkout.pricingTier.slug,
-      userId: checkout.userId ?? 'guest',
-      email: checkout.email,
-    },
-  };
-
-  try {
-    const payment = await createPaymentFromSource(input);
-    await db.checkoutSession.update({
-      where: { id: checkout.id },
-      data: {
-        paymongoPaymentId: payment.id,
-        status: CheckoutStatus.PAID,
-        paidAt: new Date(),
-      },
-    });
-    return { success: true as const, data: { paymentId: payment.id } };
-  } catch (err) {
-    if (err instanceof PayMongoError) {
-      return { success: false as const, error: `Payment failed: ${err.message}` };
-    }
-    return { success: false as const, error: 'Payment processing failed.' };
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Tier display helper (re-exported for PricingClient)
-// ---------------------------------------------------------------------------
-
-export const getTiers = getTierDisplay;

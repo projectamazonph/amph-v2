@@ -46,7 +46,7 @@ export default async function CertificatePage({ params }: PageProps) {
             </CardDescription>
           </CardHeader>
           <div className={styles.actions}>
-            <Link href="/upgrade">
+            <Link href="/pricing">
               <Button variant="primary">View tiers</Button>
             </Link>
           </div>
@@ -121,7 +121,7 @@ export default async function CertificatePage({ params }: PageProps) {
         {verificationHash ? (
           <div className={styles.actions}>
             <a
-              href={`/dashboard/certificates/${verificationHash}/pdf`}
+              href={`/certificates/${verificationHash}/pdf`}
               target="_blank"
               rel="noopener"
             >
@@ -132,13 +132,13 @@ export default async function CertificatePage({ params }: PageProps) {
             <a href={`/verify/${verificationHash}`} target="_blank" rel="noopener">
               <Button variant="secondary">Public verify link</Button>
             </a>
-            <Link href="/dashboard/certificates">
+            <Link href="/certificates">
               <Button variant="ghost">All my certificates</Button>
             </Link>
           </div>
         ) : (
           <div className={styles.actions}>
-            <Link href={`/dashboard/courses/${courseSlug}`}>
+            <Link href={`/courses/${courseSlug}`}>
               <Button variant="primary" leftIcon={<Icon name="ArrowRight" />}>
                 Back to course
               </Button>

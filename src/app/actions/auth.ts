@@ -170,8 +170,3 @@ export async function signOutFormAction(): Promise<void> {
   await signOutAction();
   redirect('/');
 }
-
-// Convenience for sign-out button
-export async function getCurrentUser() {
-  return getSession();
-}

@@ -47,7 +47,7 @@ describe('tier-gate.ts', () => {
     (db.enrollment.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([]);
     const result = await evaluateCourseAccess('user-1', 'paid');
     expect(result.allowed).toBe(false);
-    expect(result.reason).toBe('no-enrollment');
+    if (!result.allowed) expect(result.reason).toBe('no-enrollment');
   });
 
   it('allows when user has equal tier', async () => {
@@ -71,7 +71,7 @@ describe('tier-gate.ts', () => {
     ]);
     const result = await evaluateCourseAccess('user-1', 'ultimate');
     expect(result.allowed).toBe(false);
-    expect(result.reason).toBe('tier-insufficient');
+    if (!result.allowed) expect(result.reason).toBe('tier-insufficient');
   });
 
   it('allows when highest tier satisfies requirement', async () => {

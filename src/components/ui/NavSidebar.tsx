@@ -15,11 +15,9 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/admin', label: 'Dashboard', icon: 'House' },
   { href: '/admin/users', label: 'Users', icon: 'User' },
   { href: '/admin/courses', label: 'Courses', icon: 'BookOpen' },
-  { href: '/admin/badges', label: 'Badges', icon: 'Trophy' },
-  { href: '/admin/live-classes', label: 'Live classes', icon: 'Calendar' },
-  { href: '/admin/payments', label: 'Payments', icon: 'CreditCard' },
   { href: '/admin/refunds', label: 'Refunds', icon: 'Receipt' },
-  { href: '/admin/settings', label: 'Settings', icon: 'Gear' },
+  { href: '/admin/tool-scenarios', label: 'Tool scenarios', icon: 'List' },
+  { href: '/admin/analytics', label: 'Analytics', icon: 'ChartLine' },
 ];
 
 export function NavSidebar() {

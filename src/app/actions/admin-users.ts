@@ -9,31 +9,6 @@ async function adminGuard() {
   await requireAdmin();
 }
 
-export async function updateUserAction(
-  userId: string,
-  data: { name?: string; role?: 'ADMIN' | 'USER' }
-) {
-  await adminGuard();
-  const updated = await db.user.update({
-    where: { id: userId },
-    data: { name: data.name },
-  });
-  if (data.role) {
-    await db.user.update({
-      where: { id: userId },
-      data: { role: data.role },
-    });
-  }
-  await auditLog({
-    action: 'UPDATE_USER',
-    entityType: 'User',
-    entityId: userId,
-    metadata: { fields: Object.keys(data) },
-  });
-  revalidatePath(`/admin/users/${userId}`);
-  revalidatePath('/admin/users');
-}
-
 export async function suspendUserAction(userId: string) {
   await adminGuard();
   await db.user.update({

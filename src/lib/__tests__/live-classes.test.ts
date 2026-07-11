@@ -59,8 +59,8 @@ describe('live-classes.ts', () => {
         }),
       );
       expect(result).toHaveLength(1);
-      expect(result[0].registrationCount).toBe(2);
-      expect(result[0].isUserRegistered).toBeNull();
+      expect(result[0]!.registrationCount).toBe(2);
+      expect(result[0]!.isUserRegistered).toBeNull();
     });
 
     it('sets isUserRegistered when userId is provided', async () => {
@@ -68,7 +68,7 @@ describe('live-classes.ts', () => {
       mockFindMany.mockResolvedValue([klass]);
 
       const result = await listUpcomingClasses('u1');
-      expect(result[0].isUserRegistered).toBe(true);
+      expect(result[0]!.isUserRegistered).toBe(true);
     });
 
     it('sets isUserRegistered to false when user not registered', async () => {
@@ -76,7 +76,7 @@ describe('live-classes.ts', () => {
       mockFindMany.mockResolvedValue([klass]);
 
       const result = await listUpcomingClasses('u1');
-      expect(result[0].isUserRegistered).toBe(false);
+      expect(result[0]!.isUserRegistered).toBe(false);
     });
 
     it('returns empty array when no upcoming classes', async () => {
@@ -110,7 +110,7 @@ describe('live-classes.ts', () => {
       mockFindMany.mockResolvedValue([klass]);
 
       const result = await listPastClasses('u1');
-      expect(result[0].isUserRegistered).toBe(true);
+      expect(result[0]!.isUserRegistered).toBe(true);
     });
 
     it('sets isUserRegistered to false when user not registered', async () => {
@@ -118,7 +118,7 @@ describe('live-classes.ts', () => {
       mockFindMany.mockResolvedValue([klass]);
 
       const result = await listPastClasses('u1');
-      expect(result[0].isUserRegistered).toBe(false);
+      expect(result[0]!.isUserRegistered).toBe(false);
     });
   });
 

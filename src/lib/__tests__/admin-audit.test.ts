@@ -56,7 +56,7 @@ describe('admin-audit.ts', () => {
       metadata: { field: 'title', old: 'Old', new: 'New' },
     });
 
-    const call = (db.auditLog.create as unknown as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    const call = (db.auditLog.create as unknown as ReturnType<typeof vi.fn>).mock.calls[0]![0];
     expect(JSON.parse(call.data.metadata)).toEqual({ field: 'title', old: 'Old', new: 'New' });
   });
 
@@ -72,7 +72,7 @@ describe('admin-audit.ts', () => {
 
     await auditLog({ action: 'LOGIN', entityType: 'Session', entityId: 's1' });
 
-    const call = (db.auditLog.create as unknown as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    const call = (db.auditLog.create as unknown as ReturnType<typeof vi.fn>).mock.calls[0]![0];
     expect(call.data.ipAddress).toBe('192.168.1.1');
     expect(call.data.userAgent).toBe('TestAgent/1.0');
   });

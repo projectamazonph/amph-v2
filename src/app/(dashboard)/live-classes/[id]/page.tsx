@@ -174,7 +174,7 @@ export default async function LiveClassDetailPage({ params }: PageProps) {
             )}
 
             {!tierCheck.allowed && !klass.isUserRegistered && (
-              <Link href="/upgrade" className={detailStyles.upgradeLink}>
+              <Link href="/pricing" className={detailStyles.upgradeLink}>
                 See the Ultimate tier →
               </Link>
             )}

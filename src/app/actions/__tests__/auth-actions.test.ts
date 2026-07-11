@@ -46,7 +46,7 @@ describe('auth actions', () => {
     (db.user.findUnique as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(null);
     const result = await signInAction({ email: 'nobody@example.com', password: 'x' });
     expect(result.success).toBe(false);
-    expect(result.error).toBe('Email or password is incorrect.');
+    if (!result.success) expect(result.error).toBe('Email or password is incorrect.');
   });
 
   it('signInAction rejects suspended account', async () => {
@@ -55,7 +55,7 @@ describe('auth actions', () => {
     });
     const result = await signInAction({ email: 'a@b.com', password: 'x' });
     expect(result.success).toBe(false);
-    expect(result.error).toBe('This account is suspended. Contact support.');
+    if (!result.success) expect(result.error).toBe('This account is suspended. Contact support.');
   });
 
   it('signInAction succeeds for active user with valid password', async () => {

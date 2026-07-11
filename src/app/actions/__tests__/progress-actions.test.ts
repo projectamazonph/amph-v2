@@ -33,7 +33,7 @@ describe('progress actions', () => {
     (db.lesson.findUnique as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(null);
     const result = await startLessonAction({ courseSlug: 'c1', lessonSlug: 'l1' });
     expect(result.success).toBe(false);
-    expect(result.error).toBe('Lesson not found.');
+    if (!result.success) expect(result.error).toBe('Lesson not found.');
   });
 
   it('startLessonAction returns error when lesson belongs to another course', async () => {

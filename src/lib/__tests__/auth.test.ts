@@ -224,11 +224,9 @@ describe('auth.ts', () => {
 
   it('verifyToken returns null when payload fields have wrong types', async () => {
     const encoder = new TextEncoder();
-    const badToken = await new SignJWT({
-      sub: 123,        // number, not string
-      email: 'a@b.com',
-      role: 'STUDENT',
-    })
+    const badToken = await new SignJWT(
+      { sub: 123, email: 'a@b.com', role: 'STUDENT' } as unknown as ConstructorParameters<typeof SignJWT>[0],
+    )
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
       .setExpirationTime('1h')

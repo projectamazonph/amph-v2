@@ -25,7 +25,7 @@ describe('validation.ts', () => {
     const action = createSafeAction(signInSchema, async () => ({ ok: true }));
     const result = await action({ email: 'bad', password: '' });
     expect(result.success).toBe(false);
-    expect(result.fieldErrors).toBeDefined();
+    if (!result.success) expect(result.fieldErrors).toBeDefined();
   });
 
   it('createSafeAction returns error message on handler throw', async () => {
@@ -34,6 +34,6 @@ describe('validation.ts', () => {
     });
     const result = await action({ email: 'a@b.com', password: 'x' });
     expect(result.success).toBe(false);
-    expect(result.error).toBe('boom');
+    if (!result.success) expect(result.error).toBe('boom');
   });
 });

@@ -100,7 +100,7 @@ export default async function AdminDashboardPage() {
       <section className={styles.activity}>
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>Recent Payments</h2>
-          <Link href="/admin/payments" className={styles.viewAll}>
+          <Link href="/admin/refunds" className={styles.viewAll}>
             View all payments <Icon name="ArrowRight" size="sm" />
           </Link>
         </div>
@@ -179,9 +179,9 @@ export default async function AdminDashboardPage() {
             </span>
             <Icon name="ArrowRight" size="sm" />
           </Link>
-          <Link href="/admin/payments" className={styles.quickLink}>
-            <Icon name="CreditCard" size="md" />
-            <span>Payments</span>
+          <Link href="/admin/refunds" className={styles.quickLink}>
+            <Icon name="Receipt" size="md" />
+            <span>Review payments & refunds</span>
             <Icon name="ArrowRight" size="sm" />
           </Link>
         </div>
