@@ -2,7 +2,7 @@ project:
   name: "AMPH Academy v2"
   level: 3
   initialized: "2026-07-07T15:43:00Z"
-  last_updated: "2026-07-13T00:00:00Z"
+  last_updated: "2026-07-13T01:48:00Z"
 
 current_phase: 4
 current_workflow: "sprint_planning"
@@ -71,7 +71,7 @@ phases:
         completed_at: "2026-07-07"
       stories:
         total: 52
-        completed: 47
+        completed: 52
         in_progress: 0
         sprint_8_notes: >
           Sprint 8 completed 2026-07-11 (commit 1414754). Stories wire transactional emails (Resend + React Email):
@@ -95,6 +95,16 @@ phases:
           getSession wrapped); Lighthouse CI budgets (perf ≥0.85, a11y ≥0.95, bp ≥0.95, seo ≥0.9,
           LCP ≤4000ms, TBT ≤300ms); Slack alerting via scripts/sentry-slack-alert.ts (summary + spike
           modes on external cron). 17 files in single push. 47/52 stories complete.
+        sprint_12_notes: >
+          Sprint 12 — Launch closed 2026-07-13. All 5 stories shipped (code & runbook complete;
+          STORY-056 deploy execution and STORY-054 restore-drill execution are operator-side
+          actions awaiting real Vercel / Neon / Blob credentials). Sprint 12 file inventory:
+          docs/runbooks/{production-deploy,db-backup-restore}.md (2 runbooks), docs/runbooks/README.md,
+          docs/security/{tenant-isolation,security-audit-2026-07-13}.md (audit docs),
+          docs/sprint-12/{deploy-execution,launch-comms}.md (operator checklists),
+          docs/stories/STORY-053..057.md (acceptance docs),
+          scripts/{smoke-prod,backup-prod,restore-prod}.sh (3 shell scripts),
+          .github/workflows/db-backup.yml (daily cron). 52/52 stories complete.
         story_list:
           - "STORY-001-scaffold"
           - "STORY-002-tokens"
@@ -148,12 +158,17 @@ phases:
           - "STORY-050-server-action-tracing"
           - "STORY-051-lighthouse-ci"
           - "STORY-052-slack-alerting"
+          - "STORY-053-deploy-runbook"
+          - "STORY-054-backup-drill"
+          - "STORY-055-security-audit"
+          - "STORY-056-production-deploy"
+          - "STORY-057-launch-comms"
 
 metrics:
   total_workflows: 13
   completed_workflows: 10
   progress_percentage: 100
   estimated_stories: 52
-  completed_stories: 47
+  completed_stories: 52
   in_progress_stories: 0
-  last_updated: "2026-07-13T00:00:00Z"
+  last_updated: "2026-07-13T01:48:00Z"
