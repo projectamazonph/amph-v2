@@ -1,6 +1,6 @@
 # Sprint 12 — Launch
 
-**Status:** 📋 Backlog (planned start 2026-07-14)
+**Status:** 🚧 In Progress (started 2026-07-14)
 **Capacity:** 5 story points
 **Window:** Pre-launch → production deploy
 **Owner:** Ryan
@@ -21,11 +21,11 @@ the hands of paying students safely.
 
 | ID | Title | Points | Owner | Status |
 |---|---|---|---|---|
-| STORY-053 | Production deploy runbook | 1 | Ryan | 📋 Backlog |
-| STORY-054 | Database backup + restore drill | 1 | Ryan | 📋 Backlog |
-| STORY-055 | Pre-launch security audit (deps + headers + RLS) | 1 | Ryan | 📋 Backlog |
-| STORY-056 | Production deploy | 1 | Ryan | 📋 Backlog |
-| STORY-057 | Launch communications (announcement + email blast) | 1 | Ryan | 📋 Backlog |
+| STORY-053 | Production deploy runbook | 1 | Ryan | 🚧 In Progress |
+| STORY-054 | Database backup + restore drill | 1 | Ryan | 🚧 In Progress |
+| STORY-055 | Pre-launch security audit (deps + headers + RLS) | 1 | Ryan | 🚧 In Progress |
+| STORY-056 | Production deploy | 1 | Ryan | 🚧 In Progress |
+| STORY-057 | Launch communications (announcement + email blast) | 1 | Ryan | 🚧 In Progress |
 
 Total: 5 / 5 points
 
