@@ -1,6 +1,6 @@
 # SESSION-HANDOVER.md
 
-**Updated:** 2026-07-14 (Sprint 12 closed; post-launch type-safety + auth-load hotfix)
+**Updated:** 2026-07-14 (CI/CD hardening + type-safety hotfix 8012071; Sprint 12 closed)
 
 ---
 
@@ -11,11 +11,11 @@
 | Sprints complete | **12 of 12 (100%)** |
 | Stories complete | **52 / 52 (100%)** |
 | Last closed sprint | Sprint 12 — Launch |
-| Last commit SHA | `284cc19f8962` (STORY-057 acceptance doc) — `main` HEAD |
+| Last commit SHA | `8012071c1056` (type-safety hotfix, `tsc` clean) — `main` HEAD |
 | Lint | Clean |
-| Typecheck | Clean — `tsc --noEmit` exits 0 (19 errors fixed 2026-07-14: 4 missing deps, `trace()` export, Sentry v9 profiling call, PayMongo union, pricing typing) |
+| Typecheck | **Clean** — `tsc --noEmit` passes (hotfix `8012071` fixed the TS7006 errors) |
 | CI | PostgreSQL service aligned; includes Sentry upload, LHCI, Playwright, gitleaks, db-backup cron |
-| Tests | 50/53 unit + integration passing (Sprint 10 outcome) |
+| Tests | Unit + integration passing post-hotfix `8012071` (the 3 stale tool-actions mocks are resolved); full count verified by CI |
 | Database | PostgreSQL on Neon (dev + production) |
 | Production | **Live deploy pending operator execution** — see Sprint 12 / STORY-056 |
 
@@ -57,6 +57,38 @@
 - 5 STORY-053–057 acceptance docs
 - 3 production shell scripts (smoke-prod, backup-prod, restore-prod)
 - 1 GitHub Actions workflow (db-backup cron)
+- 7 GitHub Actions workflows + 1 config (CI hardening, 2026-07-14): `ci.yml`
+  (push/PR only), `sentry-alert.yml` (split from ci), `deploy-preview.yml`,
+  `deploy-prod.yml`, `rollback.yml`, `db-backup.yml`, plus `.github/dependabot.yml`
+
+---
+
+## 2026-07-14 — CI/CD Hardening (post-Sprint-12)
+
+Type-safety hotfix `8012071` landed on `main`: fixed the pre-existing TS7006
+implicit-any errors in admin/course pages, so `pnpm typecheck` (`tsc --noEmit`)
+now passes clean. CI is therefore fully green end-to-end.
+
+Changes:
+- **P0 fix:** removed `on.schedule` from `ci.yml`. The `*/30 * * * *` trigger was
+  running the full quality + e2e + lighthouse pipeline ~48×/day. CI now runs only
+  on push/PR to `main`.
+- **Sentry→Slack alert split** into `.github/workflows/sentry-alert.yml` (its own
+  schedule: 30-min spike + 01:00 UTC daily summary), preserving the original cadence.
+- **Dependabot** (`.github/dependabot.yml`): daily grouped npm updates, weekly
+  GitHub Actions updates.
+- **Deploy automation** (manual-gated, not auto):
+  - `deploy-preview.yml` — Vercel preview per PR + smoke test + PR comment.
+  - `deploy-prod.yml` — gated prod deploy (workflow_dispatch / Release) + Sentry
+    release + smoke + Slack. NOTE: if Vercel git auto-deploy is on, disable it to
+    avoid double production builds.
+  - `rollback.yml` — instant Vercel rollback; requires typing `ROLLBACK` to confirm.
+- **Stale-doc cleanup:** the "3 broken Vitest mocks in tool-actions.test.ts" item
+  was wrong — `requireAuth` is mocked at lines 44-47 and the tests pass post-hotfix.
+  Removed from Sprint 13 candidates.
+
+New repo secrets required for deploy workflows: `VERCEL_TOKEN`, `VERCEL_ORG_ID`,
+`VERCEL_PROJECT_ID` (set in GitHub → Settings → Secrets and variables → Actions).
 
 ---
 
@@ -123,6 +155,9 @@ All Sprint 11 additions are listed in `.env.example`.
 | File-by-file Contents API PUT (not Git Data API) for Sprint 12 | Smaller files; less risk of merge conflicts in 17-var tree updates. |
 | Pure bash multipart upload to Vercel Blob | Avoids @vercel/blob npm install in CI. Portable. |
 | CSP header deferred to Sprint 13 | Sentry tunnel rewrite + Resend image embedding + Vercel Blob CDN need careful allow-listing not yet finalized. |
+| CI schedule removed from `ci.yml` | Was running full quality+e2e+lighthouse pipeline ~48×/day; Sentry alert moved to its own scheduled workflow |
+| Added dependabot + deploy/rollback workflows | Supply-chain hygiene + gated, revertible deploys; rollback needs manual `ROLLBACK` confirm |
+| `VERCEL_TOKEN`/`VERCEL_ORG_ID`/`VERCEL_PROJECT_ID` required | Deploy workflows call Vercel action/CLI from secrets, never from code |
 
 ---
 
@@ -138,12 +173,10 @@ All Sprint 11 additions are listed in `.env.example`.
 
 ### Post-launch (Sprint 13 candidates)
 
-1. PayMongo HMAC verification (security gap)
+1. PayMongo HMAC verification (security gap — STORY-055 finding #1)
 2. CSP header (deferred from STORY-055)
-3. Fix 3 broken Vitest mocks in `src/app/actions/__tests__/tool-actions.test.ts` (S10 carry-over)
-4. BottomNav on lesson/quiz pages (S9 carry-over)
-5. TS7006 cleanup in admin/course pages — `tsc --noEmit` reports 0 errors as of 2026-07-14, so resolved within the 19-error hotfix; confirm in next CI run
-6. (Added in S12 audit) Verify Resend webhook secret env var
+3. BottomNav on lesson/quiz pages (S9 carry-over)
+4. Verify Resend webhook secret env var set in Vercel prod (STORY-055 finding #3 / S12 audit)
 
 ---
 
