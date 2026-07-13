@@ -157,6 +157,23 @@ export function withActionTracing<TArgs extends unknown[], TReturn>(
   };
 }
 
+/**
+ * Convenience alias used by auth helpers and other modules.
+ *
+ * `trace(name, fn)` is a thin wrapper around `withActionTracing` for the
+ * common `(name, fn)` case. It returns a function with the same signature
+ * as `fn`, instrumented with a Sentry transaction + structured log line.
+ *
+ * Usage:
+ *   export const getSession = trace('auth.getSession', async () => { ... });
+ */
+export function trace<TArgs extends unknown[], TReturn>(
+  name: string,
+  fn: (...args: TArgs) => Promise<TReturn> | TReturn,
+): (...args: TArgs) => Promise<TReturn> {
+  return withActionTracing(name, fn);
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 # SESSION-HANDOVER.md
 
-**Updated:** 2026-07-13 (Sprint 10 closed, Sprint 11 closed, Sprint 12 closed)
+**Updated:** 2026-07-14 (Sprint 12 closed; post-launch type-safety + auth-load hotfix)
 
 ---
 
@@ -13,7 +13,7 @@
 | Last closed sprint | Sprint 12 — Launch |
 | Last commit SHA | `284cc19f8962` (STORY-057 acceptance doc) — `main` HEAD |
 | Lint | Clean |
-| Typecheck | Pre-existing TS7006 errors in admin/course pages (out of scope; deferred) |
+| Typecheck | Clean — `tsc --noEmit` exits 0 (19 errors fixed 2026-07-14: 4 missing deps, `trace()` export, Sentry v9 profiling call, PayMongo union, pricing typing) |
 | CI | PostgreSQL service aligned; includes Sentry upload, LHCI, Playwright, gitleaks, db-backup cron |
 | Tests | 50/53 unit + integration passing (Sprint 10 outcome) |
 | Database | PostgreSQL on Neon (dev + production) |
@@ -142,7 +142,7 @@ All Sprint 11 additions are listed in `.env.example`.
 2. CSP header (deferred from STORY-055)
 3. Fix 3 broken Vitest mocks in `src/app/actions/__tests__/tool-actions.test.ts` (S10 carry-over)
 4. BottomNav on lesson/quiz pages (S9 carry-over)
-5. TS7006 errors in admin/course pages (cleanup)
+5. TS7006 cleanup in admin/course pages — `tsc --noEmit` reports 0 errors as of 2026-07-14, so resolved within the 19-error hotfix; confirm in next CI run
 6. (Added in S12 audit) Verify Resend webhook secret env var
 
 ---

@@ -9,7 +9,7 @@
  */
 
 import { Card, CardHeader, CardTitle, CardDescription, Badge } from '@/components/ui';
-import { getTierDisplay } from '@/lib/pricing';
+import { getTierDisplay, type TierDisplay } from '@/lib/pricing';
 import { getSession } from '@/lib/auth';
 import { CheckoutButton } from './CheckoutButton';
 import styles from './pricing.module.css';
@@ -37,7 +37,7 @@ export default async function PricingPage() {
       </header>
 
       <div className={styles.tierGrid}>
-        {tiers.map((tier) => (
+        {tiers.map((tier: TierDisplay) => (
           <Card key={tier.id} className={tier.slug === 'accelerated-mastery' ? styles.tierFeatured : styles.tier}>
             {tier.slug === 'accelerated-mastery' && (
               <Badge variant="info" className={styles.featuredBadge}>
@@ -59,7 +59,7 @@ export default async function PricingPage() {
             </div>
 
             <ul className={styles.bullets}>
-              {tier.features.bullets.map((b) => (
+              {tier.features.bullets.map((b: string) => (
                 <li key={b}>{b}</li>
               ))}
               {tier.features.includesLiveClasses && (

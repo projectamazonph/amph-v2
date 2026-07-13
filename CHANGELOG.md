@@ -4,6 +4,22 @@ All notable changes to AMPH Academy v2 are documented here.
 
 ## [Unreleased]
 
+### Post-Launch Hotfix — Type Safety + Auth Load Bug (2026-07-14)
+- Fixed 19 TypeScript compile errors (`tsc --noEmit` now exits 0), unblocking
+  soft-deployment:
+  - Added missing runtime dependencies to `package.json`: `clsx`, `resend`,
+    `@react-pdf/renderer`, `@phosphor-icons/react`; regenerated `pnpm-lock.yaml`
+  - `src/lib/tracing.ts`: exported `trace(name, fn)` — previously referenced by
+    `getSession = trace(...)` in `src/lib/auth.ts`; the missing export would have
+    prevented the auth module from loading at all (critical runtime bug)
+  - `sentry.server.config.ts`: removed `Sentry.nodeProfilingIntegration?.()`
+    (removed in `@sentry/nextjs@9`)
+  - `src/app/api/paymongo/webhook/route.ts`: discriminated-union access for
+    `event.data.id` vs nested `event.data.data.id`
+  - `src/app/(public)/pricing/page.tsx`: explicit `TierDisplay` type import +
+    `.map` callback annotations
+- Verification: `pnpm typecheck` → `tsc --noEmit` → `TSC_EXIT=0`, 0 errors
+
 ### Sprint 12 — Launch (2026-07-13)
 - Production deploy runbook: `docs/runbooks/production-deploy.md` with
   17-env-var checklist, Vercel CLI + dashboard deploy/rollback paths,

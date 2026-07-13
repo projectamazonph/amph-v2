@@ -14,8 +14,5 @@ export default function initServer() {
   if (!config.dsn) return;
   Sentry.init({
     ...config,
-    integrations: [
-      Sentry.nodeProfilingIntegration?.(),
-    ].filter(Boolean),
   });
 }

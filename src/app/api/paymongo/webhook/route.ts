@@ -94,7 +94,9 @@ export async function POST(request: NextRequest): Promise<Response> {
     category: 'paymongo',
     message: event.type,
     level: 'info',
-    data: { eventId: event.data.id ?? null },
+    data: {
+      eventId: 'data' in event.data ? event.data.data.id : event.data.id ?? null,
+    },
   });
 
   try {
