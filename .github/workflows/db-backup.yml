@@ -1,0 +1,51 @@
+name: db-backup
+
+# Daily logical backup of the production Neon database.
+# Run time: 02:00 UTC = 10:00 PHT (off-peak for the Filipino student audience).
+#
+# Sprint 12 / STORY-054
+#
+# Secrets required in GitHub repo settings:
+#   DATABASE_URL            - production Neon pooler URL
+#   BLOB_READ_WRITE_TOKEN   - Vercel Blob production token
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch: # manual trigger for ad-hoc backups
+
+jobs:
+  backup:
+    name: pg_dump -> Vercel Blob
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Postgres client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Run backup script
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+        run: chmod +x ./scripts/backup-prod.sh && ./scripts/backup-prod.sh
+
+      - name: Annotate with backup URL
+        if: success()
+        run: |
+          echo "Backup completed at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "Latest dump URL was printed by the backup script above."
+
+      - name: Notify Slack on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1.27.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": ":rotating_light: AMPH DB backup FAILED at ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }
