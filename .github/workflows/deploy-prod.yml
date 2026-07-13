@@ -1,0 +1,89 @@
+# Production deploy gate.
+#
+# Triggered MANUALLY (workflow_dispatch) or when a GitHub Release is published.
+# Deploys to Vercel production, creates a Sentry release for the commit SHA,
+# runs the production smoke test against the live custom domain, and posts a
+# Slack status.
+#
+# ── NOTE on Vercel git auto-deploy ──────────────────────────────────────────
+#   The runbook states `main` is already Vercel's production branch, so a plain
+#   push to `main` auto-deploys. To avoid *duplicate* production builds, this
+#   workflow is the explicit, gated alternative:
+#     (a) disable Vercel's automatic production deploy
+#         (Project → Settings → Git → uncheck "Automatically deploy to
+#          production"), OR
+#     (b) keep Vercel auto-deploy for day-to-day main pushes and use this
+#         workflow only for Release-triggered / manual prod deploys.
+#
+# Required repo secrets:
+#   VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID
+#   SENTRY_AUTH_TOKEN, SENTRY_ORG, SENTRY_PROJECT
+#   SLACK_WEBHOOK_URL
+
+name: Deploy Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: "production"
+        type: choice
+        options: [production]
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prod-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Vercel Prod + Sentry Release + Smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # needed for Sentry commit association
+
+      - name: Deploy to Vercel production
+        id: deploy
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: "--prod"
+
+      - name: Create Sentry release
+        uses: getsentry/action-release@v1
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+        with:
+          environment: production
+          version: amph-v2@${{ github.sha }}
+          version_prefix: ""
+
+      - name: Smoke test production
+        env:
+          PROD_URL: https://amph.projectamazonph.com
+        run: bash scripts/smoke-prod.sh
+
+      - name: Notify Slack
+        if: always()
+        uses: slackapi/slack-github-action@v1.27.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": "${{ job.status == 'success' && '✅' || '❌' }} AMPH prod deploy ${{ github.sha }} — ${{ job.status }} (${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+            }
