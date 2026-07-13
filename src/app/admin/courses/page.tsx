@@ -32,7 +32,7 @@ export default async function AdminCoursesPage() {
       </header>
 
       <div className={styles.grid}>
-        {courses.map((course) => (
+        {courses.map((course: typeof courses[number]) => (
           <div key={course.id} className={styles.courseCard}>
             <div className={styles.cardHeader}>
               <div>
@@ -49,7 +49,7 @@ export default async function AdminCoursesPage() {
               </span>
               <span>
                 <Icon name="BookOpen" size="sm" />{' '}
-                {course.modules.reduce((acc, m) => acc + m.lessons.length, 0)} lessons
+                {course.modules.reduce((acc: number, m: typeof course.modules[number]) => acc + m.lessons.length, 0)} lessons
               </span>
               <span>
                 <Icon name="User" size="sm" /> {course._count.enrollments} enrolled
