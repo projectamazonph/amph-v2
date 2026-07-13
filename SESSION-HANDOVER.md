@@ -1,6 +1,6 @@
 # SESSION-HANDOVER.md
 
-**Updated:** 2026-07-14 (CI/CD hardening + type-safety hotfix 8012071; Sprint 12 closed)
+**Updated:** 2026-07-14 (stale-doc cleanup pass #2 — corrected STORY-052 + sprint-11 PLAN; `main` HEAD `d23de02405adc79101fac411c9537473576cbf45`)
 
 ---
 
@@ -11,11 +11,11 @@
 | Sprints complete | **12 of 12 (100%)** |
 | Stories complete | **52 / 52 (100%)** |
 | Last closed sprint | Sprint 12 — Launch |
-| Last commit SHA | `8012071c1056` (type-safety hotfix, `tsc` clean) — `main` HEAD |
+| Last commit SHA | `d23de02405adc79101fac411c9537473576cbf45` (stale-doc cleanup, `tsc` clean) — `main` HEAD |
 | Lint | Clean |
 | Typecheck | **Clean** — `tsc --noEmit` passes (hotfix `8012071` fixed the TS7006 errors) |
 | CI | PostgreSQL service aligned; includes Sentry upload, LHCI, Playwright, gitleaks, db-backup cron |
-| Tests | Unit + integration passing post-hotfix `8012071` (the 3 stale tool-actions mocks are resolved); full count verified by CI |
+| Tests | Unit + integration **verified by CI** (no local `pnpm test` in this sandbox; the "3 broken tool-actions mocks" claim was incorrect — `requireAuth` is mocked at lines 21–24 of `tool-actions.test.ts`) |
 | Database | PostgreSQL on Neon (dev + production) |
 | Production | **Live deploy pending operator execution** — see Sprint 12 / STORY-056 |
 
@@ -84,7 +84,8 @@ Changes:
     avoid double production builds.
   - `rollback.yml` — instant Vercel rollback; requires typing `ROLLBACK` to confirm.
 - **Stale-doc cleanup:** the "3 broken Vitest mocks in tool-actions.test.ts" item
-  was wrong — `requireAuth` is mocked at lines 44-47 and the tests pass post-hotfix.
+  was wrong — `requireAuth` is mocked at **lines 21–24** (`vi.mock('@/lib/auth')`),
+  and the suite is **verified by CI** (no local `pnpm test` in this sandbox).
   Removed from Sprint 13 candidates.
 
 New repo secrets required for deploy workflows: `VERCEL_TOKEN`, `VERCEL_ORG_ID`,
