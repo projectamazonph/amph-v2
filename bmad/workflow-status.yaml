@@ -2,7 +2,7 @@ project:
   name: "AMPH Academy v2"
   level: 3
   initialized: "2026-07-07T15:43:00Z"
-  last_updated: "2026-07-12T00:00:00Z"
+  last_updated: "2026-07-13T00:00:00Z"
 
 current_phase: 4
 current_workflow: "sprint_planning"
@@ -70,9 +70,9 @@ phases:
         output_file: "docs/sprint-plan.md"
         completed_at: "2026-07-07"
       stories:
-        total: 47
-        completed: 42
-        in_progress: 5
+        total: 52
+        completed: 47
+        in_progress: 0
         sprint_8_notes: >
           Sprint 8 completed 2026-07-11 (commit 1414754). Stories wire transactional emails (Resend + React Email):
           enrollment confirmation on payment webhook, live class reminder on registration, refund status
@@ -82,6 +82,19 @@ phases:
           exception added), responsive breakpoint infrastructure (globals.css), BottomNav component,
           marketing+auth mobile-first refactor (5 pages), student app shell+tools refactor (7 pages).
           All pages now render correctly at 390px and 1280px. Lint clean.
+        sprint_10_notes: >
+          Sprint 10 closed 2026-07-12. 5 stories shipped (STORY-043–047): vitest.config.ts + 11 test
+          files, playwright.config.ts, scripts/check-coverage.js. 50/53 unit tests passing; 3 broken
+          mocks in tool-actions.test.ts (requireAuth not mocked) carried to Sprint 12. CI workflow
+          updated to run tsc/lint/vitest/playwright/lighthouse-ci/gitleaks on every PR.
+        sprint_11_notes: >
+          Sprint 11 closed 2026-07-13 (commit 82d181f). 5 stories shipped (STORY-048–052): Sentry
+          client/server/edge + source maps (release tracking via Vercel); Pino structured logging with
+          AsyncLocalStorage request IDs (src/lib/logger.ts, console.* replaced in paymongo webhook);
+          withActionTracing HOC for server actions (src/lib/tracing.ts, src/lib/middleware-context.ts,
+          getSession wrapped); Lighthouse CI budgets (perf ≥0.85, a11y ≥0.95, bp ≥0.95, seo ≥0.9,
+          LCP ≤4000ms, TBT ≤300ms); Slack alerting via scripts/sentry-slack-alert.ts (summary + spike
+          modes on external cron). 17 files in single push. 47/52 stories complete.
         story_list:
           - "STORY-001-scaffold"
           - "STORY-002-tokens"
@@ -130,12 +143,17 @@ phases:
           - "STORY-045-integration-tests"
           - "STORY-046-e2e-critical-path"
           - "STORY-047-coverage-enforcement"
+          - "STORY-048-sentry-setup"
+          - "STORY-049-structured-logging"
+          - "STORY-050-server-action-tracing"
+          - "STORY-051-lighthouse-ci"
+          - "STORY-052-slack-alerting"
 
 metrics:
   total_workflows: 13
   completed_workflows: 10
   progress_percentage: 100
-  estimated_stories: 47
-  completed_stories: 42
-  in_progress_stories: 5
-  last_updated: "2026-07-12T00:00:00Z"
+  estimated_stories: 52
+  completed_stories: 47
+  in_progress_stories: 0
+  last_updated: "2026-07-13T00:00:00Z"

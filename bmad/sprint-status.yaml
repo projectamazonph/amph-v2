@@ -3,15 +3,16 @@ project:
   level: 3
 
 sprint:
-  number: 10
-  name: "Tests + CI Hardening"
-  start_date: "2026-07-12"
-  end_date: "2026-07-14"
-  status: "in_progress"
+  number: 11
+  name: "Observability"
+  start_date: "2026-07-13"
+  end_date: "2026-07-13"
+  status: "complete"
+  commit_sha: "82d181f6e008ce2801a7feb4b2bbc497e7877af6"
 
 capacity:
   planned_points: 5
-  velocity: 0
+  velocity: 5
   buffer_points: 0
 
 completed_stories:
@@ -197,7 +198,7 @@ completed_stories:
     owner: "Ryan"
   - id: "STORY-031"
     title: "Course / Module / Lesson admin CRUD with MDX editor"
-    points: 1
+    points: 1.5
     sprint: 7
     epic: "Admin"
     owner: "Ryan"
@@ -267,8 +268,6 @@ completed_stories:
     sprint: 9
     epic: "Mobile"
     owner: "Ryan"
-
-planned_stories:
   - id: "STORY-043"
     title: "CI environment fix + Playwright config"
     points: 1
@@ -299,6 +298,68 @@ planned_stories:
     sprint: 10
     epic: "Infrastructure"
     owner: "Ryan"
+  - id: "STORY-048"
+    title: "Sentry setup"
+    points: 1
+    sprint: 11
+    epic: "Observability"
+    owner: "Ryan"
+  - id: "STORY-049"
+    title: "Structured logging (Pino)"
+    points: 1
+    sprint: 11
+    epic: "Observability"
+    owner: "Ryan"
+  - id: "STORY-050"
+    title: "Server action tracing"
+    points: 1
+    sprint: 11
+    epic: "Observability"
+    owner: "Ryan"
+  - id: "STORY-051"
+    title: "Lighthouse CI"
+    points: 1
+    sprint: 11
+    epic: "Observability"
+    owner: "Ryan"
+  - id: "STORY-052"
+    title: "Slack alerting (Sentry -> Slack + daily summary)"
+    points: 1
+    sprint: 11
+    epic: "Observability"
+    owner: "Ryan"
+
+planned_stories:
+  - id: "STORY-053"
+    title: "Deploy runbook with rollback procedure"
+    points: 1
+    sprint: 12
+    epic: "Launch"
+    owner: "Ryan"
+  - id: "STORY-054"
+    title: "Backup drill — restore from production backup to staging"
+    points: 1
+    sprint: 12
+    epic: "Launch"
+    owner: "Ryan"
+  - id: "STORY-055"
+    title: "Security audit — OWASP ZAP, fix high/critical"
+    points: 1
+    sprint: 12
+    epic: "Launch"
+    owner: "Ryan"
+  - id: "STORY-056"
+    title: "Production deploy to Vercel, verify Sentry + LHCI in prod"
+    points: 1
+    sprint: 12
+    epic: "Launch"
+    owner: "Ryan"
+  - id: "STORY-057"
+    title: "Launch checklist + v1 user email"
+    points: 1
+    sprint: 12
+    epic: "Launch"
+    owner: "Ryan"
 
 sprint_8_notes: >
   Sprint 8 closed 2026-07-11 (commit 1414754). Wired transactional emails (Resend + React Email):
@@ -316,14 +377,21 @@ sprint_9_notes: >
   dashboard/tools). All pages render at 390px and 1280px. Lint clean. 7 commits.
 
 sprint_10_notes: >
-  Sprint 10 in progress (2026-07-13). Test infrastructure created: vitest.config.ts,
+  Sprint 10 closed 2026-07-13. Test infrastructure complete: vitest.config.ts,
   src/lib/__tests__/ (8 test files), src/app/actions/__tests__/ (3 test files),
   playwright.config.ts, scripts/check-coverage.js. 50/53 tests passing; 3 broken mocks
-  in tool-actions.test.ts (requireAuth not mocked). CI workflow updated: tsc, lint,
-  vitest, playwright, lighthouse-ci, gitleaks. Remaining: coverage threshold enforcement,
-  Playwright E2E critical path, server action integration tests, fix broken tool-action mocks.
+  in tool-actions.test.ts (requireAuth not mocked). CI workflow has tsc, lint, vitest,
+  playwright, lighthouse-ci, gitleaks. Coverage threshold 70% enforced on src/lib and
+  src/app/actions. S10 carry-over to S12: fix 3 broken tool-action mocks.
 
 sprint_11_notes: >
-  Sprint 11 — Observability (2026-07-15). 5 stories planned: Sentry setup, structured logging
-  (Pino), server action tracing, Lighthouse CI budgets, Slack alerting. Goal: production
-  error tracking + performance budgets before launch.
+  Sprint 11 — Observability closed 2026-07-13 (commit 82d181f). 5/5 stories shipped.
+  Sentry setup (@sentry/nextjs@^9, client/server/edge configs, source maps, release
+  tracking). Structured logging (Pino + AsyncLocalStorage request context, redaction,
+  console.* removed from critical paths). Server-action tracing (withActionTracing HOC
+  + edge-friendly middleware-context). Lighthouse CI (.lighthouserc.json with assertions
+  for perf/a11y/best-practices/seo + LCP/TBT budgets). Slack alerting
+  (scripts/sentry-slack-alert.ts with summary + spike modes, scheduled CI job daily
+  01:00 UTC summary + every 30 min spike). 17 files (10 added, 7 modified) in a single
+  commit. S11 carry-over to S12: src/instrumentation.ts (CHANGELOG references, not yet
+  authored; functionally optional under @sentry/nextjs@^9 auto-detection).
