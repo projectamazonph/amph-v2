@@ -1,0 +1,35 @@
+# Dependabot — supply-chain hygiene (added 2026-07-14)
+#
+# npm: daily, grouped by dependency type so a single PR covers the whole
+#      production (or dev) tree instead of one noisy PR per package.
+# github-actions: weekly, so workflow/action bumps get deliberate review
+#                 rather than firing on every upstream patch.
+
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 10
+    groups:
+      production-dependencies:
+        dependency-type: "production"
+      development-dependencies:
+        dependency-type: "development"
+    commit-message:
+      prefix: "deps"
+    labels:
+      - "dependencies"
+      - "npm"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "dependencies"
+      - "github-actions"
