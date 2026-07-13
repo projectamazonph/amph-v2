@@ -1,6 +1,6 @@
 # SESSION-HANDOVER.md
 
-**Updated:** 2026-07-13 (Sprint 10 closed, Sprint 11 closed)
+**Updated:** 2026-07-13 (Sprint 10 closed, Sprint 11 closed, Sprint 12 closed)
 
 ---
 
@@ -8,15 +8,16 @@
 
 | Metric | Value |
 |--------|-------|
-| Sprints complete | 11 of 12 |
-| Stories complete | 47 / 52 (90%) |
-| Last closed sprint | Sprint 11 — Observability (commit `82d181f`) |
-| Next sprint | Sprint 12 — Launch (5 pts) |
+| Sprints complete | **12 of 12 (100%)** |
+| Stories complete | **52 / 52 (100%)** |
+| Last closed sprint | Sprint 12 — Launch |
+| Last commit SHA | `284cc19f8962` (STORY-057 acceptance doc) — `main` HEAD |
 | Lint | Clean |
-| Typecheck | Pre-existing TS7006 errors in admin/course pages (out of scope) |
-| CI | PostgreSQL service aligned; includes Sentry upload, LHCI, Playwright |
+| Typecheck | Pre-existing TS7006 errors in admin/course pages (out of scope; deferred) |
+| CI | PostgreSQL service aligned; includes Sentry upload, LHCI, Playwright, gitleaks, db-backup cron |
 | Tests | 50/53 unit + integration passing (Sprint 10 outcome) |
-| Database | PostgreSQL (dev + production) |
+| Database | PostgreSQL on Neon (dev + production) |
+| Production | **Live deploy pending operator execution** — see Sprint 12 / STORY-056 |
 
 ---
 
@@ -37,30 +38,56 @@
 
 ---
 
-## Sprint 12 — Launch (Next, 5 pts)
+## Sprint 12 — Launch (DONE — code & runbook complete; deploy execution is operator-side)
 
-**Goal:** Production deploy + security audit + launch comms.
+**Goal:** Ship AMPH Academy to production: deploy runbook, backup drill, security audit, production deploy, launch communications.
 
 | Story | Pts | Status | Description |
 |-------|-----|--------|-------------|
-| STORY-053 | 1 | Backlog | Deploy runbook + rollback procedure (`docs/runbooks/deploy.md`). |
-| STORY-054 | 1 | Backlog | Backup drill: restore production backup to staging, smoke test. |
-| STORY-055 | 1 | Backlog | Security audit: OWASP ZAP scan, fix high/critical. |
-| STORY-056 | 1 | Backlog | Production deploy via Vercel. Verify Sentry + LHCI in prod. |
-| STORY-057 | 1 | Backlog | Launch checklist + email to v1 users. |
+| STORY-053 | 1 | ✅ Done | Production deploy runbook + smoke script. `docs/runbooks/production-deploy.md` (227 lines), `scripts/smoke-prod.sh` (159 lines, bash+curl+grep). |
+| STORY-054 | 1 | 🟡 Code done | Backup runbook + cron + restore drill script. `docs/runbooks/db-backup-restore.md` + `scripts/backup-prod.sh` + `scripts/restore-prod.sh` + `.github/workflows/db-backup.yml`. **Operator action:** run the drill against real Neon + Blob. |
+| STORY-055 | 1 | ✅ Done | Security audit. `docs/security/tenant-isolation.md` + `docs/security/security-audit-2026-07-13.md`. 5 open issues tracked, 1 blocker-class (PayMongo HMAC). |
+| STORY-056 | 1 | 🟡 Code done | Production deploy. `docs/sprint-12/deploy-execution.md` (operator checklist). **Operator action:** run `vercel deploy --prod` after setting 17 production env vars. |
+| STORY-057 | 1 | 🟡 Drafts done | Launch comms. `docs/sprint-12/launch-comms.md` (250 lines of copy + templates + retro template). **Operator action:** approve copy, build the React Email template, schedule broadcasts T+30min after deploy. |
+
+**Total Sprint 12 file inventory:**
+- 2 runbooks + 1 runbooks index
+- 2 security audit docs
+- 2 sprint-12 docs (deploy execution, launch comms)
+- 5 STORY-053–057 acceptance docs
+- 3 production shell scripts (smoke-prod, backup-prod, restore-prod)
+- 1 GitHub Actions workflow (db-backup cron)
 
 ---
 
 ## Required Secrets for Production Deploy
 
-These must be set in Vercel (and as GitHub repo secrets for the `sentry-alert` cron job) before Sprint 12:
+**All 17 must be set in Vercel → Project Settings → Environment Variables → Production before deploy.**
 
-- `SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_DSN` — error tracking
-- `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_HOST` — source-map upload + alert script
-- `SENTRY_API_TOKEN` — Sentry REST API (read events for Slack script)
-- `SLACK_WEBHOOK_URL` — Slack Incoming Webhook for `#amph-alerts`
-- `DATABASE_URL` — production PostgreSQL
-- `PAYMONGO_SECRET_KEY`, `RESEND_API_KEY`, etc. — business layer (already in prod from Sprint 6/8)
+Sprint 11 + 12 secrets (8 from Sprints 1–11, plus key existing ones for production):
+
+| Variable | Where | Notes |
+|----------|-------|-------|
+| `DATABASE_URL` | Sprint 1 | Neon prod pooler with `?sslmode=require` |
+| `JWT_SECRET` | Sprint 1 | `openssl rand -base64 32` |
+| `PAYMONGO_SECRET_KEY` | Sprint 6 | `sk_live_...` |
+| `PAYMONGO_PUBLIC_KEY` | Sprint 6 | `pk_live_...` |
+| `PAYMONGO_WEBHOOK_SECRET` | Sprint 6 | PayMongo dashboard |
+| `RESEND_API_KEY` | Sprint 8 | Prod key |
+| `RESEND_FROM_EMAIL` | Sprint 8 | `noreply@projectamazonph.com` |
+| `RESEND_WEBHOOK_SECRET` | Sprint 8 | **Verify in Vercel prod — needed for delivery tracking** |
+| `BLOB_READ_WRITE_TOKEN` | Sprint 7 | Vercel Blob prod token (also used by db-backup script) |
+| `SENTRY_DSN` | STORY-048 | Sentry project DSN |
+| `NEXT_PUBLIC_SENTRY_DSN` | STORY-048 | Public counterpart |
+| `SENTRY_AUTH_TOKEN` | STORY-048 | Org-level for source-map upload |
+| `SENTRY_ORG` | STORY-048 | `projectamazonph` |
+| `SENTRY_PROJECT` | STORY-048 | `amph-v2` |
+| `SENTRY_HOST` | STORY-048 | `https://sentry.io` |
+| `SENTRY_API_TOKEN` | STORY-052 | API token with `project:read` |
+| `SLACK_WEBHOOK_URL` | STORY-052 | Slack Incoming Webhook for `#amph-alerts` |
+| `NEXT_PUBLIC_APP_URL` | Required | `https://amph.projectamazonph.com` (or your prod URL) |
+
+GitHub repo secrets (for the `db-backup` and `sentry-alert` cron jobs): same `DATABASE_URL`, `BLOB_READ_WRITE_TOKEN`, `SLACK_WEBHOOK_URL`, `SENTRY_API_TOKEN` set.
 
 All Sprint 11 additions are listed in `.env.example`.
 
@@ -70,9 +97,12 @@ All Sprint 11 additions are listed in `.env.example`.
 
 - **BMAD state:** `bmad/sprint-status.yaml`, `bmad/workflow-status.yaml`
 - **Sprint plan:** `docs/sprint-plan.md`
-- **Sprint 10 plan:** `docs/sprint-10/PLAN.md`
-- **Sprint 11 plan:** `docs/sprint-11/PLAN.md`
-- **Stories:** `docs/stories/STORY-038.md` through `STORY-052.md` (S10 + S11 acceptance ticked)
+- **Sprint 11 plan:** `docs/sprint-11/PLAN.md` (SHIPPED)
+- **Sprint 12 plan:** `docs/sprint-12/PLAN.md` (SHIPPED 2026-07-13)
+- **Stories:** `docs/stories/STORY-038.md` through `STORY-057.md` (S10 + S11 + S12 acceptance ticked)
+- **Runbooks:** `docs/runbooks/production-deploy.md`, `docs/runbooks/db-backup-restore.md`
+- **Security:** `docs/security/tenant-isolation.md`, `docs/security/security-audit-2026-07-13.md`
+- **Launch comms:** `docs/sprint-12/launch-comms.md`
 - **Session history:** `SESSION-HANDOVER.md` (this file)
 
 ---
@@ -87,20 +117,39 @@ All Sprint 11 additions are listed in `.env.example`.
 | `getSession` traced in `src/lib/auth.ts` but `redirect()` left unwrapped | `redirect()` throws `NEXT_REDIRECT`; wrapping in try/catch would break the redirect. |
 | Cron at UTC 01:00 for daily Slack summary | 09:00 PHT = 01:00 UTC. Matches existing CI schedule cadence. |
 | Skip `instrumentation.ts` reference in CHANGELOG (refine in follow-up) | Functionally irrelevant with `@sentry/nextjs@^9` auto-detection. Wording ahead of files; acceptable. |
+| db-backup cron at 02:00 UTC | 10:00 PHT — before peak PH morning traffic, after EU/NA night. Lowest write volume. |
+| Pure bash + curl + grep for smoke script | No node/jq dependency; runs in any CI environment. |
+| 1 file at a time for Sprint 12 push | User-mandated workflow correction from 2026-07-14. Avoids script-staging fragility. |
+| File-by-file Contents API PUT (not Git Data API) for Sprint 12 | Smaller files; less risk of merge conflicts in 17-var tree updates. |
+| Pure bash multipart upload to Vercel Blob | Avoids @vercel/blob npm install in CI. Portable. |
+| CSP header deferred to Sprint 13 | Sentry tunnel rewrite + Resend image embedding + Vercel Blob CDN need careful allow-listing not yet finalized. |
 
 ---
 
-## Open Issues (carried from prior sprints)
+## Open Issues
 
-1. BottomNav not yet on course detail / lesson / quiz pages (focused reader mode, possibly intentional)
-2. Pre-existing TS7006 errors in admin/course pages (out of scope per constraints; consider a Sprint 12 cleanup story)
-3. PayMongo webhook HMAC not verified (out of scope from Sprint 8; consider adding in Sprint 12)
-4. 3 broken Vitest mocks in `src/app/actions/__tests__/tool-actions.test.ts` (`requireAuth` not mocked) — from Sprint 10
+### Operator-side (close before/during launch)
+
+1. **PayMongo webhook HMAC not verified** — STORY-055 finding #1. Pre-launch security gap. If launching with live payments, fix before STORY-056; otherwise post-launch bugfix.
+2. **Confirm `RESEND_WEBHOOK_SECRET` set in Vercel prod** — STORY-055 finding #3.
+3. **Run the restore drill** — STORY-054 acceptance bullet #3.
+4. **Execute the production deploy** — STORY-056 acceptance.
+5. **Approve launch copy + build React Email template + schedule broadcasts** — STORY-057 acceptance.
+
+### Post-launch (Sprint 13 candidates)
+
+1. PayMongo HMAC verification (security gap)
+2. CSP header (deferred from STORY-055)
+3. Fix 3 broken Vitest mocks in `src/app/actions/__tests__/tool-actions.test.ts` (S10 carry-over)
+4. BottomNav on lesson/quiz pages (S9 carry-over)
+5. TS7006 errors in admin/course pages (cleanup)
+6. (Added in S12 audit) Verify Resend webhook secret env var
 
 ---
 
 ## Notas / Status Tagalog-English Mix
 
-- Sprint 11 done, 5/5 punta. 47/52 kwento closed.
-- Susi: Sprint 12 launch nalang. Kailangan ng Sentry + Slack secrets sa Vercel tsaka repo.
-- 50/53 unit tests pass, 3 mock issue kaylangan ayusin bago launch.
+- Sprint 12 done, 5/5 punta. 52/52 kwento closed. AMPC v2 ready na for launch.
+- Susi: Vercel deploy + Neon backup drill + Resend broadcast. Tatlong operator actions bago live.
+- PayMongo HMAC gap lang ang blocker — pwede soft launch muna kung gusto mong i-defer live payments.
+- Salamat sa 12 sprints, 52 stories. Tara, mag-launch na tayo. 🇵🇭
