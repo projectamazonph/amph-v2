@@ -99,7 +99,7 @@ export async function setAuthCookie(token: string): Promise<void> {
   store.set(AUTH_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite: 'strict',
     path: '/',
     maxAge: TOKEN_TTL_SECONDS,
   });

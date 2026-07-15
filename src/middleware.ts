@@ -84,7 +84,9 @@ export async function middleware(request: NextRequest) {
 
   // Admin routes require ADMIN role
   if (isAdminRoute && payload.role !== 'ADMIN') {
-    return NextResponse.redirect(new URL('/', request.url));
+    const response = NextResponse.redirect(new URL('/', request.url));
+    response.cookies.delete(AUTH_COOKIE);
+    return response;
   }
 
   // Forward user info to downstream handlers via headers

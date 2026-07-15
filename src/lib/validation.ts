@@ -23,14 +23,20 @@ export type ActionResult<T = unknown> =
 // Auth schemas
 // ---------------------------------------------------------------------------
 
-export const signUpSchema = z.object({
-  email: z.string().email('Enter a valid email. Example: [email protected]'),
-  password: z
-    .string()
-    .min(8, 'Password must be at least 8 characters.')
-    .max(128, 'Password is too long.'),
-  name: z.string().min(1, 'Enter your name.').max(100).optional(),
-});
+export const signUpSchema = z
+  .object({
+    email: z.string().email('Enter a valid email. Example: [email protected]'),
+    password: z
+      .string()
+      .min(8, 'Password must be at least 8 characters.')
+      .max(128, 'Password is too long.'),
+    confirmPassword: z.string(),
+    name: z.string().min(1, 'Enter your name.').max(100).optional(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Passwords do not match.',
+    path: ['confirmPassword'],
+  });
 
 export const signInSchema = z.object({
   email: z.string().email('Enter a valid email.'),

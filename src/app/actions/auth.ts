@@ -66,6 +66,7 @@ export const signUpAction = createSafeAction(signUpSchema, async (data) => {
       passwordHash: hashPassword(data.password),
       role: 'STUDENT',
       status: 'ACTIVE',
+      emailVerified: new Date(),
     },
   });
 
@@ -96,6 +97,10 @@ export const signInAction = createSafeAction(signInSchema, async (data) => {
 
   if (!verifyPassword(data.password, user.passwordHash)) {
     throw new Error('Email or password is incorrect.');
+  }
+
+  if (!user.emailVerified) {
+    throw new Error('Please verify your email before signing in. Check your inbox for the verification link.');
   }
 
   // Update last active on sign-in
