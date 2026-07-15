@@ -187,3 +187,139 @@ All Sprint 11 additions are listed in `.env.example`.
 - Susi: Vercel deploy + Neon backup drill + Resend broadcast. Tatlong operator actions bago live.
 - PayMongo HMAC gap lang ang blocker — pwede soft launch muna kung gusto mong i-defer live payments.
 - Salamat sa 12 sprints, 52 stories. Tara, mag-launch na tayo. 🇵🇭
+
+---
+
+## 2026-07-15 — E2E "Critical Path" failures (handoff for fixing agent)
+
+**Owner of this section:** Sisyphus (E2E run + diagnosis). Another agent is planning the fix — do not re-diagnose from scratch; the root causes below are confirmed by DOM probes + route/middleware inspection.
+
+### Working-tree state (READ FIRST)
+- Dirty with ONE uncommitted edit: `tests/e2e/critical-path.spec.ts` already has `/^password$/i` → `/^password/i` (3 occurrences, lines 27/39/51). This fix is **correct and applied** — do NOT revert or re-edit those lines.
+- Nothing committed, nothing pushed.
+- Dev server assumed up on `:3000` (portable Postgres `amph_v2`). If running the suite, set `PLAYWRIGHT_BROWSERS_PATH=0` (Chromium cached in `node_modules/.pnpm/.../.local-browsers`).
+
+### Run command
+`PLAYWRIGHT_BROWSERS_PATH=0 node_modules/.bin/playwright test --reporter=list` (or `pnpm test:e2e`).
+
+### Current result: 3 passed, 2 failed
+Passing: homepage loads · signup creates account · pricing shows tiers.
+Failing: `signed-in user sees dashboard link` (line 35) · `dashboard loads and shows courses` (line 47).
+
+### Findings (priority order)
+
+1. **F4 — originally CORRECT, now RESOLVED.** The earlier claim that `src/app/(dashboard)/courses/page.tsx` was missing (causing a 404) was RIGHT. A prior handoff edit wrongly "corrected" this to "the page exists" — that correction was based on `/courses` returning 307 (signin redirect) and was mistaken; a 307 proves nothing about whether the index page compiles. `git status` now shows `src/app/(dashboard)/courses/page.tsx` + `courses.module.css` as **new, untracked files** created by the fixing agent, which confirms the index page was indeed absent and is now added. So: F4 was real, and the fixing agent has resolved it. (F2/F3 stale test expectations remain valid and are being aligned by the fixing agent's test edits.)
+
+2. **F2 — stale test expectation.** Test #4 (line 35) asserts a `/dashboard/i` link after signin. The app has no "dashboard" link — the student entry is a **"Courses"** link. Update assertion to `/courses/i`.
+
+3. **F3 — stale test expectation.** Test #5 (line 47) does `goto('/dashboard')` + `toHaveURL(/\/dashboard/)`. `/dashboard` intentionally redirects to `/` (legacy redirect, by design — `(dashboard)` route group adds no URL segment). Point the test at `/courses` and assert course content instead.
+
+### Key constraints / gotchas
+- The `(dashboard)` route group means URLs are `/courses`, `/payments`, `/tools`, etc. — NOT `/dashboard/...`. Any new page goes directly under `src/app/(dashboard)/<name>/page.tsx`.
+- Do NOT "fix" the failures by deleting assertions or hard-coding values. The courses index page was genuinely missing (now added by the fixing agent per F4). The real systemic defect to keep surfaced is the `ActionResult` server-action bug below, plus the `pino-pretty` missing-dependency bug below it.
+- After fixing the `ActionResult` re-exports, re-run the suite. Tests #4/#5 still need the F2/F3 assertion alignment (student entry is a "Courses" link, not "dashboard"), but they should no longer hit a server 500.
+
+### Recommended plan (updated)
+- **F4:** RESOLVED by the fixing agent (added `src/app/(dashboard)/courses/page.tsx` + `courses.module.css`, untracked). No further action except verifying the suite now reaches the Courses page.
+- **Real fix A:** the server-action `ActionResult` re-export (detailed in the 2026-07-15 server-action section below: delete the three `export type { ActionResult }` re-exports + drop the unused import in `certificates.ts:19`).
+- **Real fix B:** the `pino-pretty` missing-dependency bug (detailed in the section below this one). This is currently the dominant cause of dev-server 500s and would also break `pnpm build`.
+- **Plus:** the F2/F3 test-assertion alignment (student entry is a "Courses" link, not "dashboard") is being handled by the fixing agent's test edits.
+- End state: suite green for the right reason, with a regression guard on Courses navigation.
+
+---
+
+## 2026-07-15 — Systemic server-action bug: `export type { ActionResult }` in `'use server'` files
+
+**Owner of this section:** Sisyphus (broad route-coverage QA). Confirmed real by a clean `.next` rebuild (cache deleted, dev server restarted cold). The error survived the clean build, so it is genuine source breakage, not a stale dev-cache artifact.
+
+### Root cause
+`src/app/actions/certificates.ts` is a `'use server'` module that ends with a type-only re-export:
+
+```ts
+// src/app/actions/certificates.ts:99
+export type { ActionResult };
+```
+
+Next 16's server-action loader scans every `'use server'` file for exports to convert into server references. It treats `ActionResult` as a runtime action. The generated loader `(dashboard)/certificates/page/actions.js` then emits:
+
+```js
+export { ActionResult as '7f6279b2657b9afb5bcbb2af34b98aa196759e86b4' } from 'ACTIONS_MODULE0'
+```
+
+But `ActionResult` is a type. It was erased at compile time, so the module has no such runtime export. Result: `Export ActionResult doesn't exist in target module`. That broken chunk loads globally, so the console error fires on every page, and any route that executes it during SSR returns 500.
+
+The same dead re-export exists in two sibling files (also unnecessary, same risk):
+- `src/app/actions/progress.ts:241` to `export type { ActionResult };`
+- `src/app/actions/tools.ts:212` to `export type { ActionResult };`
+
+Confirmed zero files import `ActionResult` from any action module. Consumers pull it from `@/lib/validation` directly. The re-exports are pure dead weight.
+
+### Evidence
+- Generated `server-reference-manifest.json` lists `ActionResult` as a server-action export for `app/(dashboard)/certificates/page`.
+- Dev server `next.err.log` shows the browser error on every page: `Export ActionResult doesn't exist in target module` (line 3 of the generated `actions.js`).
+- Clean rebuild (`.next` deleted, server restarted) reproduced the error identically.
+
+### Impact (clean-server coverage probe, logged-out / student / admin)
+- `/` logged-out: 200. `/` signed-in (student or admin): **500**.
+- `/certificates`: **500** (any auth state).
+- `/verify/abc`: **500** (any auth state).
+- `/dashboard`, `/admin/*`, `/courses`, etc.: 307 redirect but still log the console error.
+- `/pricing`, `/auth/signin`, `/auth/signup`: 200 but log the console error.
+- Secondary symptom: `_clientMiddlewareManifest.js` served as `application/json` (MIME error) is a cascade of the 500, not a separate root cause.
+
+### Note on the earlier logged-out `/` 500
+My first probe reported logged-out `/` as 500. After the clean restart it returns 200. That specific 500 was a stale `.next` cache artifact from HMR churn, not the real bug. The real bug is the `ActionResult` error plus the 500s on `/certificates`, `/verify/abc`, and every authenticated page. Restarting the dev server separated real failure from noise.
+
+### Suggested fix
+Delete the three type re-exports:
+- `src/app/actions/certificates.ts:99`
+- `src/app/actions/progress.ts:241`
+- `src/app/actions/tools.ts:212`
+
+In `certificates.ts`, `ActionResult` then becomes unused in the file body, so also drop `type ActionResult` from the line-19 import: `import { createSafeAction, type ActionResult } from '@/lib/validation'`. Consumers already import `ActionResult` from `@/lib/validation`. No behavior change. Purely removes dead type re-exports that confuse the action loader.
+
+### Priority
+This is the highest-priority real defect found in the QA pass. It blocks all authenticated usage and the certificate/verify flows. Fix before any test-alignment work in the E2E section above.
+
+---
+
+## 2026-07-15 — Missing dependency: `pino-pretty` (build-breaking)
+
+**Owner of this section:** Sisyphus (broad route-coverage QA). Confirmed real: `pino-pretty` is absent from `package.json` and from `node_modules`, yet `src/lib/logger.ts` requires it.
+
+### Root cause
+`src/lib/logger.ts` configures the Node logger to pretty-print in dev:
+
+```ts
+// src/lib/logger.ts:67-80
+try {
+  // Lazy require — pino-pretty is optional.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const pretty = require('pino-pretty');
+  return pino({ ...baseConfig, transport: { target: 'pino-pretty', ... } });
+} catch {
+  return pino(baseConfig);
+}
+```
+
+The `try/catch` only guards a runtime throw. The bundler (webpack/Turbopack) statically resolves `require('pino-pretty')` at build time and fails because the package is not installed: `Module not found: Can't resolve 'pino-pretty'`. The comment claims "pino-pretty is only installed in dev — fall back to JSON if import fails", but there is no such fallback at the module-resolution layer. The code intends it to be a dev dependency, but it was never declared in `package.json` (only `pino@^9.5.0` is present).
+
+### Evidence
+- `Select-String package.json -Pattern "pino"` → only `pino: "^9.5.0"`. No `pino-pretty` anywhere in `dependencies` or `devDependencies`.
+- `Test-Path node_modules/pino-pretty` → MISSING.
+- `git log -S "pino-pretty" -- package.json` → empty (it was never declared in tracked history).
+- Dev server `next.err.log` is dominated by this error (2946 mentions vs 663 for the `ActionResult` error). It is the current top cause of the `/` 500 and any route whose module graph reaches `logger.ts` (auth, signup, homepage via `auth.ts`).
+- Import trace in the error: `./src/lib/logger.ts -> ./src/lib/auth.ts -> ./src/app/(public)/auth/signup/page.tsx`, and `./src/lib/logger.ts -> ./src/app/actions/auth.ts`.
+
+### Impact
+- Currently the dominant build error: `next dev` compiles pages that pull in `logger.ts` to a hard `Module not found`, so `GET /` returns **500** and the homepage/signin/signup fail to serve.
+- Would also break production: `next build` performs the same static resolution and would fail with the same `Module not found`. This is not dev-only despite the comment's claim.
+
+### Suggested fix (pick one)
+1. **Declare the dependency (matches the code's intent).** Add `"pino-pretty": "^13.0.0"` to `devDependencies` in `package.json` and run `pnpm install` (use `npx -y pnpm@11 install` under Node 24, since the corepack pnpm shim crashes). This restores the pretty dev logger the code expects.
+2. **Make it truly optional.** Keep `pino-pretty` out of the dependency tree and stop the bundler from resolving it: replace the static `require('pino-pretty')` with a guarded dynamic import that the bundler treats as optional, e.g. `const pretty = await import('pino-pretty').catch(() => null)`. Note: `createNodeLogger()` is called at module top-level (`export const logger = ...` at line 83) and is not async, so this option requires restructuring the lazy-init (e.g. a lazy getter or top-level async bootstrap) — more invasive than option 1.
+
+Option 1 is the smallest correct change and aligns with the existing comment that pino-pretty is a dev-only tool. Prefer it.
+
+### Priority
+High. It is currently blocking all E2E re-testing because the dev server is unhealthy, and it would block `pnpm build` in CI. Fix alongside the `ActionResult` re-export bug. Either fix alone is not enough: with only `ActionResult` fixed, the server still 500s on `pino-pretty`; with only `pino-pretty` fixed, authenticated pages still 500 on `ActionResult`.
