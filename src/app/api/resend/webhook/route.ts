@@ -52,6 +52,11 @@ async function verifySignature(req: NextRequest): Promise<boolean> {
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  if (!RESEND_WEBHOOK_SECRET) {
+    console.error('RESEND_WEBHOOK_SECRET not set — rejecting webhook');
+    return NextResponse.json({ error: 'Webhook secret not configured.' }, { status: 500 });
+  }
+
   if (!(await verifySignature(req))) {
     return NextResponse.json({ error: 'Invalid signature.' }, { status: 401 });
   }

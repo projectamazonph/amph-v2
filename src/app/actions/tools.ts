@@ -71,7 +71,7 @@ export const startToolSession = createSafeAction(startSessionSchema, async (data
 
 const saveSessionSchema = z.object({
   sessionId: z.string().min(1),
-  state: z.unknown(),
+  state: z.record(z.string(), z.unknown()),
   timeSpentSeconds: z.number().int().min(0).optional(),
 });
 
@@ -98,7 +98,7 @@ export const saveToolSession = createSafeAction(saveSessionSchema, async (data) 
 
 const submitSessionSchema = z.object({
   sessionId: z.string().min(1),
-  state: z.unknown(),
+  state: z.record(z.string(), z.unknown()),
   timeSpentSeconds: z.number().int().min(0).optional(),
 });
 
