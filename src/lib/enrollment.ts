@@ -96,24 +96,24 @@ export async function markWebhookProcessed(
   result?: string,
   httpStatus = 200,
 ): Promise<boolean> {
-  const existing = await db.processedWebhook.findUnique({
-    where: { paymongoEventId: eventId },
-    select: { id: true },
-  });
-  if (existing) {
-    return false; // already processed
+  try {
+    await db.processedWebhook.create({
+      data: {
+        paymongoEventId: eventId,
+        eventType,
+        resourceType,
+        resourceId,
+        processingResult: result ?? null,
+        httpStatus,
+      },
+    });
+    return true;
+  } catch (e) {
+    if (e instanceof Error && 'code' in e && e.code === 'P2002') {
+      return false;
+    }
+    throw e;
   }
-  await db.processedWebhook.create({
-    data: {
-      paymongoEventId: eventId,
-      eventType,
-      resourceType,
-      resourceId,
-      processingResult: result ?? null,
-      httpStatus,
-    },
-  });
-  return true;
 }
 
 /**
@@ -191,52 +191,14 @@ export async function handleCheckoutPaid(
 
   // Find our CheckoutSession
   const checkout = await db.checkoutSession.findUnique({
-    where: { paymongoSourceId: csId }, // we store the source/checkout id here
+    where: { paymongoSourceId: csId },
     include: { pricingTier: true },
   });
   if (!checkout) {
-    // Log but don't throw — webhook will still ack 200
     console.error(`[webhook] CheckoutSession not found for paymongo id ${csId}`);
     return null;
   }
 
-  // Create Payment
-  const payment = await db.payment.create({
-    data: {
-      userId: checkout.userId ?? '', // will be updated if guest
-      pricingTierId: checkout.pricingTierId,
-      checkoutSessionId: checkout.id,
-      paymongoPaymentId: paymentIdPm,
-      paymongoSourceId: csId,
-      amountPhp: checkout.finalAmountPhp,
-      feePhp: 0, // PayMongo fee not exposed in this event; compute in Sprint 8 if needed
-      netAmountPhp: checkout.finalAmountPhp,
-      currency: 'PHP',
-      method: mapPaymentMethod(method),
-      status: PaymentStatus.COMPLETED,
-      paidAt: new Date(),
-      metadata: JSON.stringify(metadata ?? {}),
-    },
-  });
-
-  // STORY-029: auto-issue the BIR receipt invoice right after the
-  // Payment row is durable. Numbering + VAT split handled inside
-  // `issueInvoiceForPayment`. PDF generation is lazy (on first GET).
-  // We deliberately don't block the webhook on PDF render — invoice
-  // creation is the only durable bit; render happens on demand.
-  // Errors are logged but don't fail the webhook (the student can
-  // request a manual issue from /dashboard/payments if needed).
-  try {
-    await issueInvoiceForPayment(payment.id);
-  } catch (err) {
-    console.error(`[webhook] Failed to issue invoice for payment ${payment.id}:`, err);
-  }
-
-  // Find or create user (guest checkout support)
-  const { id: userId, isNew } = await findOrCreateUserByEmail(checkout.email, metadata.name ?? null);
-
-  // Resolve the course for this pricing tier. A tier may have multiple courses;
-  // we pick the first published one (or the first one if none published).
   const course = await db.course.findFirst({
     where: { pricingTierId: checkout.pricingTierId, deletedAt: null },
     orderBy: { isPublished: 'desc' },
@@ -247,61 +209,92 @@ export async function handleCheckoutPaid(
     return null;
   }
 
-  // If guest, link payment to user
-  if (isNew) {
-    await db.payment.update({
-      where: { id: payment.id },
-      data: { userId },
+  // Wrap the critical write path in a single transaction so Payment,
+  // Enrollment, and CheckoutSession updates are atomic. Invoice PDF
+  // generation happens after the transaction commits (lazy render on
+  // first GET) — it's non-durable and can be retried independently.
+  const result = await db.$transaction(async (tx) => {
+    const payment = await tx.payment.create({
+      data: {
+        userId: checkout.userId ?? '',
+        pricingTierId: checkout.pricingTierId,
+        checkoutSessionId: checkout.id,
+        paymongoPaymentId: paymentIdPm,
+        paymongoSourceId: csId,
+        amountPhp: checkout.finalAmountPhp,
+        feePhp: 0,
+        netAmountPhp: checkout.finalAmountPhp,
+        currency: 'PHP',
+        method: mapPaymentMethod(method),
+        status: PaymentStatus.COMPLETED,
+        paidAt: new Date(),
+        metadata: JSON.stringify(metadata ?? {}),
+      },
     });
+
+    // Find or create user (guest checkout support)
+    const { id: userId, isNew } = await findOrCreateUserByEmail(checkout.email, metadata.name ?? null);
+
+    // If guest, link payment to user
+    if (isNew) {
+      await tx.payment.update({
+        where: { id: payment.id },
+        data: { userId },
+      });
+    }
+
+    const enrollment = await tx.enrollment.create({
+      data: {
+        userId,
+        courseId: course.id,
+        pricingTierId: checkout.pricingTierId,
+        tier: checkout.pricingTier.tier,
+        status: EnrollmentStatus.ACTIVE,
+        payment: { connect: { id: payment.id } },
+        enrolledAt: new Date(),
+      },
+    });
+
+    await tx.checkoutSession.update({
+      where: { id: checkout.id },
+      data: {
+        status: CheckoutStatus.PAID,
+        paymongoPaymentId: paymentIdPm,
+        paidAt: new Date(),
+        userId: isNew ? userId : checkout.userId,
+      },
+    });
+
+    await tx.payment.update({
+      where: { id: payment.id },
+      data: { enrollmentId: enrollment.id },
+    });
+
+    return { enrollmentId: enrollment.id, paymentId: payment.id, userId };
+  });
+
+  // Invoice issuance — non-durable, best-effort, outside transaction
+  try {
+    await issueInvoiceForPayment(result.paymentId);
+  } catch (err) {
+    console.error(`[webhook] Failed to issue invoice for payment ${result.paymentId}:`, err);
   }
 
-  // Create Enrollment
-  const enrollment = await db.enrollment.create({
-    data: {
-      userId,
-      courseId: course.id,
-      pricingTierId: checkout.pricingTierId,
-      tier: checkout.pricingTier.tier,
-      status: EnrollmentStatus.ACTIVE,
-      payment: { connect: { id: payment.id } },
-      enrolledAt: new Date(),
-    },
-  });
-
-  // Update CheckoutSession
-  await db.checkoutSession.update({
-    where: { id: checkout.id },
-    data: {
-      status: CheckoutStatus.PAID,
-      paymongoPaymentId: paymentIdPm,
-      paidAt: new Date(),
-      userId: isNew ? userId : checkout.userId,
-    },
-  });
-
-  // Link enrollment to payment
-  await db.payment.update({
-    where: { id: payment.id },
-    data: { enrollmentId: enrollment.id },
-  });
-
-  // Sprint 8 — STORY-035: send enrollment confirmation email.
-  // Errors are swallowed so email delivery never breaks the webhook.
+  // Send enrollment confirmation email — non-durable, best-effort
   const user = await db.user.findUnique({
-    where: { id: userId },
+    where: { id: result.userId },
     select: { email: true, name: true },
   });
   const tierName = `${checkout.pricingTier?.name ?? 'your course'}`;
   if (user?.email) {
     sendEnrollmentConfirmationEmail({
       to: user.email,
-      // @ts-expect-error — Prisma String wrapper; name is verified present in DB.
       studentName: user.name ?? user.email.split('@')[0],
       tierName: tierName as string,
     }).catch((err) => console.error('[webhook] enrollment email failed:', err));
   }
 
-  return { enrollmentId: enrollment.id, paymentId: payment.id, userId };
+  return result;
 }
 
 /**

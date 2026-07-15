@@ -19,7 +19,7 @@ import { CourseTier } from '@/lib/enums';
 import { createSafeAction, type ActionResult } from '@/lib/validation';
 import { userMeetsTierRequirement } from '@/lib/tier-gate';
 import { sendLiveClassReminderEmail } from '@/lib/email';
-import { isClassFull } from '@/lib/live-classes';
+
 
 const classIdSchema = z.object({ classId: z.string().min(1) });
 
@@ -83,23 +83,41 @@ export const registerForLiveClass = createSafeAction<
     };
   }
 
-  const full = await isClassFull(data.classId);
-  if (full) {
-    throw new Error('This class is at capacity. Join the waitlist or pick another date.');
-  }
-
   if (existing) {
-    // Was cancelled — restore instead of recreating.
-    await db.liveClassRegistration.update({
-      where: { id: existing.id },
-      data: { cancelledAt: null, deletedAt: null },
+    const restored = await db.$transaction(async (tx) => {
+      const klass = await tx.liveClass.findUnique({
+        where: { id: data.classId },
+        select: { maxAttendees: true },
+      });
+      const count = await tx.liveClassRegistration.count({
+        where: { liveClassId: data.classId, deletedAt: null, cancelledAt: null },
+      });
+      if (count >= (klass?.maxAttendees ?? 0)) {
+        throw new Error('This class is at capacity. Join the waitlist or pick another date.');
+      }
+      return tx.liveClassRegistration.update({
+        where: { id: existing.id },
+        data: { cancelledAt: null, deletedAt: null },
+      });
     });
   } else {
-    await db.liveClassRegistration.create({
-      data: {
-        liveClassId: data.classId,
-        userId: user.id,
-      },
+    await db.$transaction(async (tx) => {
+      const klass = await tx.liveClass.findUnique({
+        where: { id: data.classId },
+        select: { maxAttendees: true },
+      });
+      const count = await tx.liveClassRegistration.count({
+        where: { liveClassId: data.classId, deletedAt: null, cancelledAt: null },
+      });
+      if (count >= (klass?.maxAttendees ?? 0)) {
+        throw new Error('This class is at capacity. Join the waitlist or pick another date.');
+      }
+      return tx.liveClassRegistration.create({
+        data: {
+          liveClassId: data.classId,
+          userId: user.id,
+        },
+      });
     });
   }
 

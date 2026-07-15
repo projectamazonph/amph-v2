@@ -49,22 +49,18 @@ export function formatReceiptNumber(sequence: number, year: number): string {
  * canonical format is a 5-digit zero-padded sequence (per schema comment).
  */
 export async function nextInvoiceSequence(year: number): Promise<number> {
-  const yearSuffix = String(year);
-  // All Invoice.number values are zero-padded 5-digit strings, so the
-  // natural string ordering is the same as numeric ordering for the
-  // same length. Filter by checking the last 4 chars match the year.
-  const allThisYear = await db.invoice.findMany({
-    where: { deletedAt: null },
+  const prefix = `${year}-`;
+  const latest = await db.invoice.findFirst({
+    where: {
+      deletedAt: null,
+      number: { startsWith: prefix },
+    },
+    orderBy: { number: 'desc' },
     select: { number: true },
   });
-  let max = 0;
-  for (const inv of allThisYear) {
-    if (inv.number.length >= 4 && inv.number.slice(-4) === yearSuffix) {
-      const seq = parseInt(inv.number.slice(0, 5), 10);
-      if (Number.isFinite(seq) && seq > max) max = seq;
-    }
-  }
-  return max + 1;
+  if (!latest) return 1;
+  const seq = parseInt(latest.number.split('-')[1], 10);
+  return Number.isFinite(seq) ? seq + 1 : 1;
 }
 
 /**
