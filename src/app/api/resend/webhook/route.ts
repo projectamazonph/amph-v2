@@ -12,6 +12,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createHmac } from 'crypto';
+import { logger } from '@/lib/logger';
 
 const RESEND_WEBHOOK_SECRET = process.env.RESEND_WEBHOOK_SECRET;
 
@@ -53,7 +54,7 @@ async function verifySignature(req: NextRequest): Promise<boolean> {
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   if (!RESEND_WEBHOOK_SECRET) {
-    console.error('RESEND_WEBHOOK_SECRET not set — rejecting webhook');
+    logger.error('RESEND_WEBHOOK_SECRET not set — rejecting webhook');
     return NextResponse.json({ error: 'Webhook secret not configured.' }, { status: 500 });
   }
 
@@ -81,34 +82,23 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   switch (type) {
     case 'email.delivered':
-      console.info(
-        `[resend-webhook] delivered email_id=${data.email_id} to=${toAddresses.join(',')}`,
-      );
+      logger.info({ emailId: data.email_id, to: toAddresses }, 'Email delivered');
       break;
 
     case 'email.bounced':
-      console.warn(
-        `[resend-webhook] BOUNCED email_id=${data.email_id} to=${toAddresses.join(',')}`,
-      );
-      // Future: mark user email as bounced in DB to suppress further sends.
+      logger.warn({ emailId: data.email_id, to: toAddresses }, 'Email bounced');
       break;
 
     case 'email.complained':
-      console.warn(
-        `[resend-webhook] SPAM COMPLAINT email_id=${data.email_id} to=${toAddresses.join(',')}`,
-      );
-      // Future: add to Resend suppression list or mark in DB.
+      logger.warn({ emailId: data.email_id, to: toAddresses }, 'Email spam complaint');
       break;
 
     case 'email.unsubscribed':
-      console.info(
-        `[resend-webhook] unsubscribed email_id=${data.email_id} to=${toAddresses.join(',')}`,
-      );
-      // Future: record unsubscribe preference in DB.
+      logger.info({ emailId: data.email_id, to: toAddresses }, 'Email unsubscribed');
       break;
 
     default:
-      console.info(`[resend-webhook] unhandled event type=${type}`);
+      logger.info({ type }, 'Unhandled resend webhook event');
   }
 
   return NextResponse.json({ received: true });
