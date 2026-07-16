@@ -113,7 +113,7 @@ export const registerForLiveClass = createSafeAction<
           });
         }
       },
-      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      { isolationLevel: 'Serializable' },
     );
 
   for (let attempt = 0; ; attempt++) {

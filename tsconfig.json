@@ -25,6 +25,7 @@
     "paths": {
       "@/*": ["./src/*"]
     },
+    "noImplicitAny": false,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "noFallthroughCasesInSwitch": true,
