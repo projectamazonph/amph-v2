@@ -70,7 +70,10 @@ jobs:
         run: pnpm prisma migrate deploy
 
       - name: Unit + integration tests
-        run: pnpm test -- --coverage
+        # Not `pnpm test -- --coverage`: pnpm forwards the literal `--` to
+        # vitest, which then reads `--coverage` as a filename filter and
+        # emits no coverage output at all.
+        run: pnpm test:coverage
 
       - name: Coverage threshold check
         run: |
