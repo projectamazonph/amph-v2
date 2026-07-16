@@ -34,7 +34,7 @@ jobs:
     timeout-minutes: 15
     if: false # DEPLOYMENT DISABLED — 2026-07-14
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Deploy preview to Vercel
         id: deploy

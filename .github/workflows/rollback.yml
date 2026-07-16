@@ -40,7 +40,7 @@ jobs:
     environment: production
     if: ${{ inputs.confirm == 'ROLLBACK' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install Vercel CLI
         run: npm i -g vercel@latest

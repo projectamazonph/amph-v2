@@ -36,7 +36,7 @@ jobs:
       NODE_ENV: test
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # gitleaks diffs the PR commit against its parent (`git log <sha>^..<sha>`),
           # which needs that parent to exist locally. The default shallow
@@ -127,7 +127,7 @@ jobs:
       JWT_SECRET: test-secret-min-32-characters-long-aaaaaaaa
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: pnpm/action-setup@v4
 
@@ -185,7 +185,7 @@ jobs:
       JWT_SECRET: test-secret-min-32-characters-long-aaaaaaaa
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: pnpm/action-setup@v4
 
