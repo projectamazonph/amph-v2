@@ -249,3 +249,28 @@ process had been wrong before (see process note above). Findings:
 165/165 passing. All four launch blockers (C1–C4) confirmed resolved in code.
 Items O1–O6 remain open as before (post-launch/Sprint 13 follow-ups); O7 can
 now be marked done — migrations are Postgres-native.
+
+### Pre-deployment audit — 2026-07-16 (later the same day)
+
+Two further launch blockers found and fixed during the final deploy audit:
+
+- **`next build` failed outright.** `src/lib/email.tsx` constructed the Resend
+  client at module scope; the SDK constructor throws when `RESEND_API_KEY` is
+  unset, and the PayMongo webhook route pulls this module in during page-data
+  collection — so any build without the key (CI, fresh clones) died. Fixed
+  with a lazy singleton; the send-time key guard already existed.
+- **CI has been failing at the pnpm setup step — no quality gate has actually
+  run on recent pushes.** `pnpm/action-setup@v4` refuses the conflict between
+  `version: 9` (ci.yml, sentry-alert.yml) and `packageManager: pnpm@11.13.0`
+  (package.json). Every recent run died in ~32 s before typecheck/tests/build.
+  Removed the workflow pins so `packageManager` is authoritative. **This
+  definitively answers O7:** CI was never green with the SQLite lock file —
+  it wasn't running `migrate deploy` (or anything else) at all.
+- Also fixed: `lint` script still invoked `next lint`, which Next 16 removed
+  (ESLint 9 flat config was already present — now `eslint .`, 0 errors), and
+  the production-deploy runbook falsely claimed migrations run via
+  `postinstall` and expected "5 migrations found" (now 1 squashed baseline).
+
+Verified after fixes: `next build` completes, `eslint .` 0 errors,
+`vitest` 165/165, `tsc` clean. CI green-ness must be confirmed on the next
+push — it has no recent green baseline.

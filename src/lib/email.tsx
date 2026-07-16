@@ -13,7 +13,15 @@
 import { Resend } from 'resend';
 import { BRAND_NAME } from '@/lib/brand';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy singleton: the Resend constructor throws when the API key is unset,
+// so constructing at module scope breaks `next build` (page-data collection
+// imports this module via the PayMongo webhook route). Defer until first send,
+// which is already guarded on RESEND_API_KEY being present.
+let resend: Resend | null = null;
+function getResend(): Resend {
+  resend ??= new Resend(process.env.RESEND_API_KEY);
+  return resend;
+}
 
 const FROM = process.env.RESEND_FROM_EMAIL ?? 'noreply@projectamazonph.com';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
@@ -33,7 +41,7 @@ async function sendEmail({
     return;
   }
   try {
-    const { error } = await resend.emails.send({
+    const { error } = await getResend().emails.send({
       from: FROM,
       to,
       subject,
