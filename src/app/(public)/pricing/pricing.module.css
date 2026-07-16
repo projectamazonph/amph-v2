@@ -130,7 +130,7 @@
 }
 
 .bulletLive {
-  color: var(--accent) !important;
+  color: var(--ink-900);
   font-weight: 600;
 }
 
