@@ -45,11 +45,11 @@
           "order": 4,
           "question": "What does your Amazon PPC bid actually control?",
           "optionA": "The exact price you'll pay for every click",
-          "optionB": "A ceiling — the most you'll pay, with the real cost decided by the auction and your settings",
+          "optionB": "A starting point that placement adjustments and your bid strategy then act on to set the real ceiling",
           "optionC": "A price that never changes once the campaign is live",
           "optionD": "A guaranteed discount of one cent below the next bidder",
           "correctAnswer": "B",
-          "explanation": "Your bid is a ceiling, not a fixed price. Relevance, targeting, placement modifiers, and bid strategy all affect what you actually pay. The safe habit isn't memorizing an auction formula — it's setting a defensible maximum bid and then watching your realized CPC in the reports."
+          "explanation": "Your entered bid is the base. Placement adjustments raise it for specific placements, and your bid strategy setting decides whether the result is a hard ceiling (Fixed Bids, Dynamic Down Only) or something Amazon can raise further for likely conversions (Dynamic Up and Down). The safe habit isn't memorizing an auction formula, it's setting a defensible maximum bid and then watching your realized CPC in the reports."
         },
         {
           "order": 5,
