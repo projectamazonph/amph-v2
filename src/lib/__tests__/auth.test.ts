@@ -298,4 +298,11 @@ describe('auth.ts', () => {
     expect(verifyClaimToken(rawToken, tokenHash, null)).toBe(false);
   });
 
+  it('verifyClaimToken rejects wrong-length token', () => {
+    const { tokenHash } = generateClaimToken();
+    const future = new Date(Date.now() + 60 * 60 * 1000);
+    // SHA-256 hash is 64 hex chars; passing a short token should fail
+    expect(verifyClaimToken('short', tokenHash, future)).toBe(false);
+  });
+
 

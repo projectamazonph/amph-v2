@@ -461,4 +461,35 @@ describe('enrollment.ts', () => {
       await handlePaymentRefunded(event);
     });
   });
-});
+}
+
+  describe('findOrCreateUserByEmail (C4 claim token)', () => {
+    it('returns existing user without claim token', async () => {
+      mockDb.user.findUnique.mockResolvedValueOnce({ id: 'existing-id' });
+      const result = await findOrCreateUserByEmail('existing@example.com');
+      expect(result).toEqual({ id: 'existing-id', isNew: false });
+      expect(mockDb.user.create).not.toHaveBeenCalled();
+    });
+
+    it('sets claim token on new placeholder user', async () => {
+      mockDb.user.findUnique.mockResolvedValueOnce(null);
+      mockDb.user.create.mockResolvedValueOnce({ id: 'new-user' });
+
+      const result = await findOrCreateUserByEmail('new@example.com');
+
+      expect(result.isNew).toBe(true);
+      expect(result.rawClaimToken).toBeDefined();
+      expect(typeof result.rawClaimToken).toBe('string');
+      // claim token should be a 48-char hex string
+      expect(result.rawClaimToken).toMatch(/^[0-9a-f]{48}$/);
+    });
+
+    it('does not create user if already exists', async () => {
+      mockDb.user.findUnique.mockResolvedValueOnce({ id: 'existing-id' });
+
+      const result = await findOrCreateUserByEmail('test@example.com', 'Test');
+      expect(result).toEqual({ id: 'existing-id', isNew: false });
+      expect(mockDb.user.create).not.toHaveBeenCalled();
+    });
+  });
+);
