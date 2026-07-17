@@ -11,12 +11,13 @@ export default function HomePage() {
         <div className={styles.heroContent}>
           <p className={styles.heroEyebrow}>{BRAND_NAME_UPPER}</p>
           <h1 className={styles.heroTitle}>
-            Three courses. One outcome: become the Amazon ads specialist clients retain.
+            Amazon PPC theory is everywhere. Somewhere to actually practice it isn&apos;t.
           </h1>
           <p className={styles.heroSub}>
-            Most VAs don&apos;t touch a real Amazon account until a client hands them the
-            login. {BRAND_NAME} skips that: five practice tools built on real Amazon Ads
-            Console mechanics, so you already know where everything is before that day comes.
+            {BRAND_NAME}{' '}
+            fixes that: one course, three tiers, each built around practice tools that
+            mirror the real Amazon Ads Console &mdash; so you already know where everything
+            is before a client hands you the login.
           </p>
           <div className={styles.heroActions}>
             <Link
@@ -143,7 +144,7 @@ export default function HomePage() {
       <section className={styles.ctaSection}>
         <h2>Ready to learn the Amazon PPC work that&apos;s in demand right now?</h2>
         <p>
-          Structured courses, real campaign tools, and a certificate that&apos;s part of the
+          A structured course, real campaign tools, and a certificate that&apos;s part of the
           ProjectAmazonPH hiring pipeline.
         </p>
         <Link
