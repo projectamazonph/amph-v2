@@ -408,12 +408,17 @@ describe('enrollment.ts', () => {
         expect(tx.payment.update).toHaveBeenCalledWith(
           expect.objectContaining({
             where: { id: 'pay-1' },
-            // C7: 10000 < 299900 → PARTIALLY_REFUNDED (not REFUNDED)
-            data: expect.objectContaining({ status: 'PARTIALLY_REFUNDED', refundAmountPhp: 10000 }),
+            // C7: refund amount 299900 >= original 299900 → fully refunded
+            data: expect.objectContaining({ status: 'REFUNDED', refundAmountPhp: 299900 }),
           }),
         );
-        // C7: partial refund should NOT cancel enrollment
-        expect(tx.enrollment.update).not.toHaveBeenCalled();
+        // C7: full refund should cancel enrollment
+        expect(tx.enrollment.update).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: { id: 'enr-1' },
+            data: expect.objectContaining({ status: 'REFUNDED' }),
+          }),
+        );
       });
 
       await handlePaymentRefunded(event);
