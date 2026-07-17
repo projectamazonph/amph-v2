@@ -16,6 +16,14 @@ const mockDb = vi.hoisted(() => {
 
 vi.mock('@/lib/db', () => ({ db: mockDb }));
 
+const mockCreatePaymentFromSource = vi.fn();
+vi.mock('@/lib/paymongo', () => ({
+  createPaymentFromSource: (...args: unknown[]) => mockCreatePaymentFromSource(...args),
+}));
+vi.mock('@/lib/badges', () => ({
+  evaluateBadges: vi.fn().mockResolvedValue({ awarded: [], totalXpGained: 0 }),
+}));
+
 // Prisma is imported for the TransactionClient type only; stub the value import.
 vi.mock('@prisma/client', () => ({ Prisma: {}, PrismaClient: class {} }));
 
@@ -52,6 +60,7 @@ import {
   handleCheckoutPaid,
   handleCheckoutFailed,
   handlePaymentRefunded,
+  handleSourceChargeable,
   type CheckoutPaidEvent,
   type CheckoutFailedEvent,
   type PaymentRefundedEvent,
@@ -505,6 +514,90 @@ describe('enrollment.ts', () => {
       const result = await findOrCreateUserByEmail('test@example.com', 'Test');
       expect(result).toEqual({ id: 'existing-id', isNew: false });
       expect(mockDb.user.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('handleSourceChargeable (C1)', () => {
+    function makeSourceEvent(overrides: Record<string, unknown> = {}): any {
+      return {
+        data: {
+          id: 'evt-src-1',
+          attributes: {
+            type: 'source.chargeable',
+            data: {
+              id: 'src_test_001',
+              attributes: {
+                id: 'src_test_001',
+                amount: 299900,
+                currency: 'PHP',
+                status: 'chargeable',
+                type: 'gcash',
+                metadata: {},
+                ...overrides,
+              },
+            },
+          },
+        },
+      };
+    }
+
+    it('returns null when already processed', async () => {
+      const event = makeSourceEvent();
+      mockDb.$transaction.mockImplementationOnce(async (cb: Function) => {
+        const tx = {
+          processedWebhook: { create: vi.fn() },
+          checkoutSession: { findFirst: vi.fn() },
+          payment: { findUnique: vi.fn(), update: vi.fn() },
+          user: { findUnique: vi.fn(), create: vi.fn() },
+          course: { findFirst: vi.fn() },
+          enrollment: { create: vi.fn(), findUnique: vi.fn() },
+          discountCode: { update: vi.fn() },
+          payment2: { create: vi.fn(), update: vi.fn(), findFirst: vi.fn() },
+        };
+        // Duplicate event
+        tx.processedWebhook.create.mockRejectedValueOnce(p2002());
+        return cb(tx);
+      });
+      await handleSourceChargeable(event);
+      expect(mockDb.$transaction).toHaveBeenCalled();
+    });
+
+    it('returns null when checkout session not found', async () => {
+      const event = makeSourceEvent();
+      mockDb.$transaction.mockImplementationOnce(async (cb: Function) => {
+        const tx = {
+          processedWebhook: { create: vi.fn() },
+          checkoutSession: { findFirst: vi.fn() },
+          payment: { findUnique: vi.fn(), update: vi.fn() },
+          user: { findUnique: vi.fn(), create: vi.fn() },
+          course: { findFirst: vi.fn() },
+          enrollment: { create: vi.fn(), findUnique: vi.fn() },
+          discountCode: { update: vi.fn() },
+        };
+        tx.processedWebhook.create.mockResolvedValueOnce({ id: 'pw-new' });
+        tx.checkoutSession.findFirst.mockResolvedValueOnce(null);
+        return cb(tx);
+      });
+      await handleSourceChargeable(event);
+      expect(mockDb.$transaction).toHaveBeenCalled();
+    });
+
+    it('rejects event with wrong currency', async () => {
+      const event = makeSourceEvent({ currency: 'USD' });
+      mockDb.$transaction.mockImplementationOnce(async (cb: Function) => {
+        const tx = {
+          processedWebhook: { create: vi.fn() },
+          checkoutSession: { findFirst: vi.fn() },
+          payment: { findUnique: vi.fn(), update: vi.fn() },
+        };
+        tx.processedWebhook.create.mockResolvedValueOnce({ id: 'pw-new' });
+        tx.checkoutSession.findFirst.mockResolvedValueOnce({
+          id: 'cs-1', finalAmountPhp: 299900, email: 'test@test.com', pricingTierId: 'tier-1',
+          discountCodeId: null,
+        });
+        return cb(tx);
+      });
+      await expect(handleSourceChargeable(event)).rejects.toThrow('Unexpected currency: USD');
     });
   });
 });
