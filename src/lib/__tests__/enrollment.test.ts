@@ -461,7 +461,6 @@ describe('enrollment.ts', () => {
       await handlePaymentRefunded(event);
     });
   });
-}
 
   describe('findOrCreateUserByEmail (C4 claim token)', () => {
     it('returns existing user without claim token', async () => {
@@ -480,7 +479,6 @@ describe('enrollment.ts', () => {
       expect(result.isNew).toBe(true);
       expect(result.rawClaimToken).toBeDefined();
       expect(typeof result.rawClaimToken).toBe('string');
-      // claim token should be a 48-char hex string
       expect(result.rawClaimToken).toMatch(/^[0-9a-f]{48}$/);
     });
 
@@ -492,4 +490,4 @@ describe('enrollment.ts', () => {
       expect(mockDb.user.create).not.toHaveBeenCalled();
     });
   });
-);
+});
