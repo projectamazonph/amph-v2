@@ -754,14 +754,14 @@ model RefundRequest {
   user       User    @relation(fields: [userId], references: [id])
   payment    Payment @relation(fields: [paymentId], references: [id])
   reviewedBy User?   @relation("RefundReviewer", fields: [reviewedById], references: [id])
+  // C7: Application-level deduplication because Prisma doesn't support
+  // partial unique indexes. The server action enforces atomic
+  // check-and-insert inside a $transaction. See createRefundRequestAction.
 
   @@index([userId])
   @@index([status])
   @@index([paymentId])
   @@index([deletedAt])
-  // C7: Application-level deduplication because Prisma doesn't support
-  // partial unique indexes. The server action enforces atomic
-  // check-and-insert inside a $transaction. See createRefundRequestAction.
 }
 
 // ============================================================================
