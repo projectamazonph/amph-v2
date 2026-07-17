@@ -13,6 +13,8 @@ The audience is a Filipino aspiring VA. Assume a learner has a smartphone, inter
 
 ## Course structure
 
+**Status note (2026-07-17):** the tables below describe the structure as actually built in `content/curriculum/modules/` and `scripts/import-amph-content.ts`'s `MODULE_META`, not the original aspirational reorg this document once proposed. Modules 2 and 3, and Modules 5 through 8, are numbered and scoped differently than an earlier draft of this plan had them; content was produced against the numbering below, not the earlier draft. Treat this as the live module map going forward.
+
 ### Course 1. PPC Foundations
 
 **Promise:** You can support a safe Sponsored Products launch and explain the numbers behind it.
@@ -21,11 +23,11 @@ The audience is a Filipino aspiring VA. Assume a learner has a smartphone, inter
 
 | Module | Lessons and activity | Learner can do | Required artifact |
 |---|---|---|---|
-| 0. Start Here: The Amazon Ads VA Role | What work a PPC VA does, account safety, client briefs, how the course works, console orientation. | Explain the role, request missing information, and work safely in a demo account. | Client-brief intake checklist. |
-| 1. PPC Economics and the Decision Loop | The Big Six metrics, break-even ACoS, maximum CPC, reading metric patterns. | Identify the first question to ask when performance changes. | Profitability and max-CPC sheet. |
-| 2. Listing and Retail Readiness | Buy-box or featured-offer awareness, stock, price, images, reviews, title, conversion diagnosis. | Decide whether advertising or listing work is the first lever. | Listing-readiness audit. |
-| 3. Keyword Research and Targeting Map | Search intent, auto targeting, broad, phrase, exact, product targeting, negatives, keyword research workflow. | Create a mapped target list with a negative plan. | Keyword map. |
-| 4. Sponsored Products Campaign Build | Objectives, naming, portfolios as grouping, campaign architecture, bids, budgets, launch QA. | Build and justify a safe campaign structure in the simulator. | Campaign brief and launch QA checklist. |
+| 0. Onboarding | What work a PPC VA does, account safety, client briefs, how the course works, console orientation. | Explain the role, request missing information, and work safely in a demo account. | Client-brief intake checklist. |
+| 1. PPC Foundations | The Big Six metrics: CPC, CTR, ACoS, TACoS, ROAS, conversion rate, and the decision loop for reading them. | Identify the first question to ask when performance changes. | Profitability and max-CPC sheet. |
+| 2. Keyword Research | Search intent, match types (broad, phrase, exact), negative keywords, keyword grouping, research workflow. | Create a mapped target list with a negative plan. | Keyword map. |
+| 3. Listing Optimization | Listing and ad relevance signals, listing anatomy (title, bullets, images), A+ Content and Brand Registry. | Decide whether advertising or listing work is the first lever. | Listing-readiness audit. |
+| 4. Campaign Architecture | Sponsored Products, Sponsored Brands, and Sponsored Display; campaign structure, bids, budgets, launch QA. | Build and justify a safe campaign structure in the simulator. | Campaign brief and launch QA checklist. |
 
 **Foundation gates:**
 
@@ -41,11 +43,12 @@ The audience is a Filipino aspiring VA. Assume a learner has a smartphone, inter
 
 | Module | Lessons and activity | Learner can do | Required artifact |
 |---|---|---|---|
-| 5. Search-Term Triage | Read a search-term report, decide keep, harvest, lower bid, negate exact, negate phrase, or watch. | Take a defensible action without deleting valuable traffic. | STR action log. |
-| 6. Bidding and Placement Control | Maximum CPC, bid strategy, placement modifier math, bid changes, minimum-data rules, change logs. | Change a bid safely and explain the expected trade-off. | Bid-change plan. |
-| 7. Budget, Portfolios, and Seasonal Control | Campaign budgets, budget rules, portfolio reporting, pacing, inventory-aware decisions, seasonality. | Protect winners without confusing a portfolio with targeting controls. | Budget decision log. |
-| 8. Sponsored Brands, Sponsored Display, and Creative | Eligibility, objective, audience and product targeting, Store and video creative, measurement limits. | Select an ad type based on objective and account readiness. | SB or SD test brief. |
-| 9. Reporting and Diagnostic Framework | Weekly cadence, metric patterns, root-cause tree, client language, escalation rules. | Turn data into one clear recommendation. | One-page weekly client update. |
+| 5. Portfolio Strategy | Campaign portfolios, budget pacing, seasonal strategy and promo planning. | Protect winners without confusing a portfolio with targeting controls. | Budget decision log. |
+| 6. Bidding Lab | Maximum CPC, bid strategy, placement adjustment math, bid changes, minimum-data rules, change logs. | Change a bid safely and explain the expected trade-off. | Bid-change plan. |
+| 7. Search Term Triage | Read a search-term report, decide keep, harvest, lower bid, negate exact, negate phrase, or watch. | Take a defensible action without deleting valuable traffic. | STR action log. |
+| 8. Competitive Intelligence | Brand Analytics, share of voice, competitor benchmarking. | Turn competitor data into a specific campaign adjustment. | Competitor gap-analysis worksheet. |
+
+**Not yet built:** a Reporting and Diagnostic Framework module (weekly cadence, root-cause tree, client language, escalation rules, one-page client report) was in an earlier draft of this plan and still belongs in Course 2, but no module directory or content exists for it yet. It would need its own number (9, or a renumbering of Module 8) decided at build time, not guessed here.
 
 **Mastery gates:**
 
@@ -53,18 +56,20 @@ The audience is a Filipino aspiring VA. Assume a learner has a smartphone, inter
 - Submit a report that states the result, cause, action, risk, and next check date.
 - Complete a diagnostic scenario that requires the learner to choose whether the problem is traffic, conversion, budget, or measurement.
 
-### Course 3. Ultimate Transformation
+### Course 3. Ultimate Transformation (not yet built)
 
 **Promise:** You can present a small Amazon PPC account plan and operate like a dependable junior PPC specialist.
 
 **Completion evidence:** A review-ready portfolio, a recorded walkthrough, a client handover, and an interview-ready story.
 
-| Module | Lessons and activity | Learner can do | Required artifact |
+None of this course's modules have content or module directories yet (Release 3, per `docs/CURRICULUM-REDESIGN.md`'s production order below). Final module numbers depend on where Course 2 lands once the Reporting/Diagnostic Framework question above is resolved, so the table below intentionally omits fixed numbers.
+
+| Module (unnumbered) | Lessons and activity | Learner can do | Required artifact |
 |---|---|---|---|
-| 10. Client Operations and Communication | Client intake, naming rules, task ownership, change logs, escalation, meeting notes, concise business English. | Communicate clearly and protect the account. | Client update, escalation, and change-log samples. |
-| 11. Audit to 30-Day Plan | Account audit, prioritization, opportunity sizing, launch versus mature account strategy, risks. | Produce a plan instead of a list of random optimizations. | Audit summary and 30-day plan. |
-| 12. Portfolio Capstone | Diagnose a simulated account, build a recommendation, execute tool tasks, report results, record a walkthrough. | Defend a recommendation to a reviewer. | Final portfolio bundle and five-minute walkthrough. |
-| 13. Getting Hired and Handover | Resume proof, case-study formatting, interview answers, discovery call, first-week checklist. | Show evidence of skill without exaggeration. | Portfolio page and interview answer bank. |
+| Client Operations and Communication | Client intake, naming rules, task ownership, change logs, escalation, meeting notes, concise business English. | Communicate clearly and protect the account. | Client update, escalation, and change-log samples. |
+| Audit to 30-Day Plan | Account audit, prioritization, opportunity sizing, launch versus mature account strategy, risks. | Produce a plan instead of a list of random optimizations. | Audit summary and 30-day plan. |
+| Portfolio Capstone | Diagnose a simulated account, build a recommendation, execute tool tasks, report results, record a walkthrough. | Defend a recommendation to a reviewer. | Final portfolio bundle and five-minute walkthrough. |
+| Getting Hired and Handover | Resume proof, case-study formatting, interview answers, discovery call, first-week checklist. | Show evidence of skill without exaggeration. | Portfolio page and interview answer bank. |
 
 ## The diagnostic framework
 
@@ -155,9 +160,10 @@ What we need from the client:
 
 ## Production order
 
-1. Fix and rebuild Module 0 so it matches v2 and sets realistic expectations.
-2. Rewrite Module 1 using the new standard. Use the Big Six lesson as the model.
-3. Rewrite Modules 2 and 4, then connect Keyword Research and Campaign Builder to required artifacts.
-4. Build Modules 5, 6, and 9 together. They form one weekly optimization loop.
-5. Add modules 10 through 13 and the human-review capstone.
-6. Retire or rewrite the legacy portfolio, attribution, auction, quality-score, and dayparting claims before the advanced path opens.
+Status as of 2026-07-17: steps 1-3 below are complete (see `docs/CONTENT-AUDIT-2026-07-16.md` and `docs/CONTENT-AUDIT-MODULES-2-8.md` for what was fixed and PRs #31-#32 for the work itself). Steps 4-5 are Release 3 and haven't started.
+
+1. ~~Fix and rebuild Module 0 so it matches v2 and sets realistic expectations.~~ Done.
+2. ~~Rewrite Module 1 using the new standard. Use the Big Six lesson as the model.~~ Done.
+3. ~~Retire or rewrite the legacy portfolio, attribution, auction, quality-score, and dayparting claims across Modules 2-8, and bring every lesson up to the voice guide and lesson-production standard.~~ Done.
+4. Build the Reporting and Diagnostic Framework module referenced under Course 2 above, deciding its final module number at that point.
+5. Add the Course 3 (Ultimate Transformation) modules and the human-review capstone, numbering them once step 4 has landed.
