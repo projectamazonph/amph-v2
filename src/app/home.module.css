@@ -15,7 +15,7 @@
   }
 }
 
-/* Section-level cascade reveal — RevealSection toggles .is-visible on scroll-in */
+/* Section-level cascade reveal. RevealSection toggles .is-visible on scroll-in. */
 .painSection,
 .simSection,
 .accessSection,
@@ -34,6 +34,31 @@
 .ctaSection:global(.is-visible) {
   opacity: 1;
   transform: none;
+}
+
+/* Skip the reveal-on-scroll wait entirely for reduced motion, rather than
+   relying on the global transition-duration override to make it instant. */
+@media (prefers-reduced-motion: reduce) {
+  .heroEyebrow,
+  .heroTitle,
+  .heroTagline,
+  .heroSub,
+  .heroActions,
+  .heroDecorative {
+    animation: none;
+  }
+
+  .painSection,
+  .simSection,
+  .accessSection,
+  .pricingSection,
+  .ctaSection,
+  .painItem,
+  .simRow,
+  .accessItem {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* ── Buttons ──────────────────────────────────────────────────── */

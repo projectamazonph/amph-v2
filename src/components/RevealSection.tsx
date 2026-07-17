@@ -8,9 +8,9 @@ interface RevealSectionProps {
 }
 
 /**
- * Wraps a <section> and adds an `is-visible` class the first time it
- * scrolls into view. Section CSS drives the actual cascade/stagger —
- * this only flips the observer state once, then disconnects.
+ * Reveals once and stays revealed. Unobserving after the first match
+ * (instead of toggling visibility on every crossing) keeps the section
+ * from re-hiding if a user scrolls back up past it.
  */
 export function RevealSection({ children, className }: RevealSectionProps) {
   const ref = useRef<HTMLElement>(null);
@@ -22,10 +22,9 @@ export function RevealSection({ children, className }: RevealSectionProps) {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (!entry) return;
-        // Reveal on normal scroll-into-view, and also if the element is
-        // already above the viewport (e.g. a hash-link landed past it) —
-        // otherwise content scrolled past before ever intersecting would
-        // stay permanently invisible.
+        // Also reveal if the element is already above the viewport (e.g. a
+        // hash link landed past it). Without this, content scrolled past
+        // before ever intersecting would stay permanently invisible.
         if (entry.isIntersecting || entry.boundingClientRect.top < 0) {
           setVisible(true);
           observer.unobserve(el);

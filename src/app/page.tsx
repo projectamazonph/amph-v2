@@ -67,8 +67,8 @@ export default function HomePage() {
           <h1 className={styles.heroTitle}>Learn Amazon PPC the right way</h1>
           <p className={styles.heroTagline}>We turn the theoretical into the practical.</p>
           <p className={styles.heroSub}>
-            Not only do you learn Amazon PPC from scratch &mdash; you turn that knowledge
-            into workflows you can actually run on the job, before a client ever hands you
+            Not only do you learn Amazon PPC from scratch. You turn that knowledge into
+            workflows you can actually run on the job, before a client ever hands you
             their account.
           </p>
           <div className={styles.heroActions}>
@@ -94,16 +94,16 @@ export default function HomePage() {
             You finish the lessons, but you&apos;ve never actually touched a campaign.
           </li>
           <li className={styles.painItem}>
-            You know the vocabulary &mdash; ACoS, ROAS, CPC &mdash; but freeze the first
-            time you have to act on it.
+            You know the vocabulary (ACoS, ROAS, CPC) but freeze the first time you have
+            to act on it.
           </li>
           <li className={styles.painItem}>
             Clients want proof you&apos;ve used Seller Central. Nobody lets you practice
             on one first.
           </li>
           <li className={styles.painItem}>
-            One mistake in a live account costs a client real money &mdash; so you never
-            get to make the mistakes that actually teach you something.
+            One mistake in a live account costs a client real money, so you never get to
+            make the mistakes that actually teach you something.
           </li>
         </ul>
       </RevealSection>
@@ -112,8 +112,8 @@ export default function HomePage() {
       <RevealSection className={styles.simSection}>
         <h2>Five simulators. Five real Amazon Ads Console workflows.</h2>
         <p className={styles.simSub}>
-          Each one mirrors what you&apos;d actually do inside Seller Central &mdash; no
-          client account required.
+          Each one mirrors what you&apos;d actually do inside Seller Central. No client
+          account required.
         </p>
         <ul className={styles.simList}>
           {SIMULATORS.map((sim) => (
@@ -136,8 +136,8 @@ export default function HomePage() {
           ))}
         </ul>
         <p className={styles.simClose}>
-          Not only do you learn Amazon PPC from scratch &mdash; you turn that knowledge
-          into practical workflows you can apply the moment you&apos;re on the job.
+          Not only do you learn Amazon PPC from scratch. You turn that knowledge into
+          practical workflows you can apply the moment you&apos;re on the job.
         </p>
       </RevealSection>
 
@@ -145,7 +145,7 @@ export default function HomePage() {
       <RevealSection className={styles.accessSection}>
         <h2>Two more tools, only for enrolled students</h2>
         <p className={styles.accessSub}>
-          Still in development &mdash; enroll now to get access the moment they launch.
+          Still in development. Enroll now to get access the moment they launch.
         </p>
         <ul className={styles.accessGrid}>
           <li className={styles.accessItem}>
@@ -154,7 +154,7 @@ export default function HomePage() {
               <Badge variant="default">Coming soon · Enrollees only</Badge>
             </div>
             <p>
-              A full replica of the Amazon Ads Console — build campaigns, manage keywords
+              A full replica of the Amazon Ads Console: build campaigns, manage keywords
               and bids, run reports, and get graded on scenario missions. The closest thing
               to Seller Central access without a client account.
             </p>
