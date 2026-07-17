@@ -107,6 +107,17 @@ function SuccessCard({ tierName }: { tierName: string }) {
   );
 }
 
+// Show only enough of the address to recognize it. This page is reachable
+// with just a checkout id in the URL, so it must not print the full email.
+function maskEmail(email: string): string {
+  const at = email.lastIndexOf('@');
+  if (at <= 0) return '***';
+  const local = email.slice(0, at);
+  const domain = email.slice(at);
+  const first = local[0] ?? '';
+  return `${first}***${domain}`;
+}
+
 function ClaimCard({ email, tierName }: { email: string; tierName: string }) {
   return (
     <main className={styles.page}>
@@ -118,8 +129,8 @@ function ClaimCard({ email, tierName }: { email: string; tierName: string }) {
           <CardTitle>Check your email to finish.</CardTitle>
           <CardDescription>
             Your {tierName} enrollment is active. We sent a secure link to{' '}
-            <strong>{email}</strong> — use it to set a password and access your
-            account. The link expires in 7 days.
+            <strong>{maskEmail(email)}</strong>. Use it to set a password and
+            access your account. The link expires in 7 days.
           </CardDescription>
         </CardHeader>
         <div className={styles.actions}>

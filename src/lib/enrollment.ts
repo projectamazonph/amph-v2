@@ -23,7 +23,7 @@ import { alreadyRefundedAmountPhp } from './refunds';
 import { issueInvoiceForPayment } from './receipts';
 import { sendEnrollmentConfirmationEmail, sendAccountClaimEmail } from './email';
 import { logger } from './logger';
-import { generateClaimToken } from './claim-token';
+import { generateClaimToken, PLACEHOLDER_PASSWORD_PREFIX } from './claim-token';
 import { randomUUID } from 'node:crypto';
 
 /**
@@ -158,7 +158,7 @@ export async function findOrCreateUserByEmail(
       email: canonicalEmail,
       name: name ?? canonicalEmail.split('@')[0],
       emailVerified: null,
-      passwordHash: `placeholder_${randomUUID()}`,
+      passwordHash: `${PLACEHOLDER_PASSWORD_PREFIX}${randomUUID()}`,
       claimTokenHash: claim.hash,
       claimTokenExpiresAt: claim.expiresAt,
       role: 'STUDENT',

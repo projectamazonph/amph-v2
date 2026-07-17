@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { signInAction, signUpAction, signOutAction } from '@/app/actions/auth';
+import { PLACEHOLDER_PASSWORD_PREFIX } from '@/lib/claim-token';
 
 const mockSignToken = vi.fn();
 const mockSetAuthCookie = vi.fn();
@@ -115,12 +116,16 @@ describe('auth actions', () => {
     (db.user.updateMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({ count: 1 });
     const result = await signUpAction({ email: 'guest@b.com', password: 'pass1234', confirmPassword: 'pass1234', claimToken: 'right-token' });
     expect(result.success).toBe(true);
-    if (result.success) expect((result as any).data.userId).toBe('u-guest');
-    // The consume is a guarded updateMany, not a blind update.
+    if (result.success) expect(result.data.userId).toBe('u-guest');
+    // The consume is a guarded updateMany, not a blind update. Every predicate
+    // that protects against takeover/replay must be asserted so removing any of
+    // them fails this test: id, placeholder marker, token hash, and expiry.
     expect(db.user.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
           id: 'u-guest',
+          passwordHash: { startsWith: PLACEHOLDER_PASSWORD_PREFIX },
+          claimTokenHash: expect.any(String),
           claimTokenExpiresAt: expect.objectContaining({ gt: expect.any(Date) }),
         }),
         data: expect.objectContaining({ claimTokenHash: null, claimTokenExpiresAt: null }),

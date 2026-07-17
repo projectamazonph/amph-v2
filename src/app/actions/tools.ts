@@ -18,6 +18,7 @@ import { requireAuth } from '@/lib/auth';
 import { createSafeAction } from '@/lib/validation';
 import { type ToolType } from '@/lib/enums';
 import { evaluateBadges } from '@/lib/badges';
+import { awardXpOnce } from '@/lib/xp';
 import { isUniqueConstraintError } from '@/lib/prisma-errors';
 
 /** XP granted for a passing tool submission. */
@@ -92,20 +93,21 @@ export const saveToolSession = createSafeAction(saveSessionSchema, async (data) 
   if (!session) throw new Error('Session not found.');
   if (session.userId !== user.id) throw new Error('Forbidden.');
 
-  // H3: once a session is submitted/graded, its stored state is frozen — it
-  // must match the grade that was recorded. Reject late edits instead of
-  // letting the answer state drift away from the score.
-  if (session.status !== 'IN_PROGRESS') {
-    throw new Error('This session has been submitted and can no longer be edited.');
-  }
-
-  await db.toolSession.update({
-    where: { id: data.sessionId },
+  // H3: once a session is submitted/graded its stored state is frozen, so it
+  // stays consistent with the recorded grade. The status guard lives in the
+  // updateMany where-clause so the check and the write are one atomic
+  // operation: a submit that lands between a plain read and update can no
+  // longer let a late save overwrite the graded state.
+  const saved = await db.toolSession.updateMany({
+    where: { id: data.sessionId, userId: user.id, status: 'IN_PROGRESS' },
     data: {
       state: JSON.stringify(data.state),
       timeSpentSeconds: data.timeSpentSeconds ?? session.timeSpentSeconds,
     },
   });
+  if (saved.count !== 1) {
+    throw new Error('This session has been submitted and can no longer be edited.');
+  }
 
   return { savedAt: new Date().toISOString() };
 });
@@ -129,70 +131,74 @@ export const submitToolSession = createSafeAction(submitSessionSchema, async (da
   const scenarioId = session.scenarioId;
   if (!scenarioId) throw new Error('No scenario associated with this session.');
 
-  // Already-terminal sessions re-grade from the STORED state so the response
-  // matches what was recorded, and never mutate score/state again. This makes
-  // submit safely retriable after a mid-grade crash (H3): the terminal claim
-  // below simply no-ops and the idempotent XP award fills any gap.
-  const alreadySubmitted = session.status !== 'IN_PROGRESS';
-  const stateForGrading = alreadySubmitted ? parseState(session.state) : data.state;
-
-  // Grade BEFORE touching session status — a bad scenario or malformed state
-  // throws here and leaves the session IN_PROGRESS and retriable, instead of
-  // stranding it in a submitted-but-ungraded limbo.
-  const grade = gradeToolSession(session.toolType, scenarioId, stateForGrading);
-
+  // The request that transitions the session out of IN_PROGRESS is the single
+  // writer of its terminal status, state, score, and (on a pass) XP. Any other
+  // request reconciles from the recorded terminal state instead. This keeps
+  // the grade, the stored state, and the XP consistent under concurrency and
+  // makes submit safely retriable after a mid-grade crash (H3).
+  let grade: ToolGrade;
   let xpAwarded = 0;
-  if (grade.passed) {
-    // Atomic: claim IN_PROGRESS -> GRADED, insert the XP ledger row, and
-    // increment XP in ONE transaction. The ledger's unique (userId, eventKey)
-    // makes the XP exactly-once; a retry hits P2002 and rolls back cleanly.
+
+  if (session.status === 'IN_PROGRESS') {
+    // Grade BEFORE any write — a bad scenario or malformed state throws here
+    // and leaves the session IN_PROGRESS and retriable.
+    grade = gradeToolSession(session.toolType, scenarioId, data.state);
+    const passed = grade.passed;
+
+    let wonTransition = false;
     try {
-      await db.$transaction(async (tx) => {
-        await tx.toolSession.updateMany({
+      wonTransition = await db.$transaction(async (tx) => {
+        const claim = await tx.toolSession.updateMany({
           where: { id: data.sessionId, userId: user.id, status: 'IN_PROGRESS' },
           data: {
-            state: JSON.stringify(stateForGrading),
-            status: 'GRADED',
+            state: JSON.stringify(data.state),
+            status: passed ? 'GRADED' : 'SUBMITTED',
             score: grade.totalScore,
             submittedAt: new Date(),
             timeSpentSeconds: data.timeSpentSeconds ?? session.timeSpentSeconds,
           },
         });
-        await tx.xpLedger.create({
-          data: {
-            userId: user.id,
-            eventKey: `tool-pass:${data.sessionId}`,
-            amount: TOOL_PASS_XP,
-            reason: 'Tool practice passed',
-          },
-        });
-        await tx.user.update({
-          where: { id: user.id },
-          data: { xp: { increment: TOOL_PASS_XP }, lastActiveAt: new Date() },
-        });
+        // Lost the race: a concurrent submit already made the session
+        // terminal. Award nothing and reconcile from the recorded state below.
+        if (claim.count !== 1) return false;
+
+        if (passed) {
+          // Only the winner writes XP, and only for a recorded pass. The
+          // ledger's unique key keeps it exactly-once even against a replay.
+          await tx.xpLedger.create({
+            data: {
+              userId: user.id,
+              eventKey: `tool-pass:${data.sessionId}`,
+              amount: TOOL_PASS_XP,
+              reason: 'Tool practice passed',
+            },
+          });
+          await tx.user.update({
+            where: { id: user.id },
+            data: { xp: { increment: TOOL_PASS_XP }, lastActiveAt: new Date() },
+          });
+        } else {
+          await tx.user.update({
+            where: { id: user.id },
+            data: { lastActiveAt: new Date() },
+          });
+        }
+        return true;
       });
-      xpAwarded = TOOL_PASS_XP;
     } catch (e) {
-      // Already awarded on a prior submit — session terminal, XP already
-      // granted. Idempotent no-op.
       if (!isUniqueConstraintError(e)) throw e;
+      wonTransition = false;
     }
-  } else if (!alreadySubmitted) {
-    // Failing submit: record the terminal state; no XP.
-    await db.toolSession.updateMany({
-      where: { id: data.sessionId, userId: user.id, status: 'IN_PROGRESS' },
-      data: {
-        state: JSON.stringify(stateForGrading),
-        status: 'SUBMITTED',
-        score: grade.totalScore,
-        submittedAt: new Date(),
-        timeSpentSeconds: data.timeSpentSeconds ?? session.timeSpentSeconds,
-      },
-    });
-    await db.user.update({
-      where: { id: user.id },
-      data: { lastActiveAt: new Date() },
-    });
+
+    if (wonTransition) {
+      xpAwarded = passed ? TOOL_PASS_XP : 0;
+    } else {
+      // Reconcile from whatever the winner recorded.
+      ({ grade, xpAwarded } = await reconcileTerminalSession(data.sessionId, user.id, scenarioId));
+    }
+  } else {
+    // Session was already terminal on read — reconcile, never re-mutate.
+    ({ grade, xpAwarded } = await reconcileTerminalSession(data.sessionId, user.id, scenarioId));
   }
 
   // Badge trigger fires only on a passing submission — the only criteria that
@@ -215,6 +221,35 @@ export const submitToolSession = createSafeAction(submitSessionSchema, async (da
     xpAwarded,
   };
 });
+
+/**
+ * Grade a session from its RECORDED terminal state and reconcile XP. Used when
+ * this request did not win the status transition (session already terminal, or
+ * a concurrent submit won the race). The response reflects what was stored, and
+ * XP is (idempotently) ensured only when the recorded status is GRADED.
+ */
+async function reconcileTerminalSession(
+  sessionId: string,
+  userId: string,
+  scenarioId: string,
+): Promise<{ grade: ToolGrade; xpAwarded: number }> {
+  const terminal = await db.toolSession.findUnique({ where: { id: sessionId } });
+  if (!terminal) throw new Error('Session not found.');
+  const grade = gradeToolSession(terminal.toolType, scenarioId, parseState(terminal.state));
+
+  let xpAwarded = 0;
+  if (terminal.status === 'GRADED') {
+    // awardXpOnce is idempotent: it grants only if the winner hasn't already.
+    const granted = await awardXpOnce(
+      userId,
+      `tool-pass:${sessionId}`,
+      TOOL_PASS_XP,
+      'Tool practice passed',
+    );
+    xpAwarded = granted ? TOOL_PASS_XP : 0;
+  }
+  return { grade, xpAwarded };
+}
 
 /**
  * Parse a stored session-state JSON blob. Returns `{}` on malformed JSON so

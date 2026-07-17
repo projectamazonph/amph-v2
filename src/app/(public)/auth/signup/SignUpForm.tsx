@@ -63,7 +63,14 @@ export function SignUpForm({
         autoComplete="email"
         required
         defaultValue={prefilledEmail}
-        hint={prefilledEmail ? 'From your checkout. Change if needed.' : undefined}
+        readOnly={Boolean(claimToken)}
+        hint={
+          claimToken
+            ? 'This claim link is tied to this email.'
+            : prefilledEmail
+              ? 'From your checkout. Change if needed.'
+              : undefined
+        }
         placeholder="[email protected]"
       />
       <Input label="Password" type="password" name="password" autoComplete="new-password" required hint="At least 8 characters." />

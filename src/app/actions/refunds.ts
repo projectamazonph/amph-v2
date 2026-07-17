@@ -241,17 +241,40 @@ export async function approveRefundAction(
         : err instanceof Error
           ? err.message
           : 'Unknown error';
-    await db.refundRequest.updateMany({
-      where: { id: request.id, status: RefundStatus.APPROVED },
-      data: {
-        status: RefundStatus.FAILED,
-        failedAt: new Date(),
-        failureReason: message.slice(0, 500),
-      },
-    });
+    const statusCode = err instanceof PayMongoError ? err.statusCode : null;
+    // Only an explicit 4xx rejection means no money moved — safe to mark
+    // FAILED. A timeout, connection reset, or 5xx is ambiguous: the refund may
+    // have succeeded, so marking it FAILED would misreport a possible refund.
+    const isExplicitRejection = statusCode !== null && statusCode >= 400 && statusCode < 500;
+
+    if (isExplicitRejection) {
+      await db.refundRequest.updateMany({
+        where: { id: request.id, status: RefundStatus.APPROVED },
+        data: {
+          status: RefundStatus.FAILED,
+          failedAt: new Date(),
+          failureReason: message.slice(0, 500),
+        },
+      });
+      revalidatePath('/admin/refunds');
+      revalidatePath(`/admin/refunds/${request.id}`);
+      return { success: false, error: `Refund API call failed: ${message}` };
+    }
+
+    // Ambiguous outcome: leave the request APPROVED (not FAILED, not
+    // re-approvable) so it can't be re-issued, and let the payment.refunded
+    // webhook or a human reconcile it (C9).
+    logger.error(
+      { err, requestId: request.id, statusCode },
+      'Refund outcome unknown; left APPROVED for reconciliation',
+    );
     revalidatePath('/admin/refunds');
     revalidatePath(`/admin/refunds/${request.id}`);
-    return { success: false, error: `Refund API call failed: ${message}` };
+    return {
+      success: false,
+      error:
+        'Refund status is unknown (network error). It has been left pending and will reconcile automatically. Do not retry.',
+    };
   }
 
   // State 2 — provider refund ACCEPTED. Reconcile local records. A failure

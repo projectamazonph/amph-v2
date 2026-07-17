@@ -163,6 +163,11 @@ export const submitQuizAction = createSafeAction(submitQuizSchema, async (data) 
   if (!lesson || !lesson.quiz || lesson.module.course.slug !== data.courseSlug) {
     throw new Error('Quiz not found.');
   }
+  // A draft (unpublished) quiz must not grant completion or XP even if a
+  // direct action call reaches here. Treat it as not found.
+  if (!lesson.quiz.isPublished) {
+    throw new Error('Quiz not found.');
+  }
 
   // Tier gate — deny if user lacks the required enrollment.
   const gate = await evaluateCourseAccess(user.id, data.courseSlug);
