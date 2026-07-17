@@ -146,7 +146,121 @@
           "optionC": "Higher CTR always means higher CPC",
           "optionD": "CTR only affects ad placement, not CPC",
           "correctAnswer": "B",
-          "explanation": "Amazon's algorithm uses CTR as a quality signal. Higher CTR indicates relevance, which can lead to better placements at lower costs — creating a virtuous cycle of better performance."
+          "explanation": "Amazon's algorithm uses CTR as a quality signal. Higher CTR indicates relevance, which can lead to better placements at lower costs, creating a virtuous cycle of better performance."
+        }
+      ]
+    },
+    {
+      "moduleNumber": 2,
+      "title": "Keyword Research Knowledge Check",
+      "description": "Test your understanding of match types, keyword research workflow, negative keywords, and keyword grouping.",
+      "questions": [
+        {
+          "order": 1,
+          "question": "What's the main difference between broad match and exact match keywords?",
+          "optionA": "Broad match shows ads for a wide range of related searches; exact match shows ads only for the precise term or very close variants",
+          "optionB": "Broad match is always cheaper per click than exact match",
+          "optionC": "Exact match shows ads for related searches; broad match only matches the literal term",
+          "optionD": "There is no functional difference, only a naming difference",
+          "correctAnswer": "A",
+          "explanation": "Broad match casts the widest net and can trigger on related searches Amazon judges relevant. Exact match is the tightest control, showing your ad only for the precise term or very close variants."
+        },
+        {
+          "order": 2,
+          "question": "A search term surfacing under one of your broader keywords gets 200 clicks and $150 in ad spend, with $0 in sales. What's the right read?",
+          "optionA": "Its ACoS (advertising cost of sales, ad spend divided by ad sales) is 100%, which is acceptable",
+          "optionB": "It's a strong candidate to add as a negative keyword. With zero sales, ACoS is undefined, not a fixed percentage, and this spend is pure waste",
+          "optionC": "It should be given a higher bid to try to generate a sale",
+          "optionD": "Nothing needs to change since spend is under $200",
+          "correctAnswer": "B",
+          "explanation": "ACoS is spend divided by sales, which is undefined at $0 in sales, not 100%. 200 clicks and $150 spent with zero orders on this search term is a clear signal to add it as a negative so it stops draining budget under your broader keyword."
+        },
+        {
+          "order": 3,
+          "question": "Which two match types can you actually use for negative keywords on Amazon?",
+          "optionA": "Negative broad and negative phrase",
+          "optionB": "Negative exact and negative broad",
+          "optionC": "Negative phrase and negative exact",
+          "optionD": "Negative broad only",
+          "correctAnswer": "C",
+          "explanation": "Amazon supports negative phrase and negative exact match. There's no negative broad match, so you can't block an entire loose category of searches with a single negative the way broad match works for regular targeting."
+        },
+        {
+          "order": 4,
+          "question": "Your keyword research turns up 500 candidate keywords for one product. What should you do before adding them to a campaign?",
+          "optionA": "Add all 500 immediately. More keywords always means more sales",
+          "optionB": "Score and filter them for relevance and likely volume first, then launch with the strongest subset",
+          "optionC": "Only use the 5 most expensive keywords",
+          "optionD": "Wait until you have Brand Registry before adding any keywords",
+          "correctAnswer": "B",
+          "explanation": "Unfiltered keyword lists bring in irrelevant traffic and make performance data harder to read. Score candidates for relevance and volume, launch with the strongest set, then expand from real data."
+        },
+        {
+          "order": 5,
+          "question": "Why does it make sense to shift more budget toward exact-match keywords once you have performance data on them?",
+          "optionA": "Exact match keywords with a proven conversion history are your most predictable, lowest-risk spend",
+          "optionB": "Exact match is always required by Amazon once a campaign has run for 30 days",
+          "optionC": "Exact match keywords are always cheaper per click than broad or phrase",
+          "optionD": "Broad match keywords stop working after enough data accumulates",
+          "correctAnswer": "A",
+          "explanation": "Once an exact-match keyword has a real conversion track record, it's the most predictable place to invest further budget. Broad and phrase remain useful for discovering new terms, not for scaling proven ones."
+        }
+      ]
+    },
+    {
+      "moduleNumber": 3,
+      "title": "Listing Optimization Knowledge Check",
+      "description": "Test your understanding of listing and ad relevance signals, listing anatomy, and A+ Content.",
+      "questions": [
+        {
+          "order": 1,
+          "question": "Does Amazon expose a single named \"Listing Quality Score\" that a VA can look up directly?",
+          "optionA": "Yes, it's visible in Seller Central under Listing Quality",
+          "optionB": "No. Amazon doesn't publish a single inspectable score. CTR (click-through rate), CVR (conversion rate), and relevance are the observable signals instead",
+          "optionC": "Yes, but only for Brand Registry accounts",
+          "optionD": "No, because Amazon doesn't measure listing quality at all",
+          "correctAnswer": "B",
+          "explanation": "There's no single named, inspectable \"Quality Score.\" Treat CTR, CVR, and relevance signals as the observable proxies for how well a listing is converting paid traffic, not a score you can pull from a report."
+        },
+        {
+          "order": 2,
+          "question": "Two listings for the same product get the same clicks. Listing A has a CVR (conversion rate) of 12.5% and a $0.52 CPC (cost per click). Listing B has a 6.1% CVR and an $0.89 CPC. Which gets more sales per ad dollar, and roughly by how much?",
+          "optionA": "Listing B, by about 2x",
+          "optionB": "They perform about the same",
+          "optionC": "Listing A, by about 3.5x",
+          "optionD": "Listing B, by about 3.5x",
+          "correctAnswer": "C",
+          "explanation": "Sales per ad dollar scales with CVR divided by CPC. (0.125 / 0.52) divided by (0.061 / 0.89) is about 3.5. A weaker listing doesn't just convert worse, it multiplies the gap because it's also paying more per click for the same targeting."
+        },
+        {
+          "order": 3,
+          "question": "Which of these listing elements has the most direct effect on whether a relevant click converts into a sale?",
+          "optionA": "The seller's account age",
+          "optionB": "Main images, title clarity, and review strength",
+          "optionC": "The campaign's daily budget",
+          "optionD": "The number of keywords targeted",
+          "correctAnswer": "B",
+          "explanation": "Once a shopper clicks through, it's the listing itself, images, title, bullets, reviews, and price, that decides whether they buy. Budget and keyword count affect whether you get the click, not what happens after."
+        },
+        {
+          "order": 4,
+          "question": "What does an ASIN identify?",
+          "optionA": "A seller's advertising account",
+          "optionB": "A specific product on Amazon",
+          "optionC": "A campaign's daily budget",
+          "optionD": "A shopper's search history",
+          "correctAnswer": "B",
+          "explanation": "ASIN (Amazon Standard Identification Number) is Amazon's product ID. Every distinct product listing has one."
+        },
+        {
+          "order": 5,
+          "question": "A seller without Brand Registry asks why it's worth enrolling. What's an accurate answer?",
+          "optionA": "Brand Registry guarantees a #1 search ranking",
+          "optionB": "It unlocks A+ Content and Sponsored Brands, which are commonly associated with better conversion and more ad placements, though exact lift varies by listing",
+          "optionC": "It's required before you're allowed to run any Sponsored Products campaign",
+          "optionD": "It removes Amazon's referral fees",
+          "correctAnswer": "B",
+          "explanation": "Brand Registry unlocks A+ Content and Sponsored Brands campaigns, both commonly linked to better conversion and reach. It's not a ranking guarantee, not required for basic Sponsored Products, and has nothing to do with referral fees."
         }
       ]
     },
