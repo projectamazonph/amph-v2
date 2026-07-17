@@ -73,6 +73,6 @@ Present in every one of the 23 files, same categories Modules 0–1 had before t
 
 ## Out of scope for this document
 
-- Modules 10–13 (Ultimate Transformation) don't exist yet — Release 3 per `docs/CURRICULUM-REDESIGN.md`.
-- The module-numbering mismatch between `docs/CURRICULUM-REDESIGN.md`'s target structure and the live repo's `MODULE_META` (flagged in the PR #31 handoff) — a product decision, not a content fix, and not resolved here.
+- Course 3 (Ultimate Transformation) modules don't exist yet — Release 3 per `docs/CURRICULUM-REDESIGN.md`.
+- The module-numbering mismatch between `docs/CURRICULUM-REDESIGN.md`'s original target structure and the live repo's `MODULE_META` (flagged in the PR #31 handoff) has been resolved by updating the redesign doc to describe the structure as actually built, rather than renumbering the live content to match an earlier draft.
 - Video explainer production (`docs/VIDEO-EXPLAINER-SCRIPTS.md`) — separate Release 2 checklist item.
