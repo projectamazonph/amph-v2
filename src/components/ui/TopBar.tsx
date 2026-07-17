@@ -17,7 +17,9 @@ export function TopBar({ user }: { user: SessionUser }) {
       <div className={styles.right}>
         <div className={styles.user}>
           <span className={styles.userName}>{user.name ?? user.email}</span>
-          <span className={styles.userRole}>Admin</span>
+          <span className={styles.userRole}>
+            {user.role.charAt(0) + user.role.slice(1).toLowerCase()}
+          </span>
         </div>
 
         <form action={signOutFormAction}>

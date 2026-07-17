@@ -6,13 +6,13 @@ import { Icon, type PhosphorIconName } from '@/components/ui/Icon';
 import { BRAND_NAME } from '@/lib/brand';
 import styles from './NavSidebar.module.css';
 
-interface NavItem {
+export interface NavItem {
   href: string;
   label: string;
   icon: PhosphorIconName;
 }
 
-const NAV_ITEMS: NavItem[] = [
+const ADMIN_NAV_ITEMS: NavItem[] = [
   { href: '/admin', label: 'Dashboard', icon: 'House' },
   { href: '/admin/users', label: 'Users', icon: 'User' },
   { href: '/admin/courses', label: 'Courses', icon: 'BookOpen' },
@@ -21,23 +21,35 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/admin/analytics', label: 'Analytics', icon: 'ChartLine' },
 ];
 
-export function NavSidebar() {
+interface NavSidebarProps {
+  items?: NavItem[];
+  homeHref?: string;
+  brandSuffix?: string;
+  ariaLabel?: string;
+}
+
+export function NavSidebar({
+  items = ADMIN_NAV_ITEMS,
+  homeHref = '/admin',
+  brandSuffix = ' Admin',
+  ariaLabel = 'Admin navigation',
+}: NavSidebarProps) {
   const pathname = usePathname();
 
   return (
-    <nav className={styles.sidebar} aria-label="Admin navigation">
+    <nav className={styles.sidebar} aria-label={ariaLabel}>
       <div className={styles.brand}>
-        <Link href="/admin" className={styles.brandLink}>
+        <Link href={homeHref} className={styles.brandLink}>
           <span className={styles.brandMark}>◆</span>
-          <span className={styles.brandText}>{`${BRAND_NAME} Admin`}</span>
+          <span className={styles.brandText}>{`${BRAND_NAME}${brandSuffix}`}</span>
         </Link>
       </div>
 
       <ul className={styles.list}>
-        {NAV_ITEMS.map((item) => {
+        {items.map((item) => {
           const isActive =
-            item.href === '/admin'
-              ? pathname === '/admin'
+            item.href === homeHref
+              ? pathname === homeHref
               : pathname.startsWith(item.href);
           return (
             <li key={item.href}>

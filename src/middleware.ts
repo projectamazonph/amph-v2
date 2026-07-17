@@ -49,14 +49,14 @@ async function verifyEdgeToken(token: string): Promise<TokenPayload | null> {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Legacy /dashboard/* → /* redirect (real URLs live at /courses, /payments,
-  // /tools, /live-classes, /certificates — the (dashboard) route group does
-  // not contribute to the URL). Strip /dashboard and continue. Query strings
-  // and hash are preserved.
-  if (pathname === '/dashboard' || pathname.startsWith('/dashboard/')) {
-    const remainder = pathname.slice('/dashboard'.length); // "" or "/courses/..."
-    const redirectUrl = new URL(remainder || '/', request.url);
-    return NextResponse.redirect(redirectUrl);
+  // Legacy /dashboard/<feature> bookmarks (real URLs for those features live
+  // at /courses, /payments, /tools, /live-classes, /certificates — the
+  // (dashboard) route group does not contribute to the URL). Strip the
+  // prefix and continue. Bare /dashboard is its own real page (the student
+  // home) and falls through to the auth check below instead of redirecting.
+  if (pathname.startsWith('/dashboard/')) {
+    const remainder = pathname.slice('/dashboard'.length);
+    return NextResponse.redirect(new URL(remainder, request.url));
   }
 
   // Only protect admin and dashboard routes

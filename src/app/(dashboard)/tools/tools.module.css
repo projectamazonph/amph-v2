@@ -1,3 +1,11 @@
+.heroCard {
+  margin-bottom: var(--space-6);
+}
+
+.heroCard :global(h3) {
+  font-size: var(--text-2xl);
+}
+
 .toolGrid {
   display: grid;
   grid-template-columns: 1fr;
@@ -7,12 +15,6 @@
 @media (min-width: 768px) {
   .toolGrid {
     grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (min-width: 1024px) {
-  .toolGrid {
-    grid-template-columns: repeat(3, 1fr);
   }
 }
 
