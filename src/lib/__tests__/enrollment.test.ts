@@ -485,7 +485,18 @@ describe('enrollment.ts', () => {
       expect(result.isNew).toBe(true);
       expect(result.rawClaimToken).toBeDefined();
       expect(typeof result.rawClaimToken).toBe('string');
-      expect(result.rawClaimToken).toMatch(/^[0-9a-f]{48}$/);
+      // The mock generatesClaimToken returns 'mock-claim-raw-token'
+      expect(result.rawClaimToken).toBe('mock-claim-raw-token');
+      // Verify the create call includes claim token fields
+      expect(mockDb.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            claimTokenHash: 'mock-claim-hash',
+            claimTokenExpiresAt: expect.any(Date),
+            passwordHash: 'placeholder_claim',
+          }),
+        }),
+      );
     });
 
     it('does not create user if already exists', async () => {
