@@ -226,7 +226,10 @@ describe('auth.ts', () => {
       sub: 'u1', email: 'admin@b.com', role: 'ADMIN', name: 'Admin',
     });
     mockCookieStore.get.mockReturnValue({ name: 'amph_auth', value: token });
-    mockDb.user.findUnique.mockResolvedValue({ xp: 0, level: 1, streakDays: 0, status: 'ACTIVE', deletedAt: null });
+    // H3: requireAdmin now queries DB twice: once for getSession, once for role verification
+    mockDb.user.findUnique
+      .mockResolvedValueOnce({ xp: 0, level: 1, streakDays: 0, status: 'ACTIVE', deletedAt: null })
+      .mockResolvedValueOnce({ role: 'ADMIN' });
 
     const user = await requireAdmin();
     expect(user.role).toBe('ADMIN');
@@ -237,7 +240,10 @@ describe('auth.ts', () => {
       sub: 'u1', email: 'a@b.com', role: 'STUDENT', name: 'A',
     });
     mockCookieStore.get.mockReturnValue({ name: 'amph_auth', value: token });
-    mockDb.user.findUnique.mockResolvedValue({ xp: 0, level: 1, streakDays: 0, status: 'ACTIVE', deletedAt: null });
+    // H3: requireAdmin queries DB for role verification
+    mockDb.user.findUnique
+      .mockResolvedValueOnce({ xp: 0, level: 1, streakDays: 0, status: 'ACTIVE', deletedAt: null })
+      .mockResolvedValueOnce({ role: 'STUDENT' });
 
     await expect(requireAdmin()).rejects.toThrow('NEXT_REDIRECT');
   });

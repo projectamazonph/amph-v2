@@ -33,7 +33,10 @@ vi.mock('@/lib/logger', () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
-vi.mock('node:crypto', () => ({ randomUUID: () => 'mock-uuid' }));
+vi.mock('node:crypto', () => ({ randomUUID: () => 'mock-uuid', randomBytes: vi.fn(), createHash: vi.fn() }));
+vi.mock('@/lib/auth', () => ({
+  generateClaimToken: () => ({ rawToken: 'mock-claim-raw-token', tokenHash: 'mock-claim-hash' }),
+}));
 
 import { issueInvoiceForPayment } from '@/lib/receipts';
 import { sendEnrollmentConfirmationEmail } from '@/lib/email';
