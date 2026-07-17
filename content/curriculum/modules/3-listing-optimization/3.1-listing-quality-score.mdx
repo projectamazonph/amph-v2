@@ -20,16 +20,18 @@ Here's something most Amazon sellers don't realize: **your ad performance isn't 
 
 ## The Signals That Actually Move the Needle
 
-Amazon doesn't publish a formula for how these interact with ad delivery or cost, but these are the observable, verifiable inputs worth diagnosing:
+Amazon doesn't publish a formula for how these interact with ad delivery or cost, and there's no documented weighting between them either. These are simply the observable, verifiable inputs worth diagnosing:
 
-| Factor | Weight | Impact | What It Measures |
-|--------|--------|--------|-----------------|
-| **Click-Through Rate (CTR)** | High | Primary | Do shoppers click your ad when it shows? |
-| **Conversion Rate (CVR)** | High | Primary | Do shoppers buy after clicking? |
-| **Listing Completeness** | Medium | Secondary | Is your listing fully filled out? |
-| **Review Rating** | Medium | Secondary | What do previous buyers say? |
-| **Pricing Competitiveness** | Low | Minor | Is your price competitive? |
-| **Inventory Availability** | Low | Minor | Is the product in stock? |
+| Factor | What It Measures |
+|--------|-----------------|
+| **Click-Through Rate (CTR)** | Do shoppers click your ad when it shows? |
+| **Conversion Rate (CVR)** | Do shoppers buy after clicking? |
+| **Listing Completeness** | Is your listing fully filled out? |
+| **Review Rating** | What do previous buyers say? |
+| **Pricing Competitiveness** | Is your price competitive? |
+| **Inventory Availability** | Is the product in stock? |
+
+CTR and CVR feed the ad auction directly and are the most directly observable of these. The other four are supporting factors that plausibly influence CTR and CVR over time; Amazon doesn't publish how much weight, if any, each one carries.
 
 ---
 
@@ -64,19 +66,19 @@ Here's the general dynamic, and why it compounds over time. Watch what happens t
              │                             │
              ▼                             ▼
     ┌──────────────────┐          ┌──────────────────┐
-    │  LOWER CPC       │          │  HIGHER CPC      │
-    │  (Amazon rewards)│          │  (Amazon charges  │
-    │                  │          │   more to show)   │
+    │ LOWER CPC TENDS  │          │ HIGHER CPC TENDS │
+    │ TO FOLLOW        │          │ TO FOLLOW        │
+    │ (auction effect) │          │ (auction effect) │
     └────────┬─────────┘          └────────┬─────────┘
              │                             │
              ▼                             ▼
     ┌──────────────────┐          ┌──────────────────┐
     │  MORE clicks     │          │  FEWER clicks    │
-    │  per ₱ spent     │          │  per ₱ spent     │
+    │  possible per ₱  │          │  likely per ₱    │
     └──────────────────┘          └──────────────────┘
 ```
 
-**Good listings get cheaper. Bad listings get more expensive.** This is not a one-time effect. It compounds every day.
+**Good listings tend toward more efficient ad delivery. Weak listings tend toward less efficient ad delivery.** This isn't a guaranteed, one-time effect, it's an auction-based tendency that can compound over time as the performance-data gap between listings builds up.
 
 ---
 
@@ -152,11 +154,11 @@ Not all listing improvements are created equal. Here's your prioritization. The 
 Go through this checklist before spending a single peso on ads:
 
 **Title Checklist:**
-- [ ] Includes your primary keyword in first 80 characters
+- [ ] Includes your primary keyword near the front
 - [ ] Includes brand name
 - [ ] Includes key features (size, material, quantity)
 - [ ] Uses natural language, not keyword stuffing
-- [ ] Under 200 characters (full width shown on mobile)
+- [ ] Checked against your category's current character limit in Seller Central
 
 **Image Checklist:**
 - [ ] Main image has pure white background (RGB 255,255,255)
@@ -193,7 +195,7 @@ Go through this checklist before spending a single peso on ads:
 1. Does Amazon publish a single, checkable "Quality Score" for a listing?
 2. In the Listing A vs. Listing B example, which listing pays more per click, and by roughly how much?
 3. Listing A converts at 12.5% and Listing B at 6.1%. Which one has the healthier ACoS, 17% or 58%?
-4. Name two of the "high weight" signals from the signals table.
+4. Which two signals feed the ad auction directly, according to this lesson?
 5. True or false: raising your bid is the first fix for a weak listing.
 
 **Answers:** (1) No. Amazon doesn't publish a named Quality Score. That's teaching shorthand for CTR, CVR, and the other observable signals in this lesson. (2) Listing B pays more, $0.89 vs. $0.52, about 71% higher. (3) Listing A, at 17% ACoS versus Listing B's 58%. (4) CTR (click-through rate) and CVR (conversion rate). (5) False. Fix the listing first. Bidding higher on a weak listing just burns money faster.
