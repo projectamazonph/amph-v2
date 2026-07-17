@@ -540,10 +540,12 @@ export async function handleSourceChargeable(
     );
     if (!firstTime) return null;
 
-    // Find the CheckoutSession by source ID
+    // Find the CheckoutSession by source ID with all fields needed
+    // for processPaymentPaidInTransaction (pricingTierId, discountCodeId, tier info)
     const checkout = await tx.checkoutSession.findFirst({
       where: { paymongoSourceId: sourceId, deletedAt: null },
-      select: { id: true, finalAmountPhp: true, email: true },
+      select: { id: true, email: true, finalAmountPhp: true, pricingTierId: true, discountCodeId: true },
+      include: { pricingTier: { select: { name: true, tier: true, slug: true } } },
     });
     if (!checkout) {
       logger.warn({ sourceId }, 'source.chargeable: no checkout session found for source');

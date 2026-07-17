@@ -5,6 +5,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { z } from 'zod';
 import { db } from '@/lib/db';
 import {
   hashPassword,
