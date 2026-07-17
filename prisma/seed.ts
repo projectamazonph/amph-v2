@@ -38,14 +38,22 @@ async function upsertAdminUser(): Promise<void> {
   // is missing. In test/CI environments, allow secure random defaults so
   // the seed can run without manual env configuration.
   const isProduction = process.env.NODE_ENV === 'production';
-  if (isProduction && (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD)) {
+  const rawEmail = (process.env.ADMIN_EMAIL ?? '').trim();
+  const rawPassword = process.env.ADMIN_PASSWORD ?? '';
+  if (isProduction && (!rawEmail || !rawPassword.trim())) {
     throw new Error(
       'ADMIN_EMAIL and ADMIN_PASSWORD environment variables are required in production. ' +
       'Set them in .env.local or your deployment environment.',
     );
   }
-  const email = process.env.ADMIN_EMAIL ?? 'admin+seed@amph-v2.test';
-  const password = process.env.ADMIN_PASSWORD ?? 'test-password-not-for-production';
+  if (!rawEmail) {
+    throw new Error('ADMIN_EMAIL must not be empty.');
+  }
+  if (!rawPassword.trim()) {
+    throw new Error('ADMIN_PASSWORD must not be empty or whitespace-only.');
+  }
+  const email = rawEmail;
+  const password = rawPassword;
 
   await prisma.user.upsert({
     where: { email },

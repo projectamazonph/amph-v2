@@ -211,7 +211,8 @@ export const submitQuizAction = createSafeAction(submitQuizSchema, async (data) 
     where: { userId: user.id, quizId: lesson.quiz.id },
   });
 
-  // Persist attempt
+  // Persist attempt — only award XP on first-time completion
+  const attemptXp = passed && !alreadyCompleted ? 50 : 0;
   await db.quizAttempt.create({
     data: {
       userId: user.id,
@@ -222,14 +223,15 @@ export const submitQuizAction = createSafeAction(submitQuizSchema, async (data) 
       score,
       correctCount,
       totalQuestions,
-      xpEarned: passed ? 50 : 0, // bonus XP for passing
+      xpEarned: attemptXp, // bonus XP only for first-time passes
       timeSpentSeconds: data.timeSpentSeconds ?? 0,
       completedAt: new Date(),
     },
   });
 
   // C6: Award XP only on the atomic transition from non-complete to complete.
-  // Check if the lesson is already completed before awarding XP.
+  // Check current progress before creating the attempt — set xpEarned to 0
+  // when the lesson is already completed.
   const lessonProgress = passed
     ? await db.lessonProgress.findUnique({
         where: {

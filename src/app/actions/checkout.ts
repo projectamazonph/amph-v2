@@ -46,7 +46,7 @@ import { z } from 'zod';
 
 const checkoutSchema = z.object({
   pricingTierId: z.string().min(1),
-  email: z.string().email().transform((v) => v.toLowerCase().trim()),
+  email: z.string().email().trim().min(1).transform((v) => v.toLowerCase()),
   name: z.string().max(100).optional(),
   discountCode: z.string().max(50).optional(),
   // Relative in-app paths only — an absolute URL here is an open-redirect

@@ -127,13 +127,14 @@ export async function POST(request: NextRequest): Promise<Response> {
         log.info({ component: 'paymongo-webhook', eventType: event.type }, 'unhandled event type');
     }
   } catch (err) {
-    // Log the error and return 500 so PayMongo retries (C2) — the
-    // ProcessedWebhook idempotency key (created inside the transaction)
-    // ensures retries won't duplicate side effects. If the event hadn't
-    // been processed yet, the transaction rolled back, so retry is safe.
+    // C2: Return 500 only for handler errors so PayMongo retries.
+    // The ProcessedWebhook idempotency key is created inside the handler's
+    // transaction — a failed handler rolls back cleanly, so retry is safe.
+    // If the event was already processed (idempotency check returned false),
+    // the handler returned early without error, so we never reach here.
     log.error({ component: 'paymongo-webhook', err, eventType: event.type }, 'handler error');
     Sentry.captureException(err, { tags: { source: 'paymongo-webhook', eventType: event.type } });
-    return new Response('Internal error — retry', { status: 500 });
+    return new Response('Internal error', { status: 500 });
   }
 
   return new Response('OK', { status: 200 });

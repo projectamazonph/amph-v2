@@ -124,7 +124,7 @@ export const createRefundRequestAction = createSafeAction<
       select: { id: true },
     });
 
-    return { requestId: request.id, payment };
+    return { requestId: request.id, payment, refundAmountPhp };
   });
 
   revalidatePath('/dashboard/payments');
@@ -141,7 +141,7 @@ export const createRefundRequestAction = createSafeAction<
       studentName: userData.name ?? 'Student',
       status: 'requested',
       tierName: result.payment.pricingTier?.name ?? 'your course',
-      amountPhp: result.payment.amountPhp,
+      amountPhp: result.refundAmountPhp, // Use requested refund amount, not full payment
       reason: data.reason.trim(),
     }).catch(() => {});
   }

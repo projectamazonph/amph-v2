@@ -590,6 +590,7 @@ export async function handleSourceChargeable(
           tx as any,
           payment,
           checkout,
+          event.data.attributes.data.attributes.type,
         );
         if (result) {
           // Send enrollment confirmation + claim token email
@@ -687,6 +688,7 @@ async function processPaymentInCheckout(
 
   // For a Payment-based flow, the paymongoPaymentId on the CheckoutSession
   // was already set when we created the Payment (or it's set now).
+  // Source type not available from payment.paid webhook — default to GCASH
   const result = await processPaymentPaidInTransaction(tx, { id: paymentIdPm, status: 'paid', amount: amountCentavos, paidAt: new Date().toISOString() }, checkout);
 
   // Send post-purchase emails (outside transaction — best-effort)
@@ -711,6 +713,7 @@ async function processPaymentPaidInTransaction(
     discountCodeId: string | null;
     pricingTier: { name: string; tier: string; slug: string };
   },
+  paymentMethod?: string,
 ): Promise<{ enrollmentId: string; paymentId: string; userId: string; tierName: string } | null> {
   const paymentIdPm = payment.id;
 
@@ -733,7 +736,7 @@ async function processPaymentPaidInTransaction(
       amountPhp: payment.amount,
       finalAmountPhp: checkout.finalAmountPhp,
       paymongoPaymentId: paymentIdPm,
-      method: PaymentMethod.GCASH,
+      method: paymentMethod ? mapPaymentMethod(paymentMethod) : PaymentMethod.GCASH,
       status: PaymentStatus.COMPLETED,
       paidAt: payment.paidAt ? new Date(payment.paidAt) : new Date(),
     },
