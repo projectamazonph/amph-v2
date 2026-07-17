@@ -19,9 +19,11 @@ import 'server-only';
 
 import { db } from './db';
 import { CheckoutStatus, EnrollmentStatus, PaymentMethod, PaymentStatus } from './enums';
+import { alreadyRefundedAmountPhp } from './refunds';
 import { issueInvoiceForPayment } from './receipts';
-import { sendEnrollmentConfirmationEmail } from './email';
+import { sendEnrollmentConfirmationEmail, sendAccountClaimEmail } from './email';
 import { logger } from './logger';
+import { generateClaimToken } from './claim-token';
 import { randomUUID } from 'node:crypto';
 
 /**
@@ -138,27 +140,33 @@ export async function findOrCreateUserByEmail(
   email: string,
   name?: string | null,
   client: DbClient = db,
-): Promise<{ id: string; isNew: boolean }> {
+): Promise<{ id: string; isNew: boolean; rawClaimToken?: string }> {
+  const canonicalEmail = email.trim().toLowerCase();
   const existing = await client.user.findUnique({
-    where: { email },
+    where: { email: canonicalEmail },
     select: { id: true },
   });
   if (existing) return { id: existing.id, isNew: false };
 
-  // Create placeholder user. They'll complete signup via /auth/signup
-  // which will update passwordHash + name + emailVerified.
+  // Create a placeholder user with a single-use claim token. The buyer claims
+  // it via /auth/signup by presenting the raw token (delivered by email); only
+  // the token's hash is stored. `placeholder_` marks the account as unclaimed
+  // (see PLACEHOLDER_PASSWORD_PREFIX).
+  const claim = generateClaimToken();
   const placeholder = await client.user.create({
     data: {
-      email,
-      name: name ?? email.split('@')[0],
+      email: canonicalEmail,
+      name: name ?? canonicalEmail.split('@')[0],
       emailVerified: null,
       passwordHash: `placeholder_${randomUUID()}`,
+      claimTokenHash: claim.hash,
+      claimTokenExpiresAt: claim.expiresAt,
       role: 'STUDENT',
       status: 'ACTIVE',
     },
     select: { id: true },
   });
-  return { id: placeholder.id, isNew: true };
+  return { id: placeholder.id, isNew: true, rawClaimToken: claim.raw };
 }
 
 function mapPaymentMethod(pm: string): PaymentMethod {
@@ -211,7 +219,7 @@ export async function handleCheckoutPaid(
 
     const checkout = await tx.checkoutSession.findUnique({
       where: { paymongoSourceId: csId },
-      include: { pricingTier: true },
+      include: { pricingTier: true, discountCode: { select: { maxUses: true } } },
     });
     if (!checkout) {
       // Consume the event — a session that doesn't exist won't appear on retry.
@@ -232,7 +240,7 @@ export async function handleCheckoutPaid(
     // Resolve the user FIRST (guest checkout support) so the Payment is
     // never created with a dangling FK. Uses the tx client so a rollback
     // doesn't leave an orphaned placeholder user.
-    const { id: userId } = await findOrCreateUserByEmail(
+    const { id: userId, rawClaimToken } = await findOrCreateUserByEmail(
       checkout.email,
       metadata?.name ?? null,
       tx,
@@ -259,11 +267,29 @@ export async function handleCheckoutPaid(
     // A limited-use discount only counts once the payment completes —
     // abandoned checkouts no longer burn uses (moved from
     // createCheckoutSessionAtomic).
+    //
+    // H4: increment conditionally so two concurrent redemptions of the last
+    // remaining use can't both succeed. `updateMany` with a `currentUses <
+    // maxUses` guard is a single atomic UPDATE; a null maxUses means unlimited.
     if (checkout.discountCodeId) {
-      await tx.discountCode.update({
-        where: { id: checkout.discountCodeId },
+      const maxUses = checkout.discountCode?.maxUses ?? null;
+      // maxUses null → unlimited (no guard). Otherwise guard on the literal
+      // limit: Postgres re-evaluates `currentUses < maxUses` against the
+      // row's committed value under the row lock, so two concurrent bumps of
+      // the last remaining use can't both pass.
+      const bumped = await tx.discountCode.updateMany({
+        where:
+          maxUses === null
+            ? { id: checkout.discountCodeId }
+            : { id: checkout.discountCodeId, currentUses: { lt: maxUses } },
         data: { currentUses: { increment: 1 } },
       });
+      if (bumped.count === 0) {
+        // The code hit its limit between checkout creation and fulfillment.
+        // Fail the whole transaction so we don't grant access on a discount
+        // that can no longer be honored — the webhook will retry / reconcile.
+        throw new Error('Discount code usage limit reached.');
+      }
     }
 
     // Repeat purchase of the same course reactivates the enrollment
@@ -323,10 +349,23 @@ export async function handleCheckoutPaid(
       paymentId: payment.id,
       userId,
       tierName: checkout.pricingTier?.name ?? 'your course',
+      email: checkout.email,
+      rawClaimToken: rawClaimToken ?? null,
     };
   });
 
   if (!result) return null;
+
+  // Guest purchase — deliver the account-claim link AFTER the transaction has
+  // committed, so we never email a token for a fulfillment that rolled back
+  // (audit C5). The claim email is the ONLY delivery of the raw token.
+  if (result.rawClaimToken) {
+    sendAccountClaimEmail({
+      to: result.email,
+      rawClaimToken: result.rawClaimToken,
+      tierName: result.tierName,
+    }).catch((err) => logger.error({ err }, 'Account claim email failed'));
+  }
 
   // Invoice issuance — non-durable, best-effort, outside transaction
   try {
@@ -409,31 +448,45 @@ export async function handlePaymentRefunded(
 
     const payment = await tx.payment.findUnique({
       where: { paymongoPaymentId: paymentIdPm },
-      select: { id: true },
+      select: { id: true, amountPhp: true },
     });
     if (!payment) return;
+
+    // C8: cumulative refunded amount is derived from the PROCESSED refund
+    // requests — the single source of truth. If the admin path has already
+    // recorded this refund, that sum already includes it and we must NOT add
+    // the webhook `amount` on top. When no processed request exists yet (a
+    // refund initiated outside our flow, or the admin DB write is still
+    // pending), fall back to the event amount without double-adding.
+    const processedSum = await alreadyRefundedAmountPhp(payment.id, tx);
+    const refundedTotal = processedSum > 0 ? processedSum : amount;
+    const fullyRefunded = refundedTotal >= payment.amountPhp;
 
     await tx.payment.update({
       where: { id: payment.id },
       data: {
-        status: PaymentStatus.REFUNDED,
+        status: fullyRefunded ? PaymentStatus.REFUNDED : PaymentStatus.PARTIALLY_REFUNDED,
         refundedAt: new Date(),
-        refundAmountPhp: amount,
+        refundAmountPhp: refundedTotal,
       },
     });
-    // Access enrollment via relation
-    const enrollment = await tx.enrollment.findFirst({
-      where: { payment: { id: payment.id } },
-    });
-    if (enrollment) {
-      await tx.enrollment.update({
-        where: { id: enrollment.id },
-        data: {
-          status: 'REFUNDED',
-          cancelledAt: new Date(),
-          cancellationReason: 'Refund processed',
-        },
+
+    // Only revoke access on a FULL refund. A partial refund leaves the
+    // enrollment active.
+    if (fullyRefunded) {
+      const enrollment = await tx.enrollment.findFirst({
+        where: { payment: { id: payment.id } },
       });
+      if (enrollment) {
+        await tx.enrollment.update({
+          where: { id: enrollment.id },
+          data: {
+            status: 'REFUNDED',
+            cancelledAt: new Date(),
+            cancellationReason: 'Refund processed',
+          },
+        });
+      }
     }
   });
 }

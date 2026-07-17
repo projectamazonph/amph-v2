@@ -34,6 +34,8 @@ import {
   PAYMONGO_REFUND_REASON,
 } from '@/lib/refunds';
 import { sendRefundStatusEmail } from '@/lib/email';
+import { logger } from '@/lib/logger';
+import { isUniqueConstraintError } from '@/lib/prisma-errors';
 
 // ---------------------------------------------------------------------------
 // Student: create refund request
@@ -92,16 +94,27 @@ export const createRefundRequestAction = createSafeAction<
     throw new Error('This payment has already been fully refunded.');
   }
 
-  const request = await db.refundRequest.create({
-    data: {
-      userId: user.id,
-      paymentId: payment.id,
-      reason: data.reason.trim(),
-      amountPhp: refundAmountPhp,
-      status: RefundStatus.PENDING,
-    },
-    select: { id: true },
-  });
+  // The pre-check above catches the common case; the partial unique index
+  // (one active request per payment) is the concurrency backstop — two
+  // simultaneous requests both pass the read, but only one insert survives.
+  let request: { id: string };
+  try {
+    request = await db.refundRequest.create({
+      data: {
+        userId: user.id,
+        paymentId: payment.id,
+        reason: data.reason.trim(),
+        amountPhp: refundAmountPhp,
+        status: RefundStatus.PENDING,
+      },
+      select: { id: true },
+    });
+  } catch (e) {
+    if (isUniqueConstraintError(e)) {
+      throw new Error('A refund request for this payment is already in progress.');
+    }
+    throw e;
+  }
 
   revalidatePath('/dashboard/payments');
   revalidatePath('/admin/refunds');
@@ -208,8 +221,11 @@ export async function approveRefundAction(
     return { success: false, error: 'Request is no longer pending.' };
   }
 
-  // Call PayMongo. If this throws, mark the request FAILED.
-  let paymongoRefundId: string | null = null;
+  // State 1 — provider call. A throw HERE means PayMongo did not accept the
+  // refund, so it is safe to mark the request FAILED. This is the only place
+  // FAILED is set; a DB failure after provider success must never land here
+  // (audit C9).
+  let paymongoRefundId: string;
   try {
     const refund = await refundPayment({
       paymentId: request.payment.paymongoPaymentId,
@@ -218,34 +234,6 @@ export async function approveRefundAction(
       metadata: { refundRequestId: request.id },
     });
     paymongoRefundId = refund.id;
-
-    // Mark PROCESSED. The webhook will update Payment + Enrollment; this
-    // is a best-effort synchronous update so the admin sees immediate
-    // feedback. Webhook will idempotently fill in the rest.
-    await db.refundRequest.updateMany({
-      where: { id: request.id, status: RefundStatus.APPROVED },
-      data: {
-        status: RefundStatus.PROCESSED,
-        paymongoRefundId: refund.id,
-        processedAt: new Date(),
-      },
-    });
-
-    // Also update Payment.status optimistically. If webhook beats us,
-    // it will see status=REFUNDED and skip its own update.
-    const newPaymentStatus =
-      request.amountPhp >= request.payment.amountPhp
-        ? PaymentStatus.REFUNDED
-        : PaymentStatus.PARTIALLY_REFUNDED;
-    await db.payment.update({
-      where: { id: request.payment.id },
-      data: {
-        status: newPaymentStatus,
-        refundedAt: new Date(),
-        refundAmountPhp: request.amountPhp,
-        refundReason: PAYMONGO_REFUND_REASON,
-      },
-    });
   } catch (err: unknown) {
     const message =
       err instanceof PayMongoError
@@ -253,8 +241,8 @@ export async function approveRefundAction(
         : err instanceof Error
           ? err.message
           : 'Unknown error';
-    await db.refundRequest.update({
-      where: { id: request.id },
+    await db.refundRequest.updateMany({
+      where: { id: request.id, status: RefundStatus.APPROVED },
       data: {
         status: RefundStatus.FAILED,
         failedAt: new Date(),
@@ -264,6 +252,55 @@ export async function approveRefundAction(
     revalidatePath('/admin/refunds');
     revalidatePath(`/admin/refunds/${request.id}`);
     return { success: false, error: `Refund API call failed: ${message}` };
+  }
+
+  // State 2 — provider refund ACCEPTED. Reconcile local records. A failure
+  // here does NOT undo the refund and must NOT be reported as a provider
+  // failure or re-trigger a refund (the request is already APPROVED, so a
+  // retry can't re-call PayMongo). The webhook is the backstop that finishes
+  // reconciliation.
+  try {
+    await db.$transaction(async (tx) => {
+      // Mark this request PROCESSED with its provider refund id (unique —
+      // C8). Once marked, it counts toward the cumulative refunded amount.
+      await tx.refundRequest.updateMany({
+        where: { id: request.id, status: RefundStatus.APPROVED },
+        data: {
+          status: RefundStatus.PROCESSED,
+          paymongoRefundId,
+          processedAt: new Date(),
+        },
+      });
+
+      // Single-writer cumulative amount: sum of PROCESSED requests (includes
+      // the one just marked, read within this transaction). The webhook
+      // derives the same value, so the refund is counted exactly once.
+      const refundedTotal = await alreadyRefundedAmountPhp(request.payment.id, tx);
+      const fullyRefunded = refundedTotal >= request.payment.amountPhp;
+      await tx.payment.update({
+        where: { id: request.payment.id },
+        data: {
+          status: fullyRefunded
+            ? PaymentStatus.REFUNDED
+            : PaymentStatus.PARTIALLY_REFUNDED,
+          refundedAt: new Date(),
+          refundAmountPhp: refundedTotal,
+          refundReason: PAYMONGO_REFUND_REASON,
+        },
+      });
+    });
+  } catch (err) {
+    logger.error(
+      { err, requestId: request.id, paymongoRefundId },
+      'Refund succeeded at PayMongo but local reconciliation failed; webhook will reconcile',
+    );
+    revalidatePath('/admin/refunds');
+    revalidatePath(`/admin/refunds/${request.id}`);
+    // State 2 is NOT a failure — the money left PayMongo. Report it honestly.
+    return {
+      success: true,
+      data: { requestId: request.id, status: 'PROCESSING', paymongoRefundId },
+    };
   }
 
   revalidatePath('/admin/refunds');

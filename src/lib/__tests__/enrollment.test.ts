@@ -9,7 +9,8 @@ const mockDb = vi.hoisted(() => {
     payment: { create: fn(), findUnique: fn(), findFirst: fn(), update: fn() },
     course: { findFirst: fn() },
     enrollment: { create: fn(), findUnique: fn(), findFirst: fn(), update: fn() },
-    discountCode: { update: fn() },
+    discountCode: { update: fn(), updateMany: fn() },
+    refundRequest: { findMany: fn() },
     $transaction: vi.fn(),
   };
 });
@@ -23,17 +24,25 @@ const mockEnums = vi.hoisted(() => ({
   CheckoutStatus: { PAID: 'PAID', FAILED: 'FAILED' },
   EnrollmentStatus: { ACTIVE: 'ACTIVE' },
   PaymentMethod: { GCASH: 'GCASH', MAYA: 'MAYA', GRABPAY: 'GRABPAY', CREDIT_CARD: 'CREDIT_CARD', BANK_TRANSFER: 'BANK_TRANSFER', OTHER: 'OTHER' },
-  PaymentStatus: { COMPLETED: 'COMPLETED', REFUNDED: 'REFUNDED' },
+  PaymentStatus: { COMPLETED: 'COMPLETED', REFUNDED: 'REFUNDED', PARTIALLY_REFUNDED: 'PARTIALLY_REFUNDED' },
+  RefundStatus: { PENDING: 'PENDING', APPROVED: 'APPROVED', REJECTED: 'REJECTED', PROCESSED: 'PROCESSED', FAILED: 'FAILED' },
 }));
 vi.mock('@/lib/enums', () => mockEnums);
 
 vi.mock('@/lib/receipts', () => ({ issueInvoiceForPayment: vi.fn() }));
-vi.mock('@/lib/email', () => ({ sendEnrollmentConfirmationEmail: vi.fn(() => Promise.resolve()) }));
+vi.mock('@/lib/email', () => ({
+  sendEnrollmentConfirmationEmail: vi.fn(() => Promise.resolve()),
+  sendAccountClaimEmail: vi.fn(() => Promise.resolve()),
+}));
 vi.mock('@/lib/logger', () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
-vi.mock('node:crypto', () => ({ randomUUID: () => 'mock-uuid' }));
+vi.mock('node:crypto', () => ({
+  randomUUID: () => 'mock-uuid',
+  randomBytes: (n: number) => Buffer.alloc(n, 1),
+  createHash: () => ({ update: () => ({ digest: () => 'mock-hash' }) }),
+}));
 
 import { issueInvoiceForPayment } from '@/lib/receipts';
 import { sendEnrollmentConfirmationEmail } from '@/lib/email';
@@ -197,7 +206,7 @@ describe('enrollment.ts', () => {
 
       const result = await findOrCreateUserByEmail('new@example.com', 'New User');
 
-      expect(result).toEqual({ id: 'u-new', isNew: true });
+      expect(result).toEqual({ id: 'u-new', isNew: true, rawClaimToken: expect.any(String) });
       expect(mockDb.user.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
@@ -307,12 +316,14 @@ describe('enrollment.ts', () => {
       mockDb.checkoutSession.findUnique.mockResolvedValue({
         ...checkoutRow,
         discountCodeId: 'dc-1',
+        discountCode: { maxUses: null },
       });
-      mockDb.discountCode.update.mockResolvedValue({});
+      mockDb.discountCode.updateMany.mockResolvedValue({ count: 1 });
 
       await handleCheckoutPaid(makePaidEvent());
 
-      expect(mockDb.discountCode.update).toHaveBeenCalledWith({
+      // H4: conditional atomic increment, not a blind update.
+      expect(mockDb.discountCode.updateMany).toHaveBeenCalledWith({
         where: { id: 'dc-1' },
         data: { currentUses: { increment: 1 } },
       });
@@ -386,7 +397,10 @@ describe('enrollment.ts', () => {
   describe('handlePaymentRefunded', () => {
     it('updates payment and enrollment within the transaction', async () => {
       mockDb.processedWebhook.create.mockResolvedValue({ id: 'pw-1' });
-      mockDb.payment.findUnique.mockResolvedValue({ id: 'pay-1' });
+      // Full refund (amount === payment amount) with no prior PROCESSED
+      // requests → cumulative falls back to the event amount → fully refunded.
+      mockDb.payment.findUnique.mockResolvedValue({ id: 'pay-1', amountPhp: 299900 });
+      mockDb.refundRequest.findMany.mockResolvedValue([]);
       mockDb.enrollment.findFirst.mockResolvedValue({ id: 'enr-1' });
       mockDb.payment.update.mockResolvedValue({});
       mockDb.enrollment.update.mockResolvedValue({});
@@ -396,7 +410,7 @@ describe('enrollment.ts', () => {
       expect(mockDb.payment.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: 'pay-1' },
-          data: expect.objectContaining({ status: 'REFUNDED' }),
+          data: expect.objectContaining({ status: 'REFUNDED', refundAmountPhp: 299900 }),
         }),
       );
       expect(mockDb.enrollment.update).toHaveBeenCalledWith(

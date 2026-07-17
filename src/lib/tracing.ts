@@ -30,14 +30,21 @@ import { log, withRequestContext } from './logger';
  * Opaque Sentry type — the SDK is optional in dev. We `require` it
  * lazily inside the wrapper to avoid breaking typecheck or builds
  * when @sentry/nextjs isn't installed.
+ *
+ * Uses the v8+ span API. `startTransaction` was removed in @sentry/*  v8, so
+ * the old adapter silently produced no traces at all (audit H9). `startSpan`
+ * runs the callback inside an active span and finishes + sets status
+ * automatically (errored if the callback throws).
  */
+interface SentrySpan {
+  setAttribute?: (key: string, value: unknown) => void;
+}
 type SentryLike = {
-  startTransaction: (arg: { name: string; op?: string }) => {
-    setContext: (key: string, value: Record<string, unknown>) => void;
-    setUser: (user: { id?: string; email?: string } | null) => void;
-    setStatus: (status: 'ok' | 'internal_error' | 'unknown_error') => void;
-    finish: () => void;
-  };
+  startSpan: <T>(
+    options: { name: string; op?: string },
+    callback: (span: SentrySpan) => T,
+  ) => T;
+  setUser: (user: { id?: string; email?: string } | null) => void;
   captureException: (err: unknown) => void;
 };
 
@@ -45,7 +52,7 @@ function getSentry(): SentryLike | null {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const Sentry = require('@sentry/nextjs');
-    if (Sentry && typeof Sentry.startTransaction === 'function') return Sentry;
+    if (Sentry && typeof Sentry.startSpan === 'function') return Sentry;
     return null;
   } catch {
     return null;
@@ -110,26 +117,30 @@ export function withActionTracing<TArgs extends unknown[], TReturn>(
   }
 
   const actionName = opts.name || fn.name || 'anonymous';
-  const start = performance.now();
 
   return async function tracedAction(...args: TArgs): Promise<TReturn> {
+    // Timer starts per invocation — NOT at wrapper construction — so the
+    // reported duration is this call's, not "time since module load" (H9).
+    const start = performance.now();
     const sentry = getSentry();
-    const tx = sentry?.startTransaction({ name: actionName, op: 'server.action' });
 
-    if (tx && opts.context) tx.setContext('action', opts.context);
-
-    try {
-      const result = await withRequestContext({ requestId: randomId(), route: actionName }, () =>
+    const invoke = () =>
+      withRequestContext({ requestId: randomId(), route: actionName }, () =>
         Promise.resolve(fn(...args)),
       );
 
-      if (tx) {
-        if (opts.context?.userId) {
-          tx.setUser({ id: String(opts.context.userId) });
-        }
-        tx.setStatus('ok');
-        tx.finish();
-      }
+    try {
+      const result = sentry
+        ? await sentry.startSpan({ name: actionName, op: 'server.action' }, async (span) => {
+            if (opts.context) {
+              for (const [k, v] of Object.entries(opts.context)) {
+                if (v !== null && typeof v !== 'object') span.setAttribute?.(`action.${k}`, v);
+              }
+            }
+            if (opts.context?.userId) sentry.setUser({ id: String(opts.context.userId) });
+            return invoke();
+          })
+        : await invoke();
 
       log.info(
         { action: actionName, durationMs: msSince(start), status: 'ok' },
@@ -137,10 +148,6 @@ export function withActionTracing<TArgs extends unknown[], TReturn>(
       );
       return result;
     } catch (err) {
-      if (tx) {
-        tx.setStatus('internal_error');
-        tx.finish();
-      }
       const argInfo = opts.skipArgScrub ? [] : scrubArgs(args);
       log.error(
         {

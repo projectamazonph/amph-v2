@@ -10,6 +10,7 @@ import 'server-only';
 
 import { randomUUID } from 'node:crypto';
 import { db } from './db';
+import { isUniqueConstraintError } from './prisma-errors';
 
 /**
  * Total lesson count for a course, filtered to published modules and
@@ -19,6 +20,7 @@ export async function getCourseLessonCount(courseId: string): Promise<number> {
   return db.lesson.count({
     where: {
       deletedAt: null,
+      isPublished: true,
       module: {
         courseId,
         isPublished: true,
@@ -40,12 +42,13 @@ export async function getCompletedLessonsInCourse(
       userId,
       status: 'COMPLETED',
       lesson: {
+        isPublished: true,
+        deletedAt: null,
         module: {
           courseId,
           isPublished: true,
           deletedAt: null,
         },
-        deletedAt: null,
       },
     },
   });
@@ -127,27 +130,48 @@ export async function issueCertificate(
     };
   }
 
-  const created = await db.certificate.create({
-    data: {
-      userId,
-      courseId,
-      status: 'ACTIVE',
-      verificationHash: randomUUID(),
-      metadata: JSON.stringify({
-        completedLessons: completion.completedLessons,
-        totalLessons: completion.totalLessons,
-      }),
-    },
-  });
+  // H7: the partial unique index (one ACTIVE certificate per user+course) is
+  // the concurrency backstop. Two simultaneous issues both pass the findFirst
+  // above; the losing insert hits P2002, and we return the winner's row as if
+  // it already existed — never two active certificates.
+  try {
+    const created = await db.certificate.create({
+      data: {
+        userId,
+        courseId,
+        status: 'ACTIVE',
+        verificationHash: randomUUID(),
+        metadata: JSON.stringify({
+          completedLessons: completion.completedLessons,
+          totalLessons: completion.totalLessons,
+        }),
+      },
+    });
 
-  return {
-    id: created.id,
-    verificationHash: created.verificationHash,
-    courseId: created.courseId,
-    userId: created.userId,
-    issuedAt: created.issuedAt,
-    alreadyExisted: false,
-  };
+    return {
+      id: created.id,
+      verificationHash: created.verificationHash,
+      courseId: created.courseId,
+      userId: created.userId,
+      issuedAt: created.issuedAt,
+      alreadyExisted: false,
+    };
+  } catch (e) {
+    if (!isUniqueConstraintError(e)) throw e;
+    const winner = await db.certificate.findFirst({
+      where: { userId, courseId, status: 'ACTIVE', deletedAt: null },
+      orderBy: { issuedAt: 'desc' },
+    });
+    if (!winner) throw e;
+    return {
+      id: winner.id,
+      verificationHash: winner.verificationHash,
+      courseId: winner.courseId,
+      userId: winner.userId,
+      issuedAt: winner.issuedAt,
+      alreadyExisted: true,
+    };
+  }
 }
 
 /**

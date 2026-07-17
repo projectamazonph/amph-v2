@@ -12,7 +12,7 @@ export const metadata = {
 interface PageProps {
   // STORY-027: guest checkout completion forwards the payer's email and a
   // `next` return URL so the form prefills and redirects back to checkout.
-  searchParams: Promise<{ error?: string; email?: string; next?: string }>;
+  searchParams: Promise<{ error?: string; email?: string; next?: string; claim?: string }>;
 }
 
 export default async function SignUpPage({ searchParams }: PageProps) {
@@ -26,6 +26,7 @@ export default async function SignUpPage({ searchParams }: PageProps) {
   const error = params.error ? decodeURIComponent(params.error) : null;
   const prefilledEmail = params.email ?? '';
   const nextUrl = params.next ?? '/';
+  const claimToken = params.claim ?? undefined;
 
   return (
     <main id="main-content" className={styles.authContainer}>
@@ -36,7 +37,12 @@ export default async function SignUpPage({ searchParams }: PageProps) {
             Start with the free tools. Upgrade when you&apos;re ready for the full curriculum.
           </p>
 
-          <SignUpForm error={error} prefilledEmail={prefilledEmail} nextUrl={nextUrl} />
+          <SignUpForm
+            error={error}
+            prefilledEmail={prefilledEmail}
+            nextUrl={nextUrl}
+            claimToken={claimToken}
+          />
 
           <p className={styles.footer}>
             Already have an account? <Link href="/auth/signin">Sign in</Link>

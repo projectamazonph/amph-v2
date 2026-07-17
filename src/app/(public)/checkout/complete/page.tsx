@@ -11,7 +11,6 @@
  */
 
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardDescription, Button, Badge } from '@/components/ui';
 import { Icon } from '@/components/ui/Icon';
 import { db } from '@/lib/db';
@@ -64,17 +63,13 @@ export default async function CheckoutCompletePage({ searchParams }: PageProps) 
   }
 
   if (checkout.status === CheckoutStatus.PAID) {
-    // STORY-027: guest checkout completion.
-    // If the payer isn't signed in, force them through /auth/signup to
-    // claim their placeholder account. Email is forwarded so the form
-    // prefills. After signup, they're redirected back here and signed in,
-    // so the next render falls through to SuccessCard below.
+    // Guest checkout completion. The account can only be claimed with the
+    // single-use token we email to the buyer (C5/C6) — the raw token is never
+    // available to this page — so we point guests at their inbox rather than a
+    // tokenless signup that would be rejected.
     const session = await getSession();
     if (!session) {
-      const params = new URLSearchParams({ email: checkout.email });
-      if (returnUrl) params.set('next', `/checkout/complete?returnUrl=${encodeURIComponent(returnUrl)}`);
-      else params.set('next', '/checkout/complete');
-      redirect(`/auth/signup?${params.toString()}`);
+      return <ClaimCard email={checkout.email} tierName={checkout.pricingTier.name} />;
     }
     return <SuccessCard tierName={checkout.pricingTier.name} />;
   }
@@ -105,6 +100,31 @@ function SuccessCard({ tierName }: { tierName: string }) {
           </Link>
           <Link href="/dashboard/courses">
             <Button variant="ghost">Browse courses</Button>
+          </Link>
+        </div>
+      </Card>
+    </main>
+  );
+}
+
+function ClaimCard({ email, tierName }: { email: string; tierName: string }) {
+  return (
+    <main className={styles.page}>
+      <Card className={styles.card}>
+        <CardHeader>
+          <Badge variant="success" className={styles.badge}>
+            Payment received
+          </Badge>
+          <CardTitle>Check your email to finish.</CardTitle>
+          <CardDescription>
+            Your {tierName} enrollment is active. We sent a secure link to{' '}
+            <strong>{email}</strong> — use it to set a password and access your
+            account. The link expires in 7 days.
+          </CardDescription>
+        </CardHeader>
+        <div className={styles.actions}>
+          <Link href="/auth/signin">
+            <Button variant="ghost">Already claimed? Sign in</Button>
           </Link>
         </div>
       </Card>
