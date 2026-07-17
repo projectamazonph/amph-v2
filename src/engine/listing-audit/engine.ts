@@ -83,9 +83,18 @@ function findingsAccuracy(
   if (student.length === 0) {
     return binaryCriterion('findings_accuracy', false, PASS, 'No findings submitted.');
   }
+
+  // Bolt optimization: Map reference findings by field to replace O(N*M) nested lookups with O(1) lookups
+  const refMap = new Map<string, ListingAuditFinding>();
+  for (const rf of ref) {
+    if (!refMap.has(rf.field)) {
+      refMap.set(rf.field, rf);
+    }
+  }
+
   let truePositives = 0;
   for (const sf of student) {
-    const match = ref.find((rf) => rf.field === sf.field);
+    const match = refMap.get(sf.field);
     if (!match) continue;
     // Severity at least matches
     if (severityAtLeast(sf.severity, match.severity)) truePositives++;
@@ -104,10 +113,18 @@ function severityCalibration(
   student: ListingAuditFinding[],
   ref: ListingAuditFinding[]
 ): CriterionResult {
+  // Bolt optimization: Map reference findings by field to replace O(N*M) nested lookups with O(1) lookups
+  const refMap = new Map<string, ListingAuditFinding>();
+  for (const rf of ref) {
+    if (!refMap.has(rf.field)) {
+      refMap.set(rf.field, rf);
+    }
+  }
+
   let correct = 0;
   let total = 0;
   for (const sf of student) {
-    const match = ref.find((rf) => rf.field === sf.field);
+    const match = refMap.get(sf.field);
     if (!match) continue;
     total++;
     if (sf.severity === match.severity) correct++;
