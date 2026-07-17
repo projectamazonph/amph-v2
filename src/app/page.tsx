@@ -1,7 +1,53 @@
 import Link from 'next/link';
 import { BRAND_NAME, BRAND_NAME_UPPER } from '@/lib/brand';
 import { Badge } from '@/components/ui';
+import { Icon, type PhosphorIconName } from '@/components/ui/Icon';
 import styles from './home.module.css';
+
+interface SimMeta {
+  id: 'campaign-builder' | 'bid-elevator' | 'str-triage' | 'listing-audit' | 'keyword-research';
+  name: string;
+  description: string;
+  icon: PhosphorIconName;
+}
+
+const SIMULATORS: SimMeta[] = [
+  {
+    id: 'campaign-builder',
+    name: 'Campaign Builder',
+    description:
+      'Build Sponsored Products, Sponsored Brands, Sponsored Display, and Sponsored TV campaigns. Practice the full Amazon Ads Console campaign wizard, start to finish.',
+    icon: 'Rocket',
+  },
+  {
+    id: 'bid-elevator',
+    name: 'Bid Elevator',
+    description:
+      'Adjust keyword bids against real performance data. Cut waste, raise your converters, defend ACoS at target.',
+    icon: 'ChartLine',
+  },
+  {
+    id: 'str-triage',
+    name: 'Search Term Triage',
+    description:
+      'Keep, pause, negate, or re-bid search terms. Practice the weekly triage workflow every PPC specialist runs.',
+    icon: 'List',
+  },
+  {
+    id: 'listing-audit',
+    name: 'Listing Audit',
+    description:
+      "Score a product listing on title, bullets, images, and A+ content. Find what's actually hurting conversion.",
+    icon: 'BookOpen',
+  },
+  {
+    id: 'keyword-research',
+    name: 'Keyword Research',
+    description:
+      'Categorize keywords as primary, secondary, or negative. Build the keyword list that drives every Sponsored Products campaign.',
+    icon: 'MagnifyingGlass',
+  },
+];
 
 export default function HomePage() {
   return (
@@ -10,14 +56,12 @@ export default function HomePage() {
       <section className={styles.hero}>
         <div className={styles.heroContent}>
           <p className={styles.heroEyebrow}>{BRAND_NAME_UPPER}</p>
-          <h1 className={styles.heroTitle}>
-            Amazon PPC theory is everywhere. Somewhere to actually practice it isn&apos;t.
-          </h1>
+          <h1 className={styles.heroTitle}>Learn Amazon PPC the right way</h1>
+          <p className={styles.heroTagline}>We turn the theoretical into the practical.</p>
           <p className={styles.heroSub}>
-            {BRAND_NAME}{' '}
-            fixes that: one course, three tiers, each built around practice tools that
-            mirror the real Amazon Ads Console &mdash; so you already know where everything
-            is before a client hands you the login.
+            Not only do you learn Amazon PPC from scratch &mdash; you turn that knowledge
+            into workflows you can actually run on the job, before a client ever hands you
+            their account.
           </p>
           <div className={styles.heroActions}>
             <Link
@@ -56,41 +100,55 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── What You Learn ───────────────────────────────────── */}
-      <section className={styles.learnSection}>
-        <h2>What you learn</h2>
-        <ul className={styles.learnGrid}>
-          <li className={styles.learnItem}>
-            <h3>Campaign structure</h3>
-            <p>
-              How to build Sponsored Products campaigns that Amazon&apos;s
-              algorithm actually rewards.
-            </p>
+      {/* ── Pain Points ──────────────────────────────────────── */}
+      <section className={styles.painSection}>
+        <h2>Where most Amazon PPC training falls apart</h2>
+        <ul className={styles.painList}>
+          <li className={styles.painItem}>
+            You finish the lessons, but you&apos;ve never actually touched a campaign.
           </li>
-          <li className={styles.learnItem}>
-            <h3>Bid optimization</h3>
-            <p>
-              When to raise bids, when to lower them, and when to leave the
-              campaign alone.
-            </p>
+          <li className={styles.painItem}>
+            You know the vocabulary &mdash; ACoS, ROAS, CPC &mdash; but freeze the first
+            time you have to act on it.
           </li>
-          <li className={styles.learnItem}>
-            <h3>Search term triage</h3>
-            <p>
-              Cut the wasted spend on irrelevant clicks without killing the
-              keywords that convert.
-            </p>
+          <li className={styles.painItem}>
+            Clients want proof you&apos;ve used Seller Central. Nobody lets you practice
+            on one first.
+          </li>
+          <li className={styles.painItem}>
+            One mistake in a live account costs a client real money &mdash; so you never
+            get to make the mistakes that actually teach you something.
           </li>
         </ul>
       </section>
 
-      {/* ── Practice Access ──────────────────────────────────── */}
+      {/* ── Simulators ───────────────────────────────────────── */}
+      <section className={styles.simSection}>
+        <h2>Five simulators. Five real Amazon Ads Console workflows.</h2>
+        <p className={styles.simSub}>
+          Each one mirrors what you&apos;d actually do inside Seller Central &mdash; no
+          client account required.
+        </p>
+        <ul className={styles.simGrid}>
+          {SIMULATORS.map((sim) => (
+            <li key={sim.id} className={styles.simItem}>
+              <Icon name={sim.icon} size="lg" />
+              <h3>{sim.name}</h3>
+              <p>{sim.description}</p>
+            </li>
+          ))}
+        </ul>
+        <p className={styles.simClose}>
+          Not only do you learn Amazon PPC from scratch &mdash; you turn that knowledge
+          into practical workflows you can apply the moment you&apos;re on the job.
+        </p>
+      </section>
+
+      {/* ── Coming Soon ──────────────────────────────────────── */}
       <section className={styles.accessSection}>
-        <h2>You don&apos;t need a client&apos;s login to practice this</h2>
+        <h2>Two more tools, only for enrolled students</h2>
         <p className={styles.accessSub}>
-          Every simulator mirrors real Amazon Ads Console workflows — campaign structure,
-          bid changes, search term triage — without touching a client&apos;s ad spend. Two more
-          tools are in development, and they&apos;ll only be available to enrolled students.
+          Still in development &mdash; enroll now to get access the moment they launch.
         </p>
         <ul className={styles.accessGrid}>
           <li className={styles.accessItem}>
