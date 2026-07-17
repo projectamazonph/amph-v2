@@ -4,6 +4,99 @@
   padding: var(--space-16) var(--side-pad);
 }
 
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Section-level cascade reveal. RevealSection toggles .is-visible on scroll-in. */
+.painSection,
+.simSection,
+.accessSection,
+.pricingSection,
+.ctaSection {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity var(--duration-slow) var(--ease-out),
+    transform var(--duration-slow) var(--ease-out);
+}
+
+.painSection:global(.is-visible),
+.simSection:global(.is-visible),
+.accessSection:global(.is-visible),
+.pricingSection:global(.is-visible),
+.ctaSection:global(.is-visible) {
+  opacity: 1;
+  transform: none;
+}
+
+/* Skip the reveal-on-scroll wait entirely for reduced motion, rather than
+   relying on the global transition-duration override to make it instant. */
+@media (prefers-reduced-motion: reduce) {
+  .heroEyebrow,
+  .heroTitle,
+  .heroTagline,
+  .heroSub,
+  .heroActions,
+  .heroDecorative {
+    animation: none;
+  }
+
+  .painSection,
+  .simSection,
+  .accessSection,
+  .pricingSection,
+  .ctaSection,
+  .painItem,
+  .simRow,
+  .accessItem {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── Buttons ──────────────────────────────────────────────────── */
+.btnPrimary,
+.btnSecondary {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  transition: transform var(--duration-fast) var(--ease-out),
+    background var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.btnPrimary {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.btnPrimary:hover {
+  background: var(--accent-hover);
+}
+
+.btnSecondary {
+  border: 1px solid var(--border-strong);
+  color: var(--ink-900);
+}
+
+.btnSecondary:hover {
+  background: var(--surface-2);
+}
+
+.btnPrimary:active,
+.btnSecondary:active {
+  transform: translateY(-1px);
+}
+
 /* ── Hero ──────────────────────────────────────────────────────── */
 .hero {
   display: flex;
@@ -22,12 +115,22 @@
   color: var(--ink-500);
   text-transform: uppercase;
   margin-bottom: var(--space-3);
+  animation: fadeInUp var(--duration-slow) var(--ease-out) both;
 }
 
 .heroTitle {
   font-size: var(--text-3xl);
   line-height: 1.1;
   margin: 0 0 var(--space-4);
+  animation: fadeInUp var(--duration-slow) var(--ease-out) 40ms both;
+}
+
+.heroTagline {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--ink-900);
+  margin: 0 0 var(--space-4);
+  animation: fadeInUp var(--duration-slow) var(--ease-out) 120ms both;
 }
 
 .heroSub {
@@ -36,12 +139,14 @@
   margin: 0 0 var(--space-8);
   max-width: 600px;
   line-height: 1.5;
+  animation: fadeInUp var(--duration-slow) var(--ease-out) 200ms both;
 }
 
 .heroActions {
   display: flex;
   gap: var(--space-3);
   flex-wrap: wrap;
+  animation: fadeInUp var(--duration-slow) var(--ease-out) 280ms both;
 }
 
 .heroDecorative {
@@ -68,6 +173,7 @@
     padding: var(--space-8) var(--space-10);
     border-radius: var(--radius-lg);
     white-space: nowrap;
+    animation: fadeInUp var(--duration-slow) var(--ease-out) 360ms both;
   }
 
   .heroDecorativeCaption {
@@ -80,13 +186,178 @@
   }
 }
 
-/* ── What You Learn ────────────────────────────────────────────── */
-.learnSection {
+/* ── Pain Points ──────────────────────────────────────────────── */
+.painSection {
   padding: var(--space-12) 0;
   border-top: 1px solid var(--border);
 }
 
-.learnGrid {
+.painList {
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+  margin: var(--space-6) 0 0;
+  padding: 0;
+  max-width: 720px;
+}
+
+@media (min-width: 768px) {
+  .painList {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.painItem {
+  position: relative;
+  padding: var(--space-3) 0 var(--space-3) var(--space-6);
+  color: var(--ink-700);
+  line-height: 1.5;
+  border-top: 1px solid var(--border);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity var(--duration-slow) var(--ease-out),
+    transform var(--duration-slow) var(--ease-out);
+}
+
+.painItem::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: calc(var(--space-3) + 0.4em);
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+}
+
+.painSection:global(.is-visible) .painItem {
+  opacity: 1;
+  transform: none;
+}
+
+.painSection:global(.is-visible) .painItem:nth-child(1) { transition-delay: 0ms; }
+.painSection:global(.is-visible) .painItem:nth-child(2) { transition-delay: 60ms; }
+.painSection:global(.is-visible) .painItem:nth-child(3) { transition-delay: 120ms; }
+.painSection:global(.is-visible) .painItem:nth-child(4) { transition-delay: 180ms; }
+
+/* ── Simulators (zig-zag) ─────────────────────────────────────── */
+.simSection {
+  padding: var(--space-12) 0;
+  border-top: 1px solid var(--border);
+}
+
+.simSub {
+  color: var(--ink-700);
+  margin: var(--space-2) 0 0;
+  max-width: 640px;
+  line-height: 1.5;
+}
+
+.simList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+  margin: var(--space-8) 0 0;
+  padding: 0;
+}
+
+.simRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity var(--duration-slow) var(--ease-out),
+    transform var(--duration-slow) var(--ease-out);
+}
+
+.simSection:global(.is-visible) .simRow {
+  opacity: 1;
+  transform: none;
+}
+
+.simSection:global(.is-visible) .simRow:nth-child(1) { transition-delay: 0ms; }
+.simSection:global(.is-visible) .simRow:nth-child(2) { transition-delay: 70ms; }
+.simSection:global(.is-visible) .simRow:nth-child(3) { transition-delay: 140ms; }
+.simSection:global(.is-visible) .simRow:nth-child(4) { transition-delay: 210ms; }
+.simSection:global(.is-visible) .simRow:nth-child(5) { transition-delay: 280ms; }
+
+@media (min-width: 768px) {
+  .simRow {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .simRow:nth-child(even) {
+    flex-direction: row-reverse;
+  }
+
+  .simScreenshot,
+  .simRowBody {
+    flex: 1 1 50%;
+    min-width: 0;
+  }
+}
+
+.simScreenshot {
+  position: relative;
+  line-height: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--surface-2);
+  transition: transform var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.simScreenshot:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.simScreenshot img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.simRowBody h3 {
+  margin: var(--space-3) 0 var(--space-2);
+  font-size: var(--text-xl);
+}
+
+.simRowBody p {
+  color: var(--ink-700);
+  margin: 0;
+  line-height: 1.5;
+  max-width: 480px;
+}
+
+.simClose {
+  margin: var(--space-10) 0 0;
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--ink-900);
+  max-width: 720px;
+  line-height: 1.5;
+}
+
+/* ── Coming Soon ──────────────────────────────────────────────── */
+.accessSection {
+  padding: var(--space-12) 0;
+  border-top: 1px solid var(--border);
+}
+
+.accessSub {
+  color: var(--ink-700);
+  margin: var(--space-2) 0 0;
+  max-width: 640px;
+  line-height: 1.5;
+}
+
+.accessGrid {
   list-style: none;
   display: grid;
   grid-template-columns: 1fr;
@@ -96,27 +367,63 @@
 }
 
 @media (min-width: 768px) {
-  .learnGrid {
-    grid-template-columns: repeat(3, 1fr);
+  .accessGrid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
-.learnItem h3 {
+.accessItem {
+  padding: var(--space-6);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity var(--duration-slow) var(--ease-out),
+    transform var(--duration-slow) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.accessItem:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.accessSection:global(.is-visible) .accessItem {
+  opacity: 1;
+  transform: none;
+}
+
+.accessSection:global(.is-visible) .accessItem:hover {
+  transform: translateY(-1px);
+}
+
+.accessSection:global(.is-visible) .accessItem:nth-child(1) { transition-delay: 0ms; }
+.accessSection:global(.is-visible) .accessItem:nth-child(2) { transition-delay: 60ms; }
+
+.accessItemHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
   margin: 0 0 var(--space-2);
+}
+
+.accessItemHeader h3 {
+  margin: 0;
   font-size: var(--text-lg);
 }
 
-.learnItem p {
+.accessItem p {
   color: var(--ink-700);
   margin: 0;
   line-height: 1.5;
 }
 
-/* ── Pricing Preview ───────────────────────────────────────────── */
+/* ── Pricing Preview ──────────────────────────────────────────── */
 .pricingSection {
   padding: var(--space-12) 0;
   border-top: 1px solid var(--border);
-  text-align: center;
 }
 
 .pricingSection h2 {
@@ -125,25 +432,28 @@
 
 .pricingSub {
   color: var(--ink-700);
-  margin: 0 auto var(--space-8);
+  margin: 0 0 var(--space-8);
   max-width: 600px;
 }
 
-/* ── CTA ───────────────────────────────────────────────────────── */
+/* ── CTA ──────────────────────────────────────────────────────── */
 .ctaSection {
-  padding: var(--space-12) 0;
-  border-top: 1px solid var(--border);
-  text-align: center;
+  padding: var(--space-12);
+  background: var(--surface-3);
+  border-radius: var(--radius-lg);
 }
 
 .ctaSection h2 {
+  color: var(--ink-inverse);
   margin-bottom: var(--space-4);
+  max-width: 640px;
 }
 
 .ctaSection p {
-  color: var(--ink-700);
-  margin: 0 auto var(--space-6);
-  max-width: 600px;
+  color: var(--ink-inverse);
+  opacity: 0.75;
+  margin: 0 0 var(--space-6);
+  max-width: 560px;
 }
 
 /* ── Footer ────────────────────────────────────────────────────── */
