@@ -57,50 +57,74 @@ export const createRefundRequestAction = createSafeAction<
 >(createRequestSchema, async (data) => {
   const user = await requireAuth();
 
-  const payment = await db.payment.findUnique({
-    where: { id: data.paymentId, deletedAt: null },
-    select: {
-      id: true,
-      userId: true,
-      amountPhp: true,
-      paidAt: true,
-      status: true,
-      pricingTier: { select: { name: true } },
-    },
-  });
+  // C7: Atomic check-and-insert inside a single transaction to prevent
+  // duplicate refund requests. The transaction ensures that if two
+  // concurrent requests both pass the checks, only one succeeds.
+  const result = await db.$transaction(async (tx) => {
+    const payment = await tx.payment.findUnique({
+      where: { id: data.paymentId, deletedAt: null },
+      select: {
+        id: true,
+        userId: true,
+        amountPhp: true,
+        paidAt: true,
+        status: true,
+        pricingTier: { select: { name: true } },
+      },
+    });
 
-  if (!payment) {
-    throw new Error('Payment not found.');
-  }
-  if (payment.userId !== user.id) {
-    // Don't leak the existence of payments the caller doesn't own.
-    throw new Error('Payment not found.');
-  }
-  if (!isWithinRefundWindow(payment.paidAt, payment.status)) {
-    throw new Error(
-      'Refund window has expired or payment is not eligible for a refund.',
-    );
-  }
-  if (await hasBlockingRefundRequest(payment.id)) {
-    throw new Error('A refund request for this payment is already in progress.');
-  }
+    if (!payment) {
+      throw new Error('Payment not found.');
+    }
+    if (payment.userId !== user.id) {
+      throw new Error('Payment not found.');
+    }
+    if (!isWithinRefundWindow(payment.paidAt, payment.status)) {
+      throw new Error(
+        'Refund window has expired or payment is not eligible for a refund.',
+      );
+    }
 
-  // Full refund = payment amount minus any previously-processed refunds.
-  const alreadyRefunded = await alreadyRefundedAmountPhp(payment.id);
-  const refundAmountPhp = payment.amountPhp - alreadyRefunded;
-  if (refundAmountPhp <= 0) {
-    throw new Error('This payment has already been fully refunded.');
-  }
+    // Atomic check for existing blocking request (inside transaction)
+    const blocking = await tx.refundRequest.findFirst({
+      where: {
+        paymentId: payment.id,
+        deletedAt: null,
+        status: { in: [RefundStatus.PENDING, RefundStatus.APPROVED] },
+      },
+      select: { id: true },
+    });
+    if (blocking) {
+      throw new Error('A refund request for this payment is already in progress.');
+    }
 
-  const request = await db.refundRequest.create({
-    data: {
-      userId: user.id,
-      paymentId: payment.id,
-      reason: data.reason.trim(),
-      amountPhp: refundAmountPhp,
-      status: RefundStatus.PENDING,
-    },
-    select: { id: true },
+    // Full refund = payment amount minus any previously-processed refunds.
+    const processedRefunds = await tx.refundRequest.findMany({
+      where: {
+        paymentId: payment.id,
+        deletedAt: null,
+        status: RefundStatus.PROCESSED,
+      },
+      select: { amountPhp: true },
+    });
+    const alreadyRefunded = processedRefunds.reduce((sum, r) => sum + r.amountPhp, 0);
+    const refundAmountPhp = payment.amountPhp - alreadyRefunded;
+    if (refundAmountPhp <= 0) {
+      throw new Error('This payment has already been fully refunded.');
+    }
+
+    const request = await tx.refundRequest.create({
+      data: {
+        userId: user.id,
+        paymentId: payment.id,
+        reason: data.reason.trim(),
+        amountPhp: refundAmountPhp,
+        status: RefundStatus.PENDING,
+      },
+      select: { id: true },
+    });
+
+    return { requestId: request.id, payment };
   });
 
   revalidatePath('/dashboard/payments');
@@ -111,16 +135,18 @@ export const createRefundRequestAction = createSafeAction<
     select: { email: true, name: true },
   });
 
-  sendRefundStatusEmail({
-    to: userData!.email,
-    studentName: userData!.name ?? 'Student',
-    status: 'requested',
-    tierName: payment.pricingTier?.name ?? 'your course',
-    amountPhp: refundAmountPhp,
-    reason: data.reason.trim(),
-  }).catch(() => {});
+  if (userData) {
+    sendRefundStatusEmail({
+      to: userData.email,
+      studentName: userData.name ?? 'Student',
+      status: 'requested',
+      tierName: result.payment.pricingTier?.name ?? 'your course',
+      amountPhp: result.payment.amountPhp,
+      reason: data.reason.trim(),
+    }).catch(() => {});
+  }
 
-  return { requestId: request.id };
+  return { requestId: result.requestId };
 });
 
 // ---------------------------------------------------------------------------
@@ -231,18 +257,20 @@ export async function approveRefundAction(
       },
     });
 
-    // Also update Payment.status optimistically. If webhook beats us,
-    // it will see status=REFUNDED and skip its own update.
-    const newPaymentStatus =
-      request.amountPhp >= request.payment.amountPhp
-        ? PaymentStatus.REFUNDED
-        : PaymentStatus.PARTIALLY_REFUNDED;
+    // C7: Update Payment status with cumulative refund tracking.
+    // Sum existing refunds with this new one rather than overwriting.
+    const existingRefunded = request.payment.refundAmountPhp ?? 0;
+    const newTotalRefunded = existingRefunded + request.amountPhp;
+    const fullyRefunded = newTotalRefunded >= request.payment.amountPhp;
+    const newPaymentStatus = fullyRefunded
+      ? PaymentStatus.REFUNDED
+      : PaymentStatus.PARTIALLY_REFUNDED;
     await db.payment.update({
       where: { id: request.payment.id },
       data: {
         status: newPaymentStatus,
         refundedAt: new Date(),
-        refundAmountPhp: request.amountPhp,
+        refundAmountPhp: newTotalRefunded,
         refundReason: PAYMONGO_REFUND_REASON,
       },
     });

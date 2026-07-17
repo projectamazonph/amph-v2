@@ -26,6 +26,13 @@ model User {
   image         String?
   passwordHash  String? // null for OAuth-only
 
+  // Account-claim token for guest checkout (C4 / AUDIT-2026-07-17)
+  // Hash of a cryptographically random token, set when a placeholder
+  // user is created during guest checkout. Required to claim the account
+  // via signup. Null for non-placeholder users.
+  claimTokenHash      String?
+  claimTokenExpiresAt DateTime?
+
   // Gamification
   role         String   @default("STUDENT")
   xp           Int      @default(0)
@@ -752,6 +759,9 @@ model RefundRequest {
   @@index([status])
   @@index([paymentId])
   @@index([deletedAt])
+  // C7: Application-level deduplication because Prisma doesn't support
+  // partial unique indexes. The server action enforces atomic
+  // check-and-insert inside a $transaction. See createRefundRequestAction.
 }
 
 // ============================================================================

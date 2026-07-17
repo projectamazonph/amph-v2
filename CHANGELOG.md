@@ -1,3 +1,54 @@
+## [Unreleased]
+
+### 2026-07-17 — AMPH-v2 Full Codebase Audit remediation (all findings)
+
+This commit applies all fixes from the July 17 full-codebase audit.
+
+**Critical fixes:**
+- **C1**: PayMongo Source flow — added `handleSourceChargeable` and `handlePaymentPaid`
+  webhook handlers so source.chargeable/payment.paid events create Payment + Enrollment.
+- **C2**: Webhook error responses — changed from always-200 to 5xx for retryable
+  handler failures; PayMongo will retry on non-2xx responses.
+- **C3**: Auth redirect XSS — added shared `validateRedirectUrl()` that accepts only
+  internal paths. Applied to sign-in (`redirect` param), sign-up (`next` param),
+  and checkout-complete (`returnUrl`).
+- **C4**: Guest account claiming — placeholder users now get a cryptographically
+  random claim token (SHA-256 hashed, 24h expiry). Signup requires the raw token
+  to claim a guest account.
+- **C5**: Production seed — removed fallback admin password/email. Seed now fails
+  immediately when ADMIN_EMAIL or ADMIN_PASSWORD is missing.
+- **C6**: XP farming — lesson completion and quiz actions now only award XP on
+  atomic transition from non-complete to complete. startLessonAction never
+  downgrades COMPLETED progress.
+- **C7**: Refund deduplication — atomic check-and-insert inside $transaction
+  prevents duplicate refund requests. Cumulative refund tracking: partial refunds
+  sum amounts instead of overwriting; only fully refunded payments cancel enrollment.
+
+**High-severity fixes:**
+- **H1**: Checkout completion identifier — checkout session ID is now included in
+  the PayMongo redirect URL so /checkout/complete can reliably locate the session.
+- **H2**: Payment reconciliation — currency validated (PHP only), amount mismatches
+  logged with warnings during webhook processing.
+- **H3**: Admin role staleness — `requireAdmin()` now loads authoritative role from
+  the database instead of trusting the JWT.
+- **H4**: ProcessedWebhook soft-delete — removed from SOFT_DELETE_MODELS since the
+  model has no `deletedAt` column.
+- **H5**: Simulator XP double-award — `submitToolSession` now atomically claims the
+  session with `updateMany` before grading, preventing concurrent double-award.
+- **H6**: Discount usage — increment is now guarded by maxUses check before allowing
+  the use.
+- **H7**: redirect in createSafeAction — `markLessonCompleteAction` returns the
+  redirect URL instead of calling `redirect()` inside the safe action wrapper.
+
+**Medium-severity fixes:**
+- No-JS signup form action now passes `confirmPassword` to the schema.
+- Email normalization: all email fields now `.transform(v => v.toLowerCase().trim())`.
+
+**Infrastructure:**
+- New migration: `20260717000001_claim_token` — adds `claimTokenHash` and
+  `claimTokenExpiresAt` columns to the User model.
+- Claim token generation uses SHA-256 hashing + Node crypto timing-safe comparison.
+
 # Changelog
 
 All notable changes to Project Amazon PH Academy v2 are documented here.

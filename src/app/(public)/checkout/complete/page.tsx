@@ -16,12 +16,13 @@ import { Card, CardHeader, CardTitle, CardDescription, Button, Badge } from '@/c
 import { Icon } from '@/components/ui/Icon';
 import { db } from '@/lib/db';
 import { getSession } from '@/lib/auth';
+import { validateRedirectUrl } from '@/lib/validation';
 import { CheckoutStatus } from '@/lib/enums';
 import { BRAND_NAME } from '@/lib/brand';
 import styles from './complete.module.css';
 
 interface PageProps {
-  searchParams: Promise<{ status?: string; returnUrl?: string; id?: string }>;
+  searchParams: Promise<{ status?: string; returnUrl?: string; id?: string; checkout_id?: string }>;
 }
 
 export const metadata = {
@@ -48,12 +49,12 @@ async function resolveCheckout(
 }
 
 export default async function CheckoutCompletePage({ searchParams }: PageProps) {
-  const { status, returnUrl: rawReturnUrl, id } = await searchParams;
-  // Defense in depth against open redirects: only same-app relative paths
-  // survive ("/foo" yes, "//evil.example" and "https://…" no).
-  const returnUrl =
-    rawReturnUrl?.startsWith('/') && !rawReturnUrl.startsWith('//') ? rawReturnUrl : undefined;
-  const checkout = await resolveCheckout(id, returnUrl);
+  const { status, returnUrl: rawReturnUrl, id, checkout_id } = await searchParams;
+  // H1: Support explicit checkout_id query parameter (added by createCheckoutSessionAction)
+  // in addition to the legacy id and returnUrl params.
+  const checkoutSessionId = checkout_id || id || undefined;
+  const returnUrl = validateRedirectUrl(rawReturnUrl, undefined) || undefined;
+  const checkout = await resolveCheckout(checkoutSessionId, returnUrl);
 
   if (status === 'failed') {
     return <FailedCard returnUrl={returnUrl} />;

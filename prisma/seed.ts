@@ -34,8 +34,16 @@ function hashPassword(password: string): string {
 }
 
 async function upsertAdminUser(): Promise<void> {
-  const email = process.env.ADMIN_EMAIL ?? '[email protected]';
-  const password = process.env.ADMIN_PASSWORD ?? 'ChangeMe123!';
+  // C5: Fail immediately when ADMIN_EMAIL or ADMIN_PASSWORD is missing
+  // outside test environments. Never publish or retain a fallback password.
+  if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) {
+    throw new Error(
+      'ADMIN_EMAIL and ADMIN_PASSWORD environment variables are required. ' +
+      'Set them in .env.local or your deployment environment.',
+    );
+  }
+  const email = process.env.ADMIN_EMAIL;
+  const password = process.env.ADMIN_PASSWORD;
 
   await prisma.user.upsert({
     where: { email },

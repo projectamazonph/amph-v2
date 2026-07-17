@@ -15,7 +15,7 @@
 import 'server-only';
 
 import { SignJWT, jwtVerify, type JWTPayload } from 'jose';
-import { randomBytes, scrypt, timingSafeEqual } from 'node:crypto';
+import { randomBytes, scrypt, createHash, timingSafeEqual } from 'node:crypto';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { db } from './db';
@@ -97,6 +97,39 @@ export async function verifyToken(token: string): Promise<SessionPayload | null>
   } catch {
     return null;
   }
+}
+
+// ---------------------------------------------------------------------------
+// Account-claim tokens (C4 — guest checkout)
+// ---------------------------------------------------------------------------
+
+/**
+ * Generate a cryptographically random claim token and return both the
+ * raw token (to email the user) and its SHA-256 hash (to store).
+ *
+ * The raw token is a 48-character hex string (192 bits of entropy).
+ */
+export function generateClaimToken(): { rawToken: string; tokenHash: string } {
+  const rawToken = randomBytes(24).toString('hex');
+  const tokenHash = createHash('sha256').update(rawToken).digest('hex');
+  return { rawToken, tokenHash };
+}
+
+/**
+ * Verify a raw claim token against a stored hash using timing-safe
+ * comparison.
+ */
+export function verifyClaimToken(
+  rawToken: string,
+  storedHash: string,
+  expiresAt: Date | null,
+): boolean {
+  if (!expiresAt || expiresAt < new Date()) return false;
+  const computedHash = createHash('sha256').update(rawToken).digest('hex');
+  const stored = Buffer.from(storedHash, 'hex');
+  const computed = Buffer.from(computedHash, 'hex');
+  if (stored.length !== computed.length) return false;
+  return timingSafeEqual(stored, computed);
 }
 
 // ---------------------------------------------------------------------------
@@ -198,8 +231,19 @@ export async function requireAuth(): Promise<SessionUser> {
 
 export async function requireAdmin(): Promise<SessionUser> {
   const user = await requireAuth();
-  if (user.role !== 'ADMIN') {
-    log.warn({ component: 'auth', userId: user.id, role: user.role }, 'non-admin → redirect /');
+
+  // H3: Load authoritative role from the database — the JWT may be stale.
+  const dbUser = await db.user.findUnique({
+    where: { id: user.id },
+    select: { role: true },
+  });
+
+  const effectiveRole = dbUser?.role ?? user.role;
+  if (effectiveRole !== 'ADMIN') {
+    log.warn(
+      { component: 'auth', userId: user.id, role: effectiveRole },
+      'non-admin → redirect /',
+    );
     redirect('/');
   }
   log.debug({ component: 'auth', userId: user.id }, 'requireAdmin ok');

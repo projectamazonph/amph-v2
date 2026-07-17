@@ -104,10 +104,25 @@ const submitSessionSchema = z.object({
 
 export const submitToolSession = createSafeAction(submitSessionSchema, async (data) => {
   const user = await requireAuth();
+
+  // H5: Atomically claim the session with updateMany to prevent double-award.
+  // Only IN_PROGRESS sessions are claimed — if another request already
+  // updated the status, this becomes a no-op.
+  const claimResult = await db.toolSession.updateMany({
+    where: { id: data.sessionId, userId: user.id, status: 'IN_PROGRESS' },
+    data: { status: 'SUBMITTED' }, // Temporary status while grading
+  });
+  if (claimResult.count === 0) {
+    // Either not found, not owned, or already submitted
+    const existing = await db.toolSession.findUnique({ where: { id: data.sessionId } });
+    if (!existing) throw new Error('Session not found.');
+    if (existing.userId !== user.id) throw new Error('Forbidden.');
+    throw new Error('Session already submitted.');
+  }
+
+  // Reload the claimed session
   const session = await db.toolSession.findUnique({ where: { id: data.sessionId } });
   if (!session) throw new Error('Session not found.');
-  if (session.userId !== user.id) throw new Error('Forbidden.');
-  if (session.status !== 'IN_PROGRESS') throw new Error('Session already submitted.');
 
   const scenarioId = session.scenarioId;
   if (!scenarioId) throw new Error('No scenario associated with this session.');

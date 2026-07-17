@@ -16,7 +16,8 @@
  *   - PayMongo webhooks signal chargeable/paid/failed
  *   - Success/failure pages at /checkout/success and /checkout/failed
  *
- * Sprint 8 adds the refund action here.
+ * H1: Checkout session ID is included in the PayMongo redirect URL so
+ * /checkout/complete can reliably locate the session.
  */
 
 'use server';
@@ -45,7 +46,7 @@ import { z } from 'zod';
 
 const checkoutSchema = z.object({
   pricingTierId: z.string().min(1),
-  email: z.string().email(),
+  email: z.string().email().transform((v) => v.toLowerCase().trim()),
   name: z.string().max(100).optional(),
   discountCode: z.string().max(50).optional(),
   // Relative in-app paths only — an absolute URL here is an open-redirect
@@ -97,6 +98,10 @@ export async function validateDiscountCodeAction(
  * → return redirect URL for the user.
  *
  * Guest and logged-in users both supported (email-based).
+ *
+ * H1: Creates the CheckoutSession FIRST so we can include the session ID
+ * in the PayMongo Source redirect URL, enabling /checkout/complete to
+ * reliably find the session after the user returns from PayMongo.
  */
 export async function createCheckoutSessionAction(
   formData: unknown,
@@ -150,22 +155,45 @@ export async function createCheckoutSessionAction(
   const finalAmountCentavos = amountCentavos - discountAmountCentavos;
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-  // Create source with PayMongo
+  // Step 1: Create the CheckoutSession FIRST (H1) so we have the ID for the
+  // PayMongo redirect URL. Start with status=PENDING and no source ID.
+  // We'll update it with the source ID after creating the Source.
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
-  const redirectUrl = new URL('/checkout/complete', appUrl);
-  if (returnUrl) redirectUrl.searchParams.set('returnUrl', returnUrl);
+  const baseRedirectUrl = new URL('/checkout/complete', appUrl);
+  if (returnUrl) baseRedirectUrl.searchParams.set('returnUrl', returnUrl);
 
+  // Create checkout session with a placeholder — we'll update with source ID
+  const { checkoutSessionId } = await createCheckoutSessionAtomic({
+    userId: session?.id ?? null,
+    email,
+    pricingTierId,
+    amountCentavos,
+    discountCodeId,
+    discountAmountCentavos,
+    finalAmountCentavos,
+    paymongoSourceId: '__pending__',
+    redirectUrl: baseRedirectUrl.toString(),
+    expiresAt,
+  });
+
+  // Step 2: Build the PayMongo redirect URL with the checkout session ID
+  // so /checkout/complete can reliably look it up (H1).
+  const paymongoRedirectUrl = new URL(baseRedirectUrl.toString());
+  paymongoRedirectUrl.searchParams.set('checkout_id', checkoutSessionId);
+
+  // Step 3: Create the PayMongo Source with the enriched redirect URL
   const sourceInput: CreateSourceInput = {
     amountCentavos: finalAmountCentavos,
     type: 'gcash', // default; PayMongo page lets user choose GCash/Maya/Card/etc
     email,
-    redirectUrl: redirectUrl.toString(),
+    redirectUrl: paymongoRedirectUrl.toString(),
     metadata: {
       pricingTierId,
       tierSlug: tier.slug,
       tierName: tier.name,
       userId: session?.id ?? 'guest',
       userName: formName ?? session?.name ?? '',
+      checkoutSessionId,
     },
   };
 
@@ -179,18 +207,10 @@ export async function createCheckoutSessionAction(
     return { success: false as const, error: 'Unable to initiate payment. Please try again.' };
   }
 
-  // Atomically create CheckoutSession + increment discount usage if any
-  const { checkoutSessionId } = await createCheckoutSessionAtomic({
-    userId: session?.id ?? null,
-    email,
-    pricingTierId,
-    amountCentavos,
-    discountCodeId,
-    discountAmountCentavos,
-    finalAmountCentavos,
-    paymongoSourceId: source.id,
-    redirectUrl: redirectUrl.toString(),
-    expiresAt,
+  // Step 4: Update the CheckoutSession with the real source ID
+  await db.checkoutSession.update({
+    where: { id: checkoutSessionId },
+    data: { paymongoSourceId: source.id },
   });
 
   return {

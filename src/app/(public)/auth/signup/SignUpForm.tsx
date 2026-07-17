@@ -5,15 +5,17 @@ import { useRouter } from 'next/navigation';
 import { Button, Input } from '@/components/ui';
 import { Toast } from '@/components/ui/Toast';
 import { signUpAction } from '@/app/actions/auth';
+import { validateRedirectUrl } from '@/lib/validation';
 import styles from '../signin/auth.module.css';
 
 interface SignUpFormProps {
   error: string | null;
   prefilledEmail?: string;
   nextUrl?: string;
+  claimToken?: string;
 }
 
-export function SignUpForm({ error: initialError, prefilledEmail = '', nextUrl = '/' }: SignUpFormProps) {
+export function SignUpForm({ error: initialError, prefilledEmail = '', nextUrl = '/', claimToken = '' }: SignUpFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(initialError);
@@ -32,11 +34,12 @@ export function SignUpForm({ error: initialError, prefilledEmail = '', nextUrl =
       password,
       confirmPassword,
       name: (formData.get('name') as string) || undefined,
+      claimToken: claimToken || undefined,
     });
     if (result.success) {
       // STORY-027: respect the `next` param so guest checkout returns to
       // /checkout/complete (now signed in → falls through to SuccessCard).
-      router.push(nextUrl || '/');
+      router.push(validateRedirectUrl(nextUrl));
       router.refresh();
       toast('Account created', 'success');
     } else {

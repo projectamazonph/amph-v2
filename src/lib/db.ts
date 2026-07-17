@@ -43,7 +43,7 @@ const SOFT_DELETE_MODELS = new Set([
   'Payment',
   'DiscountCode',
   'RefundRequest',
-  'ProcessedWebhook',
+  // 'ProcessedWebhook',  // H4: removed — model has no deletedAt column
   'Invoice',
   'TeamMember',
 ]);

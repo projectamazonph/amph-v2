@@ -13,6 +13,7 @@ import {
   setAuthCookie,
   clearAuthCookie,
   getSession,
+  verifyClaimToken,
 } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { rateLimit } from '@/lib/rate-limit';
@@ -27,7 +28,12 @@ import {
 // Sign up
 // ---------------------------------------------------------------------------
 
-export const signUpAction = createSafeAction(signUpSchema, async (data) => {
+// Extended schema for guest-account claiming with a claim token
+const signUpWithClaimSchema = signUpSchema.extend({
+  claimToken: z.string().optional(),
+});
+
+export const signUpAction = createSafeAction(signUpWithClaimSchema, async (data) => {
   const rl = rateLimit(`signup:${data.email.toLowerCase()}`, 5, 60_000);
   if (!rl.allowed) {
     throw new Error(`Too many attempts. Try again in ${rl.retryAfterSeconds}s.`);
@@ -42,17 +48,37 @@ export const signUpAction = createSafeAction(signUpSchema, async (data) => {
   //      password. Upgrade in place: replace hash, set name, mark verified.
   //   3. Existing email with a real passwordHash — email is taken.
   if (existing) {
-    const isPlaceholder =
-      existing.passwordHash && existing.passwordHash.startsWith('placeholder_');
-    if (!isPlaceholder) {
+    const isClaimable =
+      existing.passwordHash === 'placeholder_claim' &&
+      existing.claimTokenHash &&
+      existing.claimTokenExpiresAt &&
+      existing.claimTokenExpiresAt > new Date();
+    if (!isClaimable) {
       throw new Error('An account with that email already exists.');
     }
+
+    // Validate the claim token (C4 - must prove access to the email inbox)
+    if (!data.claimToken || !existing.claimTokenHash || !existing.claimTokenExpiresAt) {
+      throw new Error(
+        'This email is registered to a guest checkout account. ' +
+        'Check your email for the claim link with your account token.',
+      );
+    }
+    if (!verifyClaimToken(data.claimToken, existing.claimTokenHash, existing.claimTokenExpiresAt)) {
+      throw new Error(
+        'Invalid or expired claim token. Request a new claim link.',
+      );
+    }
+
+    // Invalidate all claim tokens after successful use
     const upgraded = await db.user.update({
       where: { id: existing.id },
       data: {
         name: data.name ?? existing.name,
         passwordHash: await hashPassword(data.password),
         emailVerified: new Date(),
+        claimTokenHash: null,
+        claimTokenExpiresAt: null,
       },
     });
     const token = await signToken({
@@ -153,10 +179,13 @@ export async function signOutAction(): Promise<ActionResult<{ ok: true }>> {
 // ---------------------------------------------------------------------------
 
 export async function signUpFormAction(formData: FormData): Promise<void> {
+  const password = formData.get('password') as string;
   const result = await signUpAction({
     email: formData.get('email'),
-    password: formData.get('password'),
+    password,
+    confirmPassword: password, // Same as password for no-JS path (progressive enhancement)
     name: formData.get('name') || undefined,
+    claimToken: (formData.get('claimToken') as string) || undefined,
   });
 
   if (result.success) {

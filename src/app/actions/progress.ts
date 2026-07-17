@@ -48,6 +48,19 @@ export async function startLessonAction(
     };
   }
 
+  // C6: Never downgrade COMPLETED progress — only set IN_PROGRESS if
+  // the lesson hasn't been completed yet.
+  const existingProgress = await db.lessonProgress.findUnique({
+    where: {
+      userId_lessonId: { userId: user.id, lessonId: lesson.id },
+    },
+    select: { status: true },
+  });
+
+  if (existingProgress?.status === ProgressStatus.COMPLETED) {
+    return { success: true, data: { status: ProgressStatus.COMPLETED } };
+  }
+
   // Upsert LessonProgress as IN_PROGRESS
   await db.lessonProgress.upsert({
     where: {
@@ -68,6 +81,10 @@ export async function startLessonAction(
 // markLessonCompleteAction
 // ---------------------------------------------------------------------------
 
+// H7: markLessonCompleteAction uses a form-action wrapper that calls
+// redirect() AFTER the safe action returns, avoiding the swallowed
+// redirect() problem inside createSafeAction's catch block.
+
 export const markLessonCompleteAction = createSafeAction(slugsSchema, async (data) => {
   const user = await requireAuth();
 
@@ -86,8 +103,30 @@ export const markLessonCompleteAction = createSafeAction(slugsSchema, async (dat
     throw new Error('Your current tier does not include this lesson. Upgrade to continue.');
   }
 
-  // Mark lesson complete + award XP
+  // C6: Award XP only on the atomic transition from non-complete to complete.
+  // Check current progress first.
+  const currentProgress = await db.lessonProgress.findUnique({
+    where: {
+      userId_lessonId: { userId: user.id, lessonId: lesson.id },
+    },
+    select: { status: true },
+  });
+
+  const alreadyCompleted = currentProgress?.status === ProgressStatus.COMPLETED;
+
   await db.$transaction(async (tx) => {
+    if (alreadyCompleted) {
+      await tx.lessonProgress.update({
+        where: {
+          userId_lessonId: { userId: user.id, lessonId: lesson.id },
+        },
+        data: {
+          completedAt: new Date(),
+        },
+      });
+      return;
+    }
+
     await tx.lessonProgress.upsert({
       where: {
         userId_lessonId: { userId: user.id, lessonId: lesson.id },
@@ -119,12 +158,13 @@ export const markLessonCompleteAction = createSafeAction(slugsSchema, async (dat
   revalidatePath(`/dashboard/courses/${data.courseSlug}/lessons/${data.lessonSlug}`);
   revalidatePath('/dashboard');
 
-  // Evaluate badges after the redirect-relevant side effects are durable.
-  // Idempotent — users who already have "First Steps" / "Thousandaire" won't
-  // get duplicates.
+  // Evaluate badges after the side effects are durable.
   await evaluateBadges(user.id, { trigger: 'lesson_complete' });
 
-  redirect(`/dashboard/courses/${data.courseSlug}/lessons/${data.lessonSlug}`);
+  // H7: Return the redirect URL instead of calling redirect() inside
+  // createSafeAction. The caller (markLessonCompleteFormAction) handles
+  // the navigation so the redirect() throw isn't caught by createSafeAction.
+  return { redirectTo: `/dashboard/courses/${data.courseSlug}/lessons/${data.lessonSlug}` };
 });
 
 // ---------------------------------------------------------------------------
@@ -188,8 +228,21 @@ export const submitQuizAction = createSafeAction(submitQuizSchema, async (data) 
     },
   });
 
-  // If passed, mark lesson complete and award XP
-  if (passed) {
+  // C6: Award XP only on the atomic transition from non-complete to complete.
+  // Check if the lesson is already completed before awarding XP.
+  const lessonProgress = passed
+    ? await db.lessonProgress.findUnique({
+        where: {
+          userId_lessonId: { userId: user.id, lessonId: lesson.id },
+        },
+        select: { status: true },
+      })
+    : null;
+
+  const alreadyCompleted = lessonProgress?.status === ProgressStatus.COMPLETED;
+
+  // If passed and not already completed, mark lesson complete and award XP
+  if (passed && !alreadyCompleted) {
     await db.$transaction(async (tx) => {
       await tx.lessonProgress.upsert({
         where: {

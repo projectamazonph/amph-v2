@@ -19,9 +19,10 @@
  *   2. Verify signature with HMAC-SHA256(`t=${ts}.${body}`, webhook_secret).
  *   3. Branch on event type, defer to handler in src/lib/enrollment.ts.
  *   4. Each handler does its own idempotency check via ProcessedWebhook.
- *   5. Always ACK 200 — even on handler error, after logging. PayMongo
- *      retries on non-2xx, and we don't want a partially-handled event
- *      to multiply.
+ *   5. Return 500 on handler errors so PayMongo retries (C2). The
+ *      ProcessedWebhook idempotency row is created within the handler's
+ *      transaction, so a failed handler rolls back and retries safely.
+ *   6. Return 200 only for successfully processed or already-processed events.
  *
  * Public surface (no auth): PayMongo needs to reach this URL without our
  * cookies. The signature header is the gate.
@@ -37,9 +38,13 @@ import {
   handleCheckoutPaid,
   handleCheckoutFailed,
   handlePaymentRefunded,
+  handleSourceChargeable,
+  handlePaymentPaid,
   type CheckoutPaidEvent,
   type CheckoutFailedEvent,
   type PaymentRefundedEvent,
+  type SourceChargeableEvent,
+  type PaymentPaidEvent,
 } from '@/lib/enrollment';
 import { log } from '@/lib/logger';
 
@@ -50,7 +55,9 @@ type PayMongoEvent =
   | { type: 'checkout_session.payment.paid'; data: CheckoutPaidEvent }
   | { type: 'checkout_session.payment.failed'; data: CheckoutFailedEvent }
   | { type: 'payment.refunded'; data: PaymentRefundedEvent }
-  | { type: 'source.chargeable' | 'payment.paid' | 'payment.failed' | string; data: { id?: string; attributes?: { type?: string } } };
+  | { type: 'source.chargeable'; data: SourceChargeableEvent }
+  | { type: 'payment.paid'; data: PaymentPaidEvent }
+  | { type: 'payment.failed' | string; data: { id?: string; attributes?: { type?: string } } };
 
 function pickEvent(body: string): PayMongoEvent | null {
   try {
@@ -110,18 +117,23 @@ export async function POST(request: NextRequest): Promise<Response> {
       case 'payment.refunded':
         await handlePaymentRefunded(event.data as unknown as PaymentRefundedEvent);
         break;
-      // source.chargeable + payment.paid + payment.failed are reserved for
-      // the Source-based flow (legacy). Handled in STORY-027/Sprint 8 if we
-      // ship that path; for now we acknowledge and skip.
+      case 'source.chargeable':
+        await handleSourceChargeable(event.data as unknown as SourceChargeableEvent);
+        break;
+      case 'payment.paid':
+        await handlePaymentPaid(event.data as unknown as PaymentPaidEvent);
+        break;
       default:
         log.info({ component: 'paymongo-webhook', eventType: event.type }, 'unhandled event type');
     }
   } catch (err) {
-    // Log but ack 200 — idempotent retry by PayMongo would otherwise
-    // 10x our handler error rate. Real alert comes from the ProcessedWebhook
-    // log + the absence of side-effects.
+    // Log the error and return 500 so PayMongo retries (C2) — the
+    // ProcessedWebhook idempotency key (created inside the transaction)
+    // ensures retries won't duplicate side effects. If the event hadn't
+    // been processed yet, the transaction rolled back, so retry is safe.
     log.error({ component: 'paymongo-webhook', err, eventType: event.type }, 'handler error');
     Sentry.captureException(err, { tags: { source: 'paymongo-webhook', eventType: event.type } });
+    return new Response('Internal error — retry', { status: 500 });
   }
 
   return new Response('OK', { status: 200 });
