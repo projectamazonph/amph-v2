@@ -1,5 +1,7 @@
 /**
- * Edge middleware — verifies JWT and protects /admin/* and /dashboard/*.
+ * Edge middleware — verifies JWT and protects /admin/* and the authenticated
+ * student area (the (dashboard) route group: /dashboard, /courses, /tools,
+ * /payments, /certificates, /live-classes).
  *
  * Pattern (per consensus plan B6):
  *   - Middleware runs on Edge runtime — no Prisma, no Node crypto, just `jose`
@@ -7,10 +9,14 @@
  *     avoids trusting headers blindly)
  *   - This middleware only does coarse-grained gating (auth + role) — server
  *     actions and Server Components do the authoritative checks
+ *   - Route classification lives in src/lib/route-guards.ts as plain
+ *     functions (no NextRequest/NextResponse) so it's unit-tested directly,
+ *     instead of only through curl/browser checks against the Edge runtime.
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
+import { isAdminRoute, isProtectedRoute, legacyDashboardRedirectTarget } from '@/lib/route-guards';
 
 const AUTH_COOKIE = 'amph_auth';
 
@@ -49,25 +55,17 @@ async function verifyEdgeToken(token: string): Promise<TokenPayload | null> {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Legacy /dashboard/<feature> bookmarks (real URLs for those features live
-  // at /courses, /payments, /tools, /live-classes, /certificates: the
-  // (dashboard) route group does not contribute to the URL). Strip the
-  // prefix and continue. Bare /dashboard is its own real page (the student
-  // home) and falls through to the auth check below instead of redirecting.
-  if (pathname.startsWith('/dashboard/')) {
-    const remainder = pathname.slice('/dashboard'.length);
-    // Clone nextUrl (not `new URL(remainder, request.url)`) so a path like
-    // /dashboard//evil.com can't be parsed as a protocol-relative URL and
-    // redirect off-origin, and so the query string survives the redirect.
+  const legacyTarget = legacyDashboardRedirectTarget(pathname);
+  if (legacyTarget !== null) {
+    // Clone nextUrl (not `new URL(target, request.url)`) so a redirect
+    // target can never be parsed as protocol-relative and escape the
+    // origin, and so the query string survives the redirect.
     const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = remainder;
+    redirectUrl.pathname = legacyTarget;
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Only protect admin and dashboard routes
-  const isAdminRoute = pathname.startsWith('/admin');
-  const isDashboardRoute = pathname.startsWith('/dashboard');
-  if (!isAdminRoute && !isDashboardRoute) {
+  if (!isProtectedRoute(pathname)) {
     return NextResponse.next();
   }
 
@@ -90,7 +88,7 @@ export async function middleware(request: NextRequest) {
   // Admin routes require ADMIN role. Do NOT clear the cookie here — a
   // student following a stray /admin link should be turned away, not
   // logged out of their whole session.
-  if (isAdminRoute && payload.role !== 'ADMIN') {
+  if (isAdminRoute(pathname) && payload.role !== 'ADMIN') {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
@@ -98,5 +96,13 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/dashboard/:path*'],
+  matcher: [
+    '/admin/:path*',
+    '/dashboard/:path*',
+    '/courses/:path*',
+    '/tools/:path*',
+    '/payments/:path*',
+    '/certificates/:path*',
+    '/live-classes/:path*',
+  ],
 };
