@@ -524,7 +524,7 @@ Fixed via a new `(dashboard)/layout.tsx` (sidebar + top bar, generalizing the ex
 ### Explicitly NOT done
 
 - **Manual deletion of 9 stale/superseded remote branches.** Listed exactly below — this session has no tool access to delete a remote branch (git push delete returns 403 through the session proxy; no `mcp__github__*` branch-delete tool exists). Delete via GitHub's UI (repo → branches → delete icon on each):
-  ```
+  ```text
   feat/branding-rename
   claude/content-updates-planning-0ed4ti
   claude/whats-next-4hf0yp

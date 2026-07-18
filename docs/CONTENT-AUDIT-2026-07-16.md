@@ -169,13 +169,13 @@ See `CURRICULUM-REDESIGN.md` for the module map, assessments, and production ord
 
 ## Release plan
 
-### Release 1. Trust and safety — done
+### Release 1. Trust and safety — substantially complete, two follow-ups remain
 
 - Move curriculum source into v2. ✅
 - Remove legacy names and nonexistent feature references. ✅
 - Correct the portfolio, attribution, auction, budget, quality-signal, and dayparting lessons. ✅
-- Align three pricing tiers with access rules and actual content. ✅ (two of three tiers have a real course; Ultimate has no content yet, tracked as a known gap)
-- Add factual-review metadata to time-sensitive lessons. ✅ (fact cards added; `Last verified`/`Next review due`/`Owner` fields still need the content owner to fill in)
+- Align the available course/tier access rules with actual content. ✅ for Foundations and Accelerated Mastery; **Ultimate remains blocked** until Release 3 content exists (no `Course` row, nobody can enroll).
+- Add factual-review cards. ✅ cards added; **not done** until `Last verified`/`Next review due`/`Owner` are populated by the content owner.
 
 ### Release 2. Foundations that lead to action
 
