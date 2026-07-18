@@ -24,6 +24,7 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/db';
 import { requireAuth, requireAdmin } from '@/lib/auth';
+import { auditLog } from '@/lib/admin-audit';
 import { createSafeAction, type ActionResult } from '@/lib/validation';
 import { PaymentStatus, RefundStatus } from '@/lib/enums';
 import { refundPayment, PayMongoError } from '@/lib/paymongo';
@@ -231,6 +232,14 @@ export async function approveRefundAction(
       },
     });
 
+    // Security compliance: Every admin action logs to AuditLog. No exceptions (Rule 5).
+    await auditLog({
+      action: 'APPROVE_REFUND',
+      entityType: 'RefundRequest',
+      entityId: request.id,
+      metadata: { amountPhp: request.amountPhp, paymongoRefundId: refund.id },
+    });
+
     // Also update Payment.status optimistically. If webhook beats us,
     // it will see status=REFUNDED and skip its own update.
     const newPaymentStatus =
@@ -323,6 +332,14 @@ export async function rejectRefundAction(
   if (result.count === 0) {
     return { success: false, error: 'Request is no longer pending.' };
   }
+
+  // Security compliance: Every admin action logs to AuditLog. No exceptions (Rule 5).
+  await auditLog({
+    action: 'REJECT_REFUND',
+    entityType: 'RefundRequest',
+    entityId: requestId,
+    metadata: { reason: reviewerNotes.trim() },
+  });
 
   const refundRequest = await db.refundRequest.findUnique({
     where: { id: requestId },
