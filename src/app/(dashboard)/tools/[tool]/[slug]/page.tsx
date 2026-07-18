@@ -51,7 +51,7 @@ export default async function ToolRunnerPage({ params }: PageProps) {
       <main className="container" style={{ padding: 'var(--space-8) 0' }}>
         <h1>Could not start session</h1>
         <p style={{ color: 'var(--danger)' }}>{result.error}</p>
-        <Link href={`/dashboard/tools/${toolSlug}` as never}>← Back to scenarios</Link>
+        <Link href={`/tools/${toolSlug}` as never}>← Back to scenarios</Link>
       </main>
     );
   }
@@ -60,7 +60,7 @@ export default async function ToolRunnerPage({ params }: PageProps) {
   return (
     <main id="main-content" className="container" style={{ padding: 'var(--space-6) 0' }}>
       <Link
-        href={`/dashboard/tools/${toolSlug}` as never}
+        href={`/tools/${toolSlug}` as never}
         style={{ color: 'var(--ink-500)', fontSize: 'var(--text-sm)' }}
       >
         ← {toolMeta.name} scenarios
