@@ -26,7 +26,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
   return (
     <main id="main-content" className="container" style={{ padding: 'var(--space-8) 0' }}>
       <header style={{ marginBottom: 'var(--space-8)' }}>
-        <Link href="/dashboard/tools" style={{ color: 'var(--ink-500)', fontSize: 'var(--text-sm)' }}>
+        <Link href="/tools" style={{ color: 'var(--ink-500)', fontSize: 'var(--text-sm)' }}>
           ← All tools
         </Link>
         <h1 style={{ margin: 'var(--space-2) 0', fontSize: 'var(--text-3xl)' }}>{toolMeta.name}</h1>
@@ -35,11 +35,11 @@ export default async function ToolDetailPage({ params }: PageProps) {
 
       <section>
         <h2 style={{ marginBottom: 'var(--space-4)', fontSize: 'var(--text-xl)' }}>Scenarios</h2>
-        <div className={styles.toolGrid}>
+        <div className={styles.scenarioGrid}>
           {toolMeta.scenarios.map((scenario) => (
             <Card key={scenario.id} variant="interactive" padding="md">
               <Link
-                href={`/dashboard/tools/${toolMeta.slug}/${scenario.slug}` as never}
+                href={`/tools/${toolMeta.slug}/${scenario.slug}` as never}
                 className={styles.toolLink}
               >
                 <CardHeader>

@@ -9,7 +9,6 @@ import Link from 'next/link';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { Card, CardHeader, CardTitle, CardDescription, Badge } from '@/components/ui';
-import { BottomNav } from '@/components/ui/BottomNav';
 import { ProgressStatus } from '@/lib/enums';
 import styles from './courses.module.css';
 
@@ -91,8 +90,6 @@ export default async function CoursesIndexPage() {
           );
         })}
       </section>
-
-      <BottomNav active="courses" />
     </main>
   );
 }

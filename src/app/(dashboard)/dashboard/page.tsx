@@ -1,10 +1,8 @@
-import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { Card, CardHeader, CardTitle, CardDescription, Badge, Button } from '@/components/ui';
 import { Icon } from '@/components/ui/Icon';
-import { BottomNav } from '@/components/ui/BottomNav';
 import { ProgressStatus } from '@/lib/enums';
 import styles from './dashboard.module.css';
 
@@ -104,7 +102,7 @@ export default async function DashboardPage() {
 
             return (
               <Card key={course.id} variant="interactive" padding="md">
-                <Link href={`/dashboard/courses/${course.slug}` as never} className={styles.courseLink}>
+                <Link href={`/courses/${course.slug}` as never} className={styles.courseLink}>
                   <CardHeader>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <CardTitle>{course.title}</CardTitle>
@@ -134,12 +132,10 @@ export default async function DashboardPage() {
         <p style={{ color: 'var(--ink-500)', marginBottom: 'var(--space-4)' }}>
           Practice real Amazon Advertising Console workflows with synthetic data.
         </p>
-        <Link href="/dashboard/tools" className={styles.ctaPrimary}>
+        <Link href="/tools" className={styles.ctaPrimary}>
           Open the tools
         </Link>
       </section>
-
-      <BottomNav active="home" />
     </main>
   );
 }

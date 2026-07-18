@@ -25,12 +25,14 @@
   color: var(--ink-900);
   margin: 0;
   letter-spacing: -0.01em;
+  text-align: center;
 }
 
 .subtitle {
   font-size: var(--text-sm);
   color: var(--ink-500);
   margin: 0;
+  text-align: center;
 }
 
 .form {

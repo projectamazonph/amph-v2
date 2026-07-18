@@ -49,13 +49,18 @@ async function verifyEdgeToken(token: string): Promise<TokenPayload | null> {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Legacy /dashboard/* → /* redirect (real URLs live at /courses, /payments,
-  // /tools, /live-classes, /certificates — the (dashboard) route group does
-  // not contribute to the URL). Strip /dashboard and continue. Query strings
-  // and hash are preserved.
-  if (pathname === '/dashboard' || pathname.startsWith('/dashboard/')) {
-    const remainder = pathname.slice('/dashboard'.length); // "" or "/courses/..."
-    const redirectUrl = new URL(remainder || '/', request.url);
+  // Legacy /dashboard/<feature> bookmarks (real URLs for those features live
+  // at /courses, /payments, /tools, /live-classes, /certificates: the
+  // (dashboard) route group does not contribute to the URL). Strip the
+  // prefix and continue. Bare /dashboard is its own real page (the student
+  // home) and falls through to the auth check below instead of redirecting.
+  if (pathname.startsWith('/dashboard/')) {
+    const remainder = pathname.slice('/dashboard'.length);
+    // Clone nextUrl (not `new URL(remainder, request.url)`) so a path like
+    // /dashboard//evil.com can't be parsed as a protocol-relative URL and
+    // redirect off-origin, and so the query string survives the redirect.
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = remainder;
     return NextResponse.redirect(redirectUrl);
   }
 

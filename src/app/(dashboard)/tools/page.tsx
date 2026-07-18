@@ -1,9 +1,7 @@
-import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { requireAuth } from '@/lib/auth';
 import { Card, CardHeader, CardTitle, CardDescription, Badge } from '@/components/ui';
 import { Icon, type PhosphorIconName } from '@/components/ui/Icon';
-import { BottomNav } from '@/components/ui/BottomNav';
 import { SCENARIOS as CB_SCENARIOS, BTV_SCENARIOS } from '@/engine/campaign-builder/scenarios';
 import { SCENARIOS as BE_SCENARIOS } from '@/engine/bid-elevator/scenarios';
 import { SCENARIOS as STR_SCENARIOS } from '@/engine/str-triage/scenarios';
@@ -63,21 +61,37 @@ export const metadata = {
 
 export default async function ToolsIndexPage() {
   const user = await requireAuth();
+  const heroTool = TOOLS[0];
+  if (!heroTool) throw new Error('TOOLS must have at least one entry');
+  const restTools = TOOLS.slice(1);
 
   return (
     <main id="main-content" className="container" style={{ padding: 'var(--space-8) 0' }}>
       <header style={{ marginBottom: 'var(--space-8)' }}>
         <h1 style={{ marginBottom: 'var(--space-2)' }}>Practice tools</h1>
         <p style={{ color: 'var(--ink-500)', maxWidth: '640px' }}>
-          Each tool mirrors a real Amazon Advertising Console workflow. Pick a tool, then pick a scenario.
-          Your work saves automatically — come back anytime.
+          Each tool mirrors a real Amazon Advertising Console workflow. Pick a tool, then pick
+          a scenario. Your work saves automatically, so you can come back anytime.
         </p>
       </header>
 
+      <Card key={heroTool.id} variant="interactive" padding="lg" className={styles.heroCard}>
+        <Link href={`/tools/${heroTool.id}` as never} className={styles.toolLink}>
+          <CardHeader>
+            <div className={styles.toolHeader}>
+              <Icon name={heroTool.icon} size="xl" />
+              <Badge variant="default">{heroTool.scenarioCount} scenarios</Badge>
+            </div>
+            <CardTitle className={styles.heroTitle}>{heroTool.name}</CardTitle>
+            <CardDescription>{heroTool.description}</CardDescription>
+          </CardHeader>
+        </Link>
+      </Card>
+
       <section className={styles.toolGrid}>
-        {TOOLS.map((tool) => (
+        {restTools.map((tool) => (
           <Card key={tool.id} variant="interactive" padding="lg">
-            <Link href={`/dashboard/tools/${tool.id}` as never} className={styles.toolLink}>
+            <Link href={`/tools/${tool.id}` as never} className={styles.toolLink}>
               <CardHeader>
                 <div className={styles.toolHeader}>
                   <Icon name={tool.icon} size="lg" />
@@ -90,8 +104,6 @@ export default async function ToolsIndexPage() {
           </Card>
         ))}
       </section>
-
-      <BottomNav active="tools" />
     </main>
   );
 }

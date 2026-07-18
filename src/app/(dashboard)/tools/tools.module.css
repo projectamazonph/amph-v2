@@ -1,3 +1,15 @@
+.heroCard {
+  margin-bottom: var(--space-6);
+}
+
+.heroTitle {
+  font-size: var(--text-2xl);
+}
+
+/* Remaining-tools grid on the index page, under the hero card: fixed at 2
+   columns since there are only 4 items. Scenario counts per tool vary up to
+   10 (see the detail page's own .scenarioGrid), so that one keeps 3 columns
+   at the wider breakpoint instead of sharing this class. */
 .toolGrid {
   display: grid;
   grid-template-columns: 1fr;
@@ -10,8 +22,20 @@
   }
 }
 
+.scenarioGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+@media (min-width: 768px) {
+  .scenarioGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (min-width: 1024px) {
-  .toolGrid {
+  .scenarioGrid {
     grid-template-columns: repeat(3, 1fr);
   }
 }

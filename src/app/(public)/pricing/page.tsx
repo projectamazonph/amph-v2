@@ -30,7 +30,7 @@ export default async function PricingPage() {
         <p className={styles.eyebrow}>PRICING</p>
         <h1 className={styles.title}>Pick the tier that matches where you are.</h1>
         <p className={styles.subtitle}>
-          Every tier teaches the same core skill — the difference is how much support and
+          Every tier teaches the same core skill. The difference is how much support and
           speed you want. Pick based on how you learn best, not how fast you think you need
           to move.
         </p>
@@ -108,7 +108,7 @@ export default async function PricingPage() {
           <summary>What if I don&apos;t have any Amazon ads experience yet?</summary>
           <p>
             Start with PPC Foundations. The first three modules build the mental model
-            from scratch — you don&apos;t need prior campaign work to follow along.
+            from scratch, so you don&apos;t need prior campaign work to follow along.
           </p>
         </details>
       </section>
