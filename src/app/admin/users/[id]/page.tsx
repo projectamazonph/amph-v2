@@ -131,6 +131,10 @@ export default async function UserDetailPage({
         <section className={styles.card}>
           <h2 className={styles.cardTitle}>
             Enrollments ({user.enrollments.length})
+            {' — '}
+            <Link href={`/admin/enroll?email=${encodeURIComponent(user.email)}`}>
+              enroll in a tier
+            </Link>
           </h2>
           {user.enrollments.length === 0 ? (
             <p className={styles.empty}>No enrollments yet.</p>

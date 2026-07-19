@@ -151,6 +151,37 @@
   margin-top: auto;
 }
 
+.enrollBtn,
+.enrollBtnFeatured {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: var(--text-base);
+  transition: transform var(--duration-fast) var(--ease-out),
+    background var(--duration-fast) var(--ease-out);
+}
+
+.enrollBtnFeatured {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.enrollBtnFeatured:hover {
+  background: var(--accent-hover);
+}
+
+.enrollBtn {
+  background: transparent;
+  color: var(--ink-900);
+  border: 1px solid var(--ink-900);
+}
+.enrollBtn:hover {
+  background: var(--accent-soft);
+}
+
 .fineprint {
   font-size: var(--text-xs);
   color: var(--ink-500);

@@ -11,8 +11,8 @@
 import { Card, CardHeader, CardTitle, CardDescription, Badge } from '@/components/ui';
 import { getTierDisplay, type TierDisplay } from '@/lib/pricing';
 import { getSession } from '@/lib/auth';
-import { CheckoutButton } from './CheckoutButton';
 import { BRAND_NAME } from '@/lib/brand';
+import Link from 'next/link';
 import styles from './pricing.module.css';
 
 export const metadata = {
@@ -75,15 +75,22 @@ export default async function PricingPage() {
             </ul>
 
             <div className={styles.cta}>
-              <CheckoutButton
-                pricingTierId={tier.id}
-                tierName={tier.name}
-                defaultEmail={session?.email ?? ''}
-                isFeatured={tier.slug === 'accelerated-mastery'}
-              />
+              <Link
+                href={session ? '/dashboard' : '/auth/signup?next=/dashboard'}
+                className={
+                  tier.slug === 'accelerated-mastery'
+                    ? styles.enrollBtnFeatured
+                    : styles.enrollBtn
+                }
+              >
+                {session ? 'Go to your dashboard' : `Start with ${tier.name}`}
+              </Link>
             </div>
 
-            <p className={styles.fineprint}>Pay via GCash, Maya, credit card, or bank transfer.</p>
+            <p className={styles.fineprint}>
+              Pay via GCash or bank transfer — message us on Facebook or email
+              after signing up and we&apos;ll activate your access within 24 hours.
+            </p>
           </Card>
         ))}
       </div>
@@ -91,10 +98,18 @@ export default async function PricingPage() {
       <section className={styles.faqBlock}>
         <h2>Questions</h2>
         <details>
+          <summary>How do I enroll and pay?</summary>
+          <p>
+            Create a free account, then pay via GCash or bank transfer and
+            message us on Facebook or email with your account email. We
+            activate your access manually — usually within 24 hours.
+          </p>
+        </details>
+        <details>
           <summary>Do you offer refunds?</summary>
           <p>
-            Yes. Request within 14 days of purchase; we&apos;ll review and process within five
-            business days. After 14 days, refunds are case-by-case.
+            Yes. Message us within 14 days of purchase; we&apos;ll review and process within
+            five business days. After 14 days, refunds are case-by-case.
           </p>
         </details>
         <details>

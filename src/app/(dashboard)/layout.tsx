@@ -9,7 +9,6 @@ const STUDENT_NAV_ITEMS: NavItem[] = [
   { href: '/tools', label: 'Tools', icon: 'Gear' },
   { href: '/live-classes', label: 'Live classes', icon: 'Video' },
   { href: '/certificates', label: 'Certificates', icon: 'GraduationCap' },
-  { href: '/payments', label: 'Payments', icon: 'CreditCard' },
 ];
 
 export default async function DashboardLayout({
