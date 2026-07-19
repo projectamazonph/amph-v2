@@ -22,6 +22,20 @@ if (!process.env.DATABASE_URL) {
 }
 const prisma = new PrismaClient({ adapter: new PrismaPg(process.env.DATABASE_URL) });
 
+// Raw email addresses are PII; a plain run may land in CI/cron/aggregated logs
+// (CWE-532). Mask by default and require an explicit opt-in to print full
+// addresses for the actual reconciliation. The opaque user id is always shown
+// (it's the key an operator acts on) and is not itself PII.
+const SHOW_RAW_EMAILS = process.env.SHOW_EMAILS === '1' || process.env.SHOW_EMAILS === 'true';
+
+/** Mask the local part, keep the domain: 'Maria@Example.com' -> 'M***@example.com'. */
+function maskEmail(email: string): string {
+  const at = email.lastIndexOf('@');
+  if (at <= 0) return '***';
+  const first = email[0] ?? '';
+  return `${first}***${email.slice(at)}`;
+}
+
 async function main() {
   // Group by canonical (lowercased) email and report every member of any group
   // with more than one row. This catches collisions where BOTH rows are
@@ -49,7 +63,12 @@ async function main() {
 
   console.log(`Found ${rows.length} account(s) in ${new Set(rows.map((r) => r.canonical)).size} colliding group(s), needing manual reconciliation:\n`);
   for (const r of rows) {
-    console.log(`  ${r.id}  ${r.email}  ->  canonical "${r.canonical}"`);
+    const email = SHOW_RAW_EMAILS ? r.email : maskEmail(r.email);
+    const canonical = SHOW_RAW_EMAILS ? r.canonical : maskEmail(r.canonical);
+    console.log(`  ${r.id}  ${email}  ->  canonical "${canonical}"`);
+  }
+  if (!SHOW_RAW_EMAILS) {
+    console.log('\n(Emails masked. Re-run with SHOW_EMAILS=1 to print full addresses for reconciliation.)');
   }
   console.log(
     '\nResolve each group by merging or renaming the duplicate accounts, then re-run the H6 UPDATE.',
