@@ -10,7 +10,7 @@ const SLOTS: Array<{ key: BottomNavSlot; label: string; href: string; icon: stri
   { key: 'home',    label: 'Home',    href: '/dashboard',          icon: 'House' },
   { key: 'courses', label: 'Courses', href: '/dashboard/courses',  icon: 'BookOpen' },
   { key: 'tools',   label: 'Tools',   href: '/dashboard/tools',    icon: 'Gear' },
-  { key: 'profile', label: 'Profile', href: '/dashboard/payments', icon: 'User' },
+  { key: 'profile', label: 'Profile', href: '/dashboard/certificates', icon: 'User' },
 ];
 
 export function BottomNav({ active, hrefOverrides = {} }: BottomNavProps) {

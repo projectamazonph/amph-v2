@@ -8,7 +8,7 @@
  * security hole.
  *
  * Email reminders: stubbed for Sprint 8 (when Resend templates land). The
- * action returns silently if RESEND_API_KEY is absent, so we don't break the
+ * action's email call is a no-op stub in this build, so we don't break the
  * flow in development or pre-launch.
  */
 

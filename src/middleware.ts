@@ -101,7 +101,6 @@ export const config = {
     '/dashboard/:path*',
     '/courses/:path*',
     '/tools/:path*',
-    '/payments/:path*',
     '/certificates/:path*',
     '/live-classes/:path*',
   ],
