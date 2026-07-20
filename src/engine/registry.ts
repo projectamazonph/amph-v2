@@ -4,7 +4,8 @@
  * Maps URL slugs to (Prisma ToolType, scenario loader, display metadata).
  */
 
-import { SCENARIOS as CB_SCENARIOS, BTV_SCENARIOS } from './campaign-builder/scenarios';
+import { SCENARIOS as CB_SCENARIOS } from './campaign-builder/scenarios';
+import { BTV_SCENARIOS } from './campaign-builder/btv-scenarios';
 import { SCENARIOS as BE_SCENARIOS } from './bid-elevator/scenarios';
 import { SCENARIOS as STR_SCENARIOS } from './str-triage/scenarios';
 import { SCENARIOS as LA_SCENARIOS } from './listing-audit/scenarios';

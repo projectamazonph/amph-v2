@@ -34,11 +34,16 @@ export function gradeListingAudit(
 ): ListingAuditGrade {
   const ref = scenario.referenceFindings;
 
+  // Bolt optimization: Map reference findings by field to replace O(N*M) nested lookups with O(1) lookups
+  const refMap = new Map<string, ListingAuditFinding>(
+    ref.map((rf) => [rf.field, rf])
+  );
+
   const criteria: CriterionResult[] = [
     // Findings identification
     findingsIdentified(studentFindings, ref),
-    findingsAccuracy(studentFindings, ref),
-    severityCalibration(studentFindings, ref),
+    findingsAccuracy(studentFindings, refMap),
+    severityCalibration(studentFindings, refMap),
 
     // Listing revision (optional but weighted higher)
     titleQuality(scenario.referenceListing.title, studentRevision?.title),
@@ -78,17 +83,18 @@ function findingsIdentified(
 
 function findingsAccuracy(
   student: ListingAuditFinding[],
-  ref: ListingAuditFinding[]
+  refMap: Map<string, ListingAuditFinding>
 ): CriterionResult {
   if (student.length === 0) {
     return binaryCriterion('findings_accuracy', false, PASS, 'No findings submitted.');
   }
   let truePositives = 0;
   for (const sf of student) {
-    const match = ref.find((rf) => rf.field === sf.field);
+    const match = refMap.get(sf.field);
     if (!match) continue;
-    // Severity at least matches
-    if (severityAtLeast(sf.severity, match.severity)) truePositives++;
+    // Exact severity match only — over-calling severity (e.g. warning as
+    // critical) is a real skill deficiency in Amazon PPC work, not accuracy.
+    if (sf.severity === match.severity) truePositives++;
   }
   const precision = truePositives / student.length;
   return gradedCriterion(
@@ -102,12 +108,12 @@ function findingsAccuracy(
 
 function severityCalibration(
   student: ListingAuditFinding[],
-  ref: ListingAuditFinding[]
+  refMap: Map<string, ListingAuditFinding>
 ): CriterionResult {
   let correct = 0;
   let total = 0;
   for (const sf of student) {
-    const match = ref.find((rf) => rf.field === sf.field);
+    const match = refMap.get(sf.field);
     if (!match) continue;
     total++;
     if (sf.severity === match.severity) correct++;
@@ -216,11 +222,6 @@ function aplusContentQuality(
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function severityAtLeast(have: string, need: string): boolean {
-  const rank = { good: 0, warning: 1, critical: 2 };
-  return rank[have as 'good' | 'warning' | 'critical'] >= rank[need as 'good' | 'warning' | 'critical'];
-}
 
 /**
  * Generate automatic findings for a listing against an optimized reference.
