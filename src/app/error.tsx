@@ -11,7 +11,8 @@ export default function Error({
   // (Prisma queries, file paths). The digest is safe and lets support
   // correlate with server logs / Sentry.
   return (
-    <main style={{ padding: 'var(--space-8)', textAlign: 'center' }}>
+
+    <main id="main-content" style={{ padding: 'var(--space-8)', textAlign: 'center' }}>
       <h1>Something went wrong</h1>
       <p style={{ color: 'var(--ink-500)' }}>
         An unexpected error occurred. Please try again.

@@ -32,7 +32,7 @@ export default async function ScenarioDetailPage({ params }: { params: { id: str
       </header>
 
       <div className={styles.layout}>
-        <main className={styles.main}>
+        <main id="main-content" className={styles.main}>
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <h2 className={styles.cardTitle}>{scenario.title}</h2>

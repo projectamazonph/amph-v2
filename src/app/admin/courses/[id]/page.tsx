@@ -42,7 +42,7 @@ export default async function CourseDetailPage({
 
       <div className={styles.layout}>
         {/* Main: modules + lessons */}
-        <main className={styles.main}>
+        <main id="main-content" className={styles.main}>
           <div className={styles.sectionHeader}>
             <h2 className={styles.sectionTitle}>Modules & Lessons</h2>
           </div>
