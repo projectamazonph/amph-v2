@@ -1,5 +1,10 @@
 # Sentinel Journal — Critical Security Learnings
 
+## 2026-07-25 - Dual Rate-Limiting for Sensitive Server Actions (Credential Stuffing & DoS Protection)
+**Vulnerability:** The application originally had single-dimensional rate limiting on authentication Server Actions (using only target-based keys like lowercase email). This made the app vulnerable to distributed credential stuffing (using different email accounts from a single IP without triggering the target limit) and did not fully prevent targeted DoS / event loop starvation against CPU-intensive cryptographic operations like `scrypt`.
+**Learning:** Target-only rate limits are vulnerable to multi-target credential stuffing, while IP-only rate limits are vulnerable to shared IP (NAT) lockout of legitimate users. Combining them into dual rate-limiting (IP-based limit set slightly higher, combined with lowercase email-based limit) secures both dimensions.
+**Prevention:** Always implement dual rate-limiting using both the client IP address (retrieved from `x-forwarded-for` / `x-real-ip` headers) and target keys (like lowercased email) on sensitive entry points such as sign-in, sign-up, or checkout actions.
+
 ## 2026-07-16 - Synchronous Password Hashing Blocks Next.js Event Loop (DoS Risk)
 **Vulnerability:** The application used `scryptSync` (synchronous CPU-intensive password hashing) inside Next.js server action handlers for registration and login. Because Node.js runs on a single main event loop, a small number of concurrent authentication requests (or a distributed credential stuffing attack) completely blocks the event loop, starving all other concurrent requests and causing a full Denial of Service (DoS).
 **Learning:** Next.js Server Actions and Route Handlers run on Node's main thread by default. Using synchronous cryptography operations (such as `scryptSync` or `pbkdf2Sync`) prevents the server from processing other concurrent connections.
