@@ -30,7 +30,7 @@ export default async function DashboardPage() {
     },
   });
 
-  // Compute aggregate stats first to get relevant lesson IDs
+  // Compute aggregate stats first to get relevant lesson IDs for scoping queries
   const allLessons = courses.flatMap((c) => c.modules.flatMap((m) => m.lessons));
   const allLessonIds = allLessons.map((l) => l.id);
 
