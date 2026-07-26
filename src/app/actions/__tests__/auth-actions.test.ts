@@ -7,6 +7,11 @@ const mockSetAuthCookie = vi.fn();
 const mockClearAuthCookie = vi.fn();
 const mockVerifyPassword = vi.fn();
 const mockHashPassword = vi.fn().mockReturnValue('hashed-pw');
+const mockRateLimit = vi.fn().mockReturnValue({ allowed: true, retryAfterSeconds: 0 });
+
+vi.mock('@/lib/rate-limit', () => ({
+  rateLimit: (...args: unknown[]) => mockRateLimit(...args),
+}));
 
 vi.mock('@/lib/auth', () => ({
   hashPassword: (...args: unknown[]) => mockHashPassword(...args),
@@ -29,6 +34,9 @@ vi.mock('next/headers', () => ({
     set: vi.fn(),
     delete: vi.fn(),
   }),
+  headers: () => Promise.resolve({
+    get: () => null,
+  }),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -41,6 +49,7 @@ describe('auth actions', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mockSignToken.mockResolvedValue('token');
+    mockRateLimit.mockReturnValue({ allowed: true, retryAfterSeconds: 0 });
   });
 
   it('signInAction rejects unknown email', async () => {
@@ -132,6 +141,36 @@ describe('auth actions', () => {
       }),
     );
     expect(db.user.update).not.toHaveBeenCalled();
+  });
+
+  it('signInAction rejects when IP rate limited', async () => {
+    mockRateLimit.mockImplementation((key) => {
+      if (key.startsWith('signin:ip:')) {
+        return { allowed: false, retryAfterSeconds: 60 };
+      }
+      return { allowed: true, retryAfterSeconds: 0 };
+    });
+
+    const result = await signInAction({ email: 'a@b.com', password: 'x' });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toContain('Too many login attempts from this IP');
+    }
+  });
+
+  it('signUpAction rejects when IP rate limited', async () => {
+    mockRateLimit.mockImplementation((key) => {
+      if (key.startsWith('signup:ip:')) {
+        return { allowed: false, retryAfterSeconds: 60 };
+      }
+      return { allowed: true, retryAfterSeconds: 0 };
+    });
+
+    const result = await signUpAction({ email: 'new@b.com', password: 'pass1234', confirmPassword: 'pass1234' });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toContain('Too many signup attempts from this IP');
+    }
   });
 
   it('signOutAction clears cookie and returns ok', async () => {
