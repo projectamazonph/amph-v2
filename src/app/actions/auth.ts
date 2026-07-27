@@ -5,6 +5,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import { db } from '@/lib/db';
 import {
   hashPassword,
@@ -32,9 +33,19 @@ import {
 // ---------------------------------------------------------------------------
 
 export const signUpAction = createSafeAction(signUpSchema, async (data) => {
-  const rl = rateLimit(`signup:${data.email.toLowerCase()}`, 5, 60_000);
-  if (!rl.allowed) {
-    throw new Error(`Too many attempts. Try again in ${rl.retryAfterSeconds}s.`);
+  const emailKey = `signup:${data.email.toLowerCase()}`;
+  const heads = await headers();
+  const ip = heads.get('x-forwarded-for') || heads.get('x-real-ip') || '127.0.0.1';
+  const ipKey = `signup:ip:${ip}`;
+
+  const rlEmail = rateLimit(emailKey, 5, 60_000);
+  const rlIp = rateLimit(ipKey, 20, 60_000);
+
+  if (!rlEmail.allowed) {
+    throw new Error(`Too many attempts. Try again in ${rlEmail.retryAfterSeconds}s.`);
+  }
+  if (!rlIp.allowed) {
+    throw new Error(`Too many attempts from this IP. Try again in ${rlIp.retryAfterSeconds}s.`);
   }
 
   const existing = await db.user.findUnique({ where: { email: data.email } });
@@ -125,9 +136,19 @@ export const signUpAction = createSafeAction(signUpSchema, async (data) => {
 export const signInAction = createSafeAction(signInSchema, async (data) => {
   // Rate-limit BEFORE any DB or scrypt work — the sync scrypt verify is
   // exactly what an attacker would use to burn the event loop.
-  const rl = rateLimit(`signin:${data.email.toLowerCase()}`, 5, 60_000);
-  if (!rl.allowed) {
-    throw new Error(`Too many attempts. Try again in ${rl.retryAfterSeconds}s.`);
+  const emailKey = `signin:${data.email.toLowerCase()}`;
+  const heads = await headers();
+  const ip = heads.get('x-forwarded-for') || heads.get('x-real-ip') || '127.0.0.1';
+  const ipKey = `signin:ip:${ip}`;
+
+  const rlEmail = rateLimit(emailKey, 5, 60_000);
+  const rlIp = rateLimit(ipKey, 20, 60_000);
+
+  if (!rlEmail.allowed) {
+    throw new Error(`Too many attempts. Try again in ${rlEmail.retryAfterSeconds}s.`);
+  }
+  if (!rlIp.allowed) {
+    throw new Error(`Too many attempts from this IP. Try again in ${rlIp.retryAfterSeconds}s.`);
   }
 
   const user = await db.user.findUnique({ where: { email: data.email } });
