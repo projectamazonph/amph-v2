@@ -194,13 +194,21 @@ async function PendingLessons({
     take: 50,
   });
 
+  const courseLessonIds = allLessons.map((l) => l.id);
   const completedSet = new Set(
-    (
-      await db.lessonProgress.findMany({
-        where: { userId, status: 'COMPLETED', deletedAt: null },
-        select: { lessonId: true },
-      })
-    ).map((p) => p.lessonId),
+    courseLessonIds.length > 0
+      ? (
+          await db.lessonProgress.findMany({
+            where: {
+              userId,
+              lessonId: { in: courseLessonIds },
+              status: 'COMPLETED',
+              deletedAt: null,
+            },
+            select: { lessonId: true },
+          })
+        ).map((p) => p.lessonId)
+      : []
   );
 
   const pending = allLessons.filter((l) => !completedSet.has(l.id)).slice(0, 8);
