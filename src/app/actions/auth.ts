@@ -5,6 +5,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import { db } from '@/lib/db';
 import {
   hashPassword,
@@ -32,9 +33,18 @@ import {
 // ---------------------------------------------------------------------------
 
 export const signUpAction = createSafeAction(signUpSchema, async (data) => {
-  const rl = rateLimit(`signup:${data.email.toLowerCase()}`, 5, 60_000);
-  if (!rl.allowed) {
-    throw new Error(`Too many attempts. Try again in ${rl.retryAfterSeconds}s.`);
+  const heads = await headers();
+  const xff = heads.get('x-forwarded-for');
+  const ip = (xff ? xff.split(',')[0]?.trim() : null) ?? heads.get('x-real-ip') ?? 'unknown';
+
+  const rlEmail = rateLimit(`signup:email:${data.email.toLowerCase()}`, 5, 60_000);
+  if (!rlEmail.allowed) {
+    throw new Error(`Too many attempts. Try again in ${rlEmail.retryAfterSeconds}s.`);
+  }
+
+  const rlIp = rateLimit(`signup:ip:${ip}`, 10, 60_000);
+  if (!rlIp.allowed) {
+    throw new Error(`Too many attempts from this IP. Try again in ${rlIp.retryAfterSeconds}s.`);
   }
 
   const existing = await db.user.findUnique({ where: { email: data.email } });
@@ -123,11 +133,20 @@ export const signUpAction = createSafeAction(signUpSchema, async (data) => {
 // ---------------------------------------------------------------------------
 
 export const signInAction = createSafeAction(signInSchema, async (data) => {
-  // Rate-limit BEFORE any DB or scrypt work — the sync scrypt verify is
-  // exactly what an attacker would use to burn the event loop.
-  const rl = rateLimit(`signin:${data.email.toLowerCase()}`, 5, 60_000);
-  if (!rl.allowed) {
-    throw new Error(`Too many attempts. Try again in ${rl.retryAfterSeconds}s.`);
+  const heads = await headers();
+  const xff = heads.get('x-forwarded-for');
+  const ip = (xff ? xff.split(',')[0]?.trim() : null) ?? heads.get('x-real-ip') ?? 'unknown';
+
+  // Rate-limit BEFORE any DB or scrypt work — the async scrypt verify is
+  // protected from event-loop starvation by dual rate-limiting (IP & target).
+  const rlEmail = rateLimit(`signin:email:${data.email.toLowerCase()}`, 5, 60_000);
+  if (!rlEmail.allowed) {
+    throw new Error(`Too many attempts. Try again in ${rlEmail.retryAfterSeconds}s.`);
+  }
+
+  const rlIp = rateLimit(`signin:ip:${ip}`, 10, 60_000);
+  if (!rlIp.allowed) {
+    throw new Error(`Too many attempts from this IP. Try again in ${rlIp.retryAfterSeconds}s.`);
   }
 
   const user = await db.user.findUnique({ where: { email: data.email } });
