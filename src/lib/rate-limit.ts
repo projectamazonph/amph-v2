@@ -8,6 +8,7 @@
  */
 
 import 'server-only';
+import { headers } from 'next/headers';
 
 const buckets = new Map<string, number[]>();
 
@@ -22,6 +23,37 @@ export interface RateLimitResult {
  * per `windowMs`. Denied hits are not recorded (a blocked attacker doesn't
  * extend their own lockout window).
  */
+/**
+ * Dual rate limiter combining IP-based and email-based limits.
+ * Protects against credential stuffing and brute-force attacks by limiting
+ * requests per IP address AND per target email account.
+ */
+export async function rateLimitDual(
+  email: string,
+  ipLimit = 10,
+  emailLimit = 5,
+  windowMs = 60_000,
+): Promise<RateLimitResult> {
+  const heads = await headers();
+  const xff = heads.get('x-forwarded-for');
+  const ip = (xff ? xff.split(',')[0]?.trim() : null) ?? heads.get('x-real-ip') ?? 'unknown-ip';
+  const lowercaseEmail = email.toLowerCase();
+
+  // First, check and record the IP limit
+  const ipRes = rateLimit(`ip:${ip}`, ipLimit, windowMs);
+  if (!ipRes.allowed) {
+    return ipRes;
+  }
+
+  // Next, check and record the target email limit
+  const emailRes = rateLimit(`email:${lowercaseEmail}`, emailLimit, windowMs);
+  if (!emailRes.allowed) {
+    return emailRes;
+  }
+
+  return { allowed: true, retryAfterSeconds: 0 };
+}
+
 export function rateLimit(key: string, limit = 5, windowMs = 60_000): RateLimitResult {
   const now = Date.now();
   const cutoff = now - windowMs;

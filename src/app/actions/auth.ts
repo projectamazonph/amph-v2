@@ -15,7 +15,7 @@ import {
   getSession,
 } from '@/lib/auth';
 import { logger } from '@/lib/logger';
-import { rateLimit } from '@/lib/rate-limit';
+import { rateLimitDual } from '@/lib/rate-limit';
 import {
   hashClaimToken,
   PLACEHOLDER_PASSWORD_PREFIX,
@@ -32,7 +32,8 @@ import {
 // ---------------------------------------------------------------------------
 
 export const signUpAction = createSafeAction(signUpSchema, async (data) => {
-  const rl = rateLimit(`signup:${data.email.toLowerCase()}`, 5, 60_000);
+  // Dual rate limiting: limit IP to 10 attempts and the target email to 5 attempts per windowMs.
+  const rl = await rateLimitDual(data.email, 10, 5, 60_000);
   if (!rl.allowed) {
     throw new Error(`Too many attempts. Try again in ${rl.retryAfterSeconds}s.`);
   }
@@ -125,7 +126,8 @@ export const signUpAction = createSafeAction(signUpSchema, async (data) => {
 export const signInAction = createSafeAction(signInSchema, async (data) => {
   // Rate-limit BEFORE any DB or scrypt work — the sync scrypt verify is
   // exactly what an attacker would use to burn the event loop.
-  const rl = rateLimit(`signin:${data.email.toLowerCase()}`, 5, 60_000);
+  // Dual rate limiting: limit IP to 10 attempts and the target email to 5 attempts per windowMs.
+  const rl = await rateLimitDual(data.email, 10, 5, 60_000);
   if (!rl.allowed) {
     throw new Error(`Too many attempts. Try again in ${rl.retryAfterSeconds}s.`);
   }
