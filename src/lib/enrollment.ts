@@ -12,7 +12,7 @@
 import 'server-only';
 
 import { db } from './db';
-import { EnrollmentStatus } from './enums';
+import { EnrollmentStatus, PaymentStatus } from './enums';
 import { generateClaimToken, PLACEHOLDER_PASSWORD_PREFIX } from './claim-token';
 import { randomUUID } from 'node:crypto';
 
@@ -65,10 +65,21 @@ export async function findOrCreateUserByEmail(
   return { id: placeholder.id, isNew: true, rawClaimToken: claim.raw };
 }
 
+export interface ManualEnrollmentPaymentInput {
+  /** One of the PaymentMethod values (e.g. GCASH, BANK_TRANSFER, OTHER). */
+  method: string;
+  /** Amount actually received, in centavos. */
+  amountPhp: number;
+  /** Free-text reference for bookkeeping, e.g. a GCash ref # or receipt note. */
+  reference?: string | null;
+}
+
 export interface ManualEnrollmentInput {
   email: string;
   name?: string | null;
   pricingTierId: string;
+  /** Omit for comp/free grants — no Payment row is created. */
+  payment?: ManualEnrollmentPaymentInput;
 }
 
 export interface ManualEnrollmentResult {
@@ -79,6 +90,7 @@ export interface ManualEnrollmentResult {
   tierName: string;
   enrolledCourseIds: string[];
   alreadyEnrolledCourseIds: string[];
+  paymentRecorded: boolean;
 }
 
 /**
@@ -93,6 +105,7 @@ export async function grantManualEnrollment({
   email,
   name,
   pricingTierId,
+  payment,
 }: ManualEnrollmentInput): Promise<ManualEnrollmentResult> {
   const tier = await db.pricingTier.findUnique({
     where: { id: pricingTierId },
@@ -137,6 +150,23 @@ export async function grantManualEnrollment({
       });
     }
 
+    if (payment) {
+      // Not tied to a single Enrollment — a tier can bundle several courses,
+      // so this records one payment for the whole grant, not per course.
+      await tx.payment.create({
+        data: {
+          userId: user.id,
+          pricingTierId: tier.id,
+          amountPhp: payment.amountPhp,
+          netAmountPhp: payment.amountPhp,
+          method: payment.method,
+          status: PaymentStatus.COMPLETED,
+          paidAt: new Date(),
+          metadata: payment.reference?.trim() || null,
+        },
+      });
+    }
+
     return {
       userId: user.id,
       isNewUser: user.isNew,
@@ -144,6 +174,7 @@ export async function grantManualEnrollment({
       tierName: tier.name,
       enrolledCourseIds: toCreate,
       alreadyEnrolledCourseIds: [...alreadyEnrolled],
+      paymentRecorded: !!payment,
     };
   });
 }

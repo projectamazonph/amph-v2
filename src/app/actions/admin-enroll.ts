@@ -14,12 +14,22 @@ import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/auth';
 import { auditLog } from '@/lib/admin-audit';
 import { grantManualEnrollment } from '@/lib/enrollment';
+import { PaymentMethodValues } from '@/lib/enums';
 import type { ActionResult } from '@/lib/validation';
 
 const manualEnrollSchema = z.object({
   email: z.string().trim().toLowerCase().email('Enter a valid email address.'),
   name: z.string().trim().max(100).optional(),
   pricingTierId: z.string().min(1, 'Pick a pricing tier.'),
+  payment: z
+    .object({
+      method: z.enum(PaymentMethodValues as [string, ...string[]], {
+        message: 'Pick a payment method.',
+      }),
+      amountPhp: z.number().int().positive('Enter the amount paid.'),
+      reference: z.string().trim().max(200).optional(),
+    })
+    .optional(),
 });
 
 export interface ManualEnrollActionData {
@@ -29,6 +39,7 @@ export interface ManualEnrollActionData {
   tierName: string;
   enrolledCount: number;
   alreadyEnrolledCount: number;
+  paymentRecorded: boolean;
 }
 
 export async function manualEnrollAction(
@@ -49,12 +60,21 @@ export async function manualEnrollAction(
       email: parsed.data.email,
       name: parsed.data.name || null,
       pricingTierId: parsed.data.pricingTierId,
+      payment: parsed.data.payment,
     });
 
     await auditLog({
       action: 'MANUAL_ENROLL',
       entityType: 'User',
       entityId: result.userId,
+      metadata: parsed.data.payment
+        ? {
+            tier: result.tierName,
+            paymentMethod: parsed.data.payment.method,
+            amountPhp: parsed.data.payment.amountPhp,
+            reference: parsed.data.payment.reference || undefined,
+          }
+        : undefined,
     });
     revalidatePath('/admin/users');
     revalidatePath(`/admin/users/${result.userId}`);
@@ -77,6 +97,7 @@ export async function manualEnrollAction(
         tierName: result.tierName,
         enrolledCount: result.enrolledCourseIds.length,
         alreadyEnrolledCount: result.alreadyEnrolledCourseIds.length,
+        paymentRecorded: result.paymentRecorded,
       },
     };
   } catch (err) {
