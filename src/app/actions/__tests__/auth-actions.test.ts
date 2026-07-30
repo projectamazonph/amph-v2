@@ -23,11 +23,16 @@ vi.mock('@/lib/db', () => ({
   },
 }));
 
+const mockHeadersGet = vi.fn();
+
 vi.mock('next/headers', () => ({
   cookies: () => ({
     get: () => undefined,
     set: vi.fn(),
     delete: vi.fn(),
+  }),
+  headers: async () => ({
+    get: (name: string) => mockHeadersGet(name),
   }),
 }));
 
@@ -41,6 +46,10 @@ describe('auth actions', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mockSignToken.mockResolvedValue('token');
+    mockHeadersGet.mockImplementation((name: string) => {
+      if (name === 'x-forwarded-for') return '127.0.0.1';
+      return null;
+    });
   });
 
   it('signInAction rejects unknown email', async () => {
@@ -138,5 +147,61 @@ describe('auth actions', () => {
     const result = await signOutAction();
     expect(result.success).toBe(true);
     expect((result as any).data.ok).toBe(true);
+  });
+
+  describe('dual rate-limiting', () => {
+    it('signInAction triggers email rate limit on 6th attempt', async () => {
+      // Use unique email, distinct IP for each call to avoid hitting the IP rate limit
+      for (let i = 0; i < 5; i++) {
+        mockHeadersGet.mockReturnValue(`192.168.1.${i}`);
+        await signInAction({ email: 'ratelimit-email-signin@example.com', password: 'x' });
+      }
+      mockHeadersGet.mockReturnValue('192.168.1.99');
+      const result = await signInAction({ email: 'ratelimit-email-signin@example.com', password: 'x' });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toContain('Too many attempts.');
+        expect(result.error).not.toContain('Too many attempts from this IP.');
+      }
+    });
+
+    it('signInAction triggers IP rate limit on 11th attempt', async () => {
+      // Use unique email for each call to avoid hitting the email rate limit, keep same IP
+      mockHeadersGet.mockReturnValue('10.0.0.1');
+      for (let i = 0; i < 10; i++) {
+        await signInAction({ email: `ratelimit-ip-signin-${i}@example.com`, password: 'x' });
+      }
+      const result = await signInAction({ email: 'ratelimit-ip-signin-final@example.com', password: 'x' });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toContain('Too many attempts from this IP.');
+      }
+    });
+
+    it('signUpAction triggers email rate limit on 6th attempt', async () => {
+      for (let i = 0; i < 5; i++) {
+        mockHeadersGet.mockReturnValue(`192.168.2.${i}`);
+        await signUpAction({ email: 'ratelimit-email-signup@example.com', password: 'pass1234', confirmPassword: 'pass1234' });
+      }
+      mockHeadersGet.mockReturnValue('192.168.2.99');
+      const result = await signUpAction({ email: 'ratelimit-email-signup@example.com', password: 'pass1234', confirmPassword: 'pass1234' });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toContain('Too many attempts.');
+        expect(result.error).not.toContain('Too many attempts from this IP.');
+      }
+    });
+
+    it('signUpAction triggers IP rate limit on 11th attempt', async () => {
+      mockHeadersGet.mockReturnValue('10.0.0.2');
+      for (let i = 0; i < 10; i++) {
+        await signUpAction({ email: `ratelimit-ip-signup-${i}@example.com`, password: 'pass1234', confirmPassword: 'pass1234' });
+      }
+      const result = await signUpAction({ email: 'ratelimit-ip-signup-final@example.com', password: 'pass1234', confirmPassword: 'pass1234' });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toContain('Too many attempts from this IP.');
+      }
+    });
   });
 });
