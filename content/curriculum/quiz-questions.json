@@ -331,6 +331,36 @@
           "optionD": "It removes Amazon's referral fees",
           "correctAnswer": "B",
           "explanation": "Brand Registry unlocks A+ Content and Sponsored Brands campaigns, both commonly linked to better conversion and reach. It's not a ranking guarantee, not required for basic Sponsored Products, and has nothing to do with referral fees."
+        },
+        {
+          "order": 6,
+          "question": "A listing's main image is 800px on a white background. What's the concrete problem?",
+          "optionA": "Nothing — white background is all that matters",
+          "optionB": "It's below the roughly 1000px minimum needed to enable Amazon's zoom feature",
+          "optionC": "Amazon will suspend the listing immediately",
+          "optionD": "The image needs a colored background instead",
+          "correctAnswer": "B",
+          "explanation": "Main images need to be at least around 1000px to enable Amazon's zoom feature, which listings commonly rely on to help shoppers examine the product before buying. White background is necessary but not sufficient on its own."
+        },
+        {
+          "order": 7,
+          "question": "A bullet point reads \"350ml capacity.\" What's missing to make it a PPC-aware bullet?",
+          "optionA": "Nothing — specs are exactly what shoppers want to see",
+          "optionB": "The benefit and proof that turn the spec into a reason to buy",
+          "optionC": "A keyword-stuffed rewrite of the same spec",
+          "optionD": "An exclamation point for emphasis",
+          "correctAnswer": "B",
+          "explanation": "A bare feature like \"350ml capacity\" tells a shopper what the product is, not why it matters to them. The feature-to-benefit-to-proof structure turns a spec into a reason to click and buy."
+        },
+        {
+          "order": 8,
+          "question": "Why should a title stay concise and natural instead of stuffing in every possible keyword?",
+          "optionA": "Amazon enforces category-specific title-length limits, and a truncated or rejected title is worse than a clean, shorter one",
+          "optionB": "Longer titles always rank higher regardless of length limits",
+          "optionC": "Keyword stuffing has no downside as long as every word is relevant",
+          "optionD": "Amazon rewards keyword density with a lower CPC",
+          "correctAnswer": "A",
+          "explanation": "Amazon enforces hard title-length limits that vary by category and change over time. A title that gets truncated on mobile or rejected outright is a worse outcome than a shorter, natural title with the primary keyword near the front."
         }
       ]
     },
@@ -398,6 +428,26 @@
           "optionD": "Running auto campaigns alongside manual campaigns",
           "correctAnswer": "A",
           "explanation": "Under-budgeting causes campaigns to stop running before the day ends. Amazon shoppers are active 24/7, and you may miss peak converting hours. Monitor spend patterns and set budgets that allow full-day coverage for proven campaigns."
+        },
+        {
+          "order": 7,
+          "question": "Your exact-match campaign already targets \"garlic press\" at a $1.10 bid with a proven 18% CVR. Your broad-match campaign for the same product is also picking up clicks on the same search term at a $0.35 bid. What fixes this?",
+          "optionA": "Raise the exact-match bid even higher to compensate",
+          "optionB": "Add \"garlic press\" as a negative exact keyword inside the broad-match campaign",
+          "optionC": "Delete the broad-match campaign entirely",
+          "optionD": "Lower the broad campaign's daily budget to zero",
+          "correctAnswer": "B",
+          "explanation": "Broad match naturally also matches the exact search it's meant to discover around, so both of your own campaigns end up eligible for the same search. Adding the term as a negative exact in the broad campaign stops it from competing with the exact campaign that already owns that keyword, freeing the broad campaign's budget for genuinely new terms."
+        },
+        {
+          "order": 8,
+          "question": "In the Campaign Builder tool's scoring, which criterion carries the most weight, and why?",
+          "optionA": "Keyword selection, because relevance matters more than anything else",
+          "optionB": "Campaign structure, because a well-organized campaign with decent keywords outperforms a chaotic campaign with great keywords",
+          "optionC": "Negative keywords, because wasted spend is the single biggest risk",
+          "optionD": "Budget allocation, because the campaign with the most money always wins",
+          "correctAnswer": "B",
+          "explanation": "Campaign structure carries the most weight (30%) because it's the foundation everything else depends on. Good keywords and reasonable bids can't do their job inside a structure that mixes proven and unproven terms in the same budget and ad group."
         }
       ]
     },
