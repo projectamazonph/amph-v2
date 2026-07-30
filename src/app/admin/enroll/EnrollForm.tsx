@@ -6,14 +6,28 @@ import {
   manualEnrollAction,
   type ManualEnrollActionData,
 } from '@/app/actions/admin-enroll';
+import { PaymentMethod, PaymentMethodValues } from '@/lib/enums';
 import styles from './enroll.module.css';
 
 interface TierOption {
   id: string;
   name: string;
   priceLabel: string;
+  /** Centavos. */
+  pricePhp: number;
   courseCount: number;
 }
+
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  [PaymentMethod.GCASH]: 'GCash',
+  [PaymentMethod.MAYA]: 'Maya',
+  [PaymentMethod.GRABPAY]: 'GrabPay',
+  [PaymentMethod.CREDIT_CARD]: 'Credit card',
+  [PaymentMethod.DEBIT_CARD]: 'Debit card',
+  [PaymentMethod.BANK_TRANSFER]: 'Bank transfer',
+  [PaymentMethod.OTC]: 'Over-the-counter',
+  [PaymentMethod.OTHER]: 'Other',
+};
 
 export function EnrollForm({
   defaultEmail,
@@ -26,9 +40,32 @@ export function EnrollForm({
   const [email, setEmail] = useState(defaultEmail);
   const [name, setName] = useState('');
   const [pricingTierId, setPricingTierId] = useState(tiers[0]?.id ?? '');
+  const [recordPayment, setRecordPayment] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<string>(
+    PaymentMethodValues[0] ?? '',
+  );
+  const [amountPhpInput, setAmountPhpInput] = useState('');
+  const [reference, setReference] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ManualEnrollActionData | null>(null);
   const [copied, setCopied] = useState(false);
+
+  function selectedTierPriceLabel(tierId: string): string {
+    const tier = tiers.find((t) => t.id === tierId);
+    return tier ? (tier.pricePhp / 100).toFixed(2) : '';
+  }
+
+  function handleTierChange(tierId: string) {
+    setPricingTierId(tierId);
+    if (recordPayment) setAmountPhpInput(selectedTierPriceLabel(tierId));
+  }
+
+  function handleRecordPaymentToggle(checked: boolean) {
+    setRecordPayment(checked);
+    if (checked && !amountPhpInput) {
+      setAmountPhpInput(selectedTierPriceLabel(pricingTierId));
+    }
+  }
 
   function handleSubmit() {
     setError(null);
@@ -38,11 +75,27 @@ export function EnrollForm({
       setError('Enter the student email.');
       return;
     }
+
+    let payment: { method: string; amountPhp: number; reference?: string } | undefined;
+    if (recordPayment) {
+      const pesos = Number(amountPhpInput);
+      if (!amountPhpInput || Number.isNaN(pesos) || pesos <= 0) {
+        setError('Enter the amount paid.');
+        return;
+      }
+      payment = {
+        method: paymentMethod,
+        amountPhp: Math.round(pesos * 100),
+        reference: reference.trim() || undefined,
+      };
+    }
+
     startTransition(async () => {
       const res = await manualEnrollAction({
         email,
         name: name.trim() || undefined,
         pricingTierId,
+        payment,
       });
       if (!res.success) {
         setError(res.error);
@@ -92,7 +145,7 @@ export function EnrollForm({
         <span>Pricing tier</span>
         <select
           value={pricingTierId}
-          onChange={(e) => setPricingTierId(e.target.value)}
+          onChange={(e) => handleTierChange(e.target.value)}
           className={styles.select}
         >
           {tiers.map((tier) => (
@@ -103,6 +156,58 @@ export function EnrollForm({
           ))}
         </select>
       </label>
+
+      <label className={styles.checkboxRow}>
+        <input
+          type="checkbox"
+          checked={recordPayment}
+          onChange={(e) => handleRecordPaymentToggle(e.target.checked)}
+        />
+        <span>Record a payment for bookkeeping (paid outside the platform)</span>
+      </label>
+
+      {recordPayment && (
+        <div className={styles.paymentFields}>
+          <label className={styles.field}>
+            <span>Payment method</span>
+            <select
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              className={styles.select}
+            >
+              {PaymentMethodValues.map((method) => (
+                <option key={method} value={method}>
+                  {PAYMENT_METHOD_LABELS[method] ?? method}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className={styles.field}>
+            <span>Amount paid (₱)</span>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={amountPhpInput}
+              onChange={(e) => setAmountPhpInput(e.target.value)}
+              className={styles.input}
+            />
+          </label>
+
+          <label className={styles.field}>
+            <span>Reference / note (optional)</span>
+            <input
+              type="text"
+              value={reference}
+              onChange={(e) => setReference(e.target.value)}
+              placeholder="e.g. GCash ref #123456789"
+              className={styles.input}
+              autoComplete="off"
+            />
+          </label>
+        </div>
+      )}
 
       <Button onClick={handleSubmit} loading={isPending} variant="primary">
         Enroll student
@@ -120,6 +225,7 @@ export function EnrollForm({
             {result.alreadyEnrolledCount > 0
               ? ` (${result.alreadyEnrolledCount} already active)`
               : ''}
+            {result.paymentRecorded ? ' · payment recorded' : ''}
           </p>
 
           {result.claimUrl ? (

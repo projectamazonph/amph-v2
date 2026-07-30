@@ -15,6 +15,7 @@ export interface NavItem {
 const ADMIN_NAV_ITEMS: NavItem[] = [
   { href: '/admin', label: 'Dashboard', icon: 'House' },
   { href: '/admin/users', label: 'Users', icon: 'User' },
+  { href: '/admin/enroll', label: 'Enroll student', icon: 'UserPlus' },
   { href: '/admin/courses', label: 'Courses', icon: 'BookOpen' },
   { href: '/admin/refunds', label: 'Refunds', icon: 'Receipt' },
   { href: '/admin/tool-scenarios', label: 'Tool scenarios', icon: 'List' },
