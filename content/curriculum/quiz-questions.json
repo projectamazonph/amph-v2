@@ -244,6 +244,36 @@
           "optionD": "Broad match keywords stop working after enough data accumulates",
           "correctAnswer": "A",
           "explanation": "Once an exact-match keyword has a real conversion track record, it's the most predictable place to invest further budget. Broad and phrase remain useful for discovering new terms, not for scaling proven ones."
+        },
+        {
+          "order": 6,
+          "question": "An ad group has \"cutting board for meat,\" \"cutting board gift set,\" and \"large cutting board.\" What's the problem with this grouping?",
+          "optionA": "There's no problem — they're all cutting board keywords",
+          "optionB": "The keywords reflect three different shopper intents (use case, gift buying, size), so one bid and one negative list won't fit all three well",
+          "optionC": "The group has too few keywords to be useful",
+          "optionD": "Match types are mixed, which is the only real grouping error",
+          "correctAnswer": "B",
+          "explanation": "A good ad group shares one obvious shopper intent so a single bid and negative list make sense for everything in it. A gift buyer, a use-case buyer, and a size-driven buyer are different shoppers behind the same product, and grouping them together blurs the bid and reporting clarity theming is supposed to give you."
+        },
+        {
+          "order": 7,
+          "question": "Why run broad, phrase, and exact match versions of the same keyword in separate campaigns instead of the same ad group?",
+          "optionA": "Amazon technically forbids mixing match types in one ad group",
+          "optionB": "It gives independent budget and bid control per match type and avoids the same keyword competing against itself across match types",
+          "optionC": "Separate campaigns are required before Brand Registry approval",
+          "optionD": "It has no real effect — it's mainly a cosmetic organization choice",
+          "correctAnswer": "B",
+          "explanation": "Mixing match types in one ad group causes cannibalization: the same keyword in broad and exact can compete against itself in the auction. Separate campaigns by match type give you independent budgets and bids, and a clean read on which match type is actually performing."
+        },
+        {
+          "order": 8,
+          "question": "You've pulled 300 candidate keywords. Which two filtering criteria should you apply first, before scoring by volume or competition?",
+          "optionA": "Volume and competition",
+          "optionB": "Relevance and purchase intent",
+          "optionC": "Alphabetical order and keyword length",
+          "optionD": "Price and category",
+          "correctAnswer": "B",
+          "explanation": "Relevance and intent are the first cut: remove anything outside your product category and anything reflecting research intent (\"how to,\" \"vs,\" \"review\") before you spend time scoring what survives for volume and competition. Filtering by volume too early wastes scoring effort on keywords that should never have made the list."
         }
       ]
     },
