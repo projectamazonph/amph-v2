@@ -1,6 +1,7 @@
 import { requireAuth } from '@/lib/auth';
 import { NavSidebar, type NavItem } from '@/components/ui/NavSidebar';
 import { TopBar } from '@/components/ui/TopBar';
+import { ToastProvider } from '@/components/ui/Toast';
 import styles from './layout.module.css';
 
 const STUDENT_NAV_ITEMS: NavItem[] = [
@@ -20,17 +21,19 @@ export default async function DashboardLayout({
   const user = await requireAuth();
 
   return (
-    <div className={styles.shell}>
-      <NavSidebar
-        items={STUDENT_NAV_ITEMS}
-        homeHref="/dashboard"
-        brandSuffix=""
-        ariaLabel="Student navigation"
-      />
-      <div className={styles.main}>
-        <TopBar user={user} />
-        <div className={styles.content}>{children}</div>
+    <ToastProvider>
+      <div className={styles.shell}>
+        <NavSidebar
+          items={STUDENT_NAV_ITEMS}
+          homeHref="/dashboard"
+          brandSuffix=""
+          ariaLabel="Student navigation"
+        />
+        <div className={styles.main}>
+          <TopBar user={user} />
+          <div className={styles.content}>{children}</div>
+        </div>
       </div>
-    </div>
+    </ToastProvider>
   );
 }
