@@ -11,8 +11,8 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
+import { headers } from 'next/headers';
 import { requireAdmin } from '@/lib/auth';
-import { auditLog } from '@/lib/admin-audit';
 import { grantManualEnrollment } from '@/lib/enrollment';
 import { PaymentMethodValues } from '@/lib/enums';
 import type { ActionResult } from '@/lib/validation';
@@ -45,7 +45,7 @@ export interface ManualEnrollActionData {
 export async function manualEnrollAction(
   input: z.infer<typeof manualEnrollSchema>,
 ): Promise<ActionResult<ManualEnrollActionData>> {
-  await requireAdmin();
+  const actor = await requireAdmin();
 
   const parsed = manualEnrollSchema.safeParse(input);
   if (!parsed.success) {
@@ -56,26 +56,19 @@ export async function manualEnrollAction(
   }
 
   try {
+    const heads = await headers();
     const result = await grantManualEnrollment({
       email: parsed.data.email,
       name: parsed.data.name || null,
       pricingTierId: parsed.data.pricingTierId,
       payment: parsed.data.payment,
+      audit: {
+        actorId: actor.id,
+        ipAddress: heads.get('x-forwarded-for') ?? heads.get('x-real-ip'),
+        userAgent: heads.get('user-agent'),
+      },
     });
 
-    await auditLog({
-      action: 'MANUAL_ENROLL',
-      entityType: 'User',
-      entityId: result.userId,
-      metadata: parsed.data.payment
-        ? {
-            tier: result.tierName,
-            paymentMethod: parsed.data.payment.method,
-            amountPhp: parsed.data.payment.amountPhp,
-            reference: parsed.data.payment.reference || undefined,
-          }
-        : undefined,
-    });
     revalidatePath('/admin/users');
     revalidatePath(`/admin/users/${result.userId}`);
 

@@ -74,12 +74,25 @@ export interface ManualEnrollmentPaymentInput {
   reference?: string | null;
 }
 
+export interface ManualEnrollmentAuditInput {
+  actorId: string;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+}
+
 export interface ManualEnrollmentInput {
   email: string;
   name?: string | null;
   pricingTierId: string;
-  /** Omit for comp/free grants — no Payment row is created. */
+  /** Omit for comp/free grants. No Payment row is created. */
   payment?: ManualEnrollmentPaymentInput;
+  /**
+   * When present, an AuditLog row is written in the same transaction as the
+   * enrollment/payment writes — so a commit can never be reported back as a
+   * failure (and retried into a duplicate payment) just because the audit
+   * write failed separately afterward.
+   */
+  audit?: ManualEnrollmentAuditInput;
 }
 
 export interface ManualEnrollmentResult {
@@ -106,6 +119,7 @@ export async function grantManualEnrollment({
   name,
   pricingTierId,
   payment,
+  audit,
 }: ManualEnrollmentInput): Promise<ManualEnrollmentResult> {
   const tier = await db.pricingTier.findUnique({
     where: { id: pricingTierId },
@@ -151,7 +165,7 @@ export async function grantManualEnrollment({
     }
 
     if (payment) {
-      // Not tied to a single Enrollment — a tier can bundle several courses,
+      // Not tied to a single Enrollment. A tier can bundle several courses,
       // so this records one payment for the whole grant, not per course.
       await tx.payment.create({
         data: {
@@ -163,6 +177,32 @@ export async function grantManualEnrollment({
           status: PaymentStatus.COMPLETED,
           paidAt: new Date(),
           metadata: payment.reference?.trim() || null,
+        },
+      });
+    }
+
+    if (audit) {
+      // Written via `tx`, not the separate auditLog() helper, so this commits
+      // atomically with the enrollment/payment writes above: a failure here
+      // rolls back the whole grant instead of leaving a committed payment
+      // that gets reported to the admin as a failure (and risks a duplicate
+      // payment on retry).
+      await tx.auditLog.create({
+        data: {
+          actorId: audit.actorId,
+          action: 'MANUAL_ENROLL',
+          entityType: 'User',
+          entityId: user.id,
+          metadata: payment
+            ? JSON.stringify({
+                tier: tier.name,
+                paymentMethod: payment.method,
+                amountPhp: payment.amountPhp,
+                reference: payment.reference?.trim() || undefined,
+              })
+            : null,
+          ipAddress: audit.ipAddress ?? null,
+          userAgent: audit.userAgent ?? null,
         },
       });
     }
