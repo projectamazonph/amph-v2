@@ -15,17 +15,17 @@ interface PageProps {
 }
 
 export default async function SignInPage({ searchParams }: PageProps) {
-  // Already signed in? Bounce to home.
+  // Already signed in? Bounce to the dashboard.
   const session = await getSession();
   if (session) {
     if (session.role === 'ADMIN') redirect('/admin');
-    redirect('/');
+    redirect('/dashboard');
   }
 
   const params = await searchParams;
   const error = params.error ? decodeURIComponent(params.error) : null;
   // C3: validate the redirect target before it can ever reach router.push().
-  const safeRedirect = validateRedirectUrl(params.redirect);
+  const safeRedirect = validateRedirectUrl(params.redirect, '/dashboard');
 
   return (
     <main id="main-content" className={styles.authContainer}>

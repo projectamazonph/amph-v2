@@ -67,7 +67,7 @@ export default async function CoursesIndexPage() {
 
           return (
             <Card key={course.id} variant="interactive" padding="md">
-              <Link href={`/dashboard/courses/${course.slug}` as never} className={styles.courseLink}>
+              <Link href={`/courses/${course.slug}`} className={styles.courseLink}>
                 <CardHeader>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <CardTitle>{course.title}</CardTitle>

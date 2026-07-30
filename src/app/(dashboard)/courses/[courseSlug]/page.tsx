@@ -59,6 +59,13 @@ export default async function CourseDetailPage({ params }: PageProps) {
     : [];
   const progressMap = new Map(lessonProgress.map((p) => [p.lessonId, p.status]));
 
+  const completedCount = allLessonIds.filter(
+    (id) => progressMap.get(id) === ProgressStatus.COMPLETED
+  ).length;
+  const progressPct = allLessonIds.length > 0
+    ? Math.round((completedCount / allLessonIds.length) * 100)
+    : 0;
+
   return (
     <main id="main-content" className="container" style={{ padding: 'var(--space-6) 0' }}>
       <Link href="/dashboard" style={{ color: 'var(--ink-500)', fontSize: 'var(--text-sm)' }}>
@@ -99,7 +106,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
               return (
                 <li key={lesson.id} className={styles.lessonItem}>
                   <Link
-                    href={`/dashboard/courses/${course.slug}/lessons/${lesson.slug}` as never}
+                    href={`/courses/${course.slug}/lessons/${lesson.slug}`}
                     className={styles.lessonLink}
                   >
                     <div className={styles.lessonStatus}>
@@ -140,6 +147,21 @@ export default async function CourseDetailPage({ params }: PageProps) {
           </ul>
         </section>
       ))}
+
+      {allLessonIds.length > 0 && (
+        <section className={styles.progressSection}>
+          <h2>Your progress</h2>
+          <div className={styles.progressBar}>
+            <div className={styles.progressFill} style={{ width: `${progressPct}%` }} />
+          </div>
+          <div className={styles.progressMeta}>
+            <span>
+              {completedCount} of {allLessonIds.length} lessons complete
+            </span>
+            <span>{progressPct}%</span>
+          </div>
+        </section>
+      )}
     </main>
   );
 }

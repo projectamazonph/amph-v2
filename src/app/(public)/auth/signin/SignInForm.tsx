@@ -28,7 +28,7 @@ export function SignInForm({
       password: formData.get('password'),
     });
     if (result.success) {
-      const target = result.data.role === 'ADMIN' ? '/admin' : validateRedirectUrl(redirectTo);
+      const target = result.data.role === 'ADMIN' ? '/admin' : validateRedirectUrl(redirectTo, '/dashboard');
       router.push(target);
       router.refresh();
       toast('Signed in', 'success');

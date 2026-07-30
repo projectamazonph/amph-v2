@@ -23,7 +23,7 @@ export default async function SignUpPage({ searchParams }: PageProps) {
   const session = await getSession();
   if (session) {
     if (session.role === 'ADMIN') redirect('/admin');
-    redirect('/');
+    redirect('/dashboard');
   }
 
   const params = await searchParams;
@@ -31,7 +31,7 @@ export default async function SignUpPage({ searchParams }: PageProps) {
   const prefilledEmail = params.email ?? '';
   // C3: `next` is attacker-controlled query input — validate before it can
   // ever reach a redirect() or router.push().
-  const nextUrl = validateRedirectUrl(params.next);
+  const nextUrl = validateRedirectUrl(params.next, '/dashboard');
   const claimToken = params.claim ?? undefined;
 
   return (

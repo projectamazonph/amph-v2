@@ -193,7 +193,7 @@ export async function signUpFormAction(formData: FormData): Promise<void> {
   });
 
   if (result.success) {
-    redirect('/');
+    redirect('/dashboard');
   }
 
   // On failure, redirect back to signup with error query param
@@ -208,11 +208,11 @@ export async function signInFormAction(formData: FormData): Promise<void> {
   });
 
   if (result.success) {
-    // Admin goes to admin dashboard, others to home
+    // Admin goes to admin dashboard, others to the student dashboard
     if (result.data.role === 'ADMIN') {
       redirect('/admin');
     }
-    redirect('/');
+    redirect('/dashboard');
   }
 
   const error = result.success ? '' : encodeURIComponent(result.error);

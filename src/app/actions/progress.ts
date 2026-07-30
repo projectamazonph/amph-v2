@@ -53,7 +53,19 @@ export async function startLessonAction(
     };
   }
 
-  // Upsert LessonProgress as IN_PROGRESS
+  // Upsert LessonProgress as IN_PROGRESS — but never downgrade a lesson the
+  // student already completed just because they revisited it to re-read it.
+  const existing = await db.lessonProgress.findUnique({
+    where: {
+      userId_lessonId: { userId: user.id, lessonId: lesson.id },
+    },
+    select: { status: true },
+  });
+
+  if (existing?.status === ProgressStatus.COMPLETED) {
+    return { success: true, data: { status: ProgressStatus.COMPLETED } };
+  }
+
   await db.lessonProgress.upsert({
     where: {
       userId_lessonId: { userId: user.id, lessonId: lesson.id },

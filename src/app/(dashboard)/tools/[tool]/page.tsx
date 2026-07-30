@@ -39,7 +39,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
           {toolMeta.scenarios.map((scenario) => (
             <Card key={scenario.id} variant="interactive" padding="md">
               <Link
-                href={`/tools/${toolMeta.slug}/${scenario.slug}` as never}
+                href={`/tools/${toolMeta.slug}/${scenario.slug}`}
                 className={styles.toolLink}
               >
                 <CardHeader>

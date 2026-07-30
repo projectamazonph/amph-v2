@@ -17,7 +17,7 @@ interface SignUpFormProps {
 export function SignUpForm({
   error: initialError,
   prefilledEmail = '',
-  nextUrl = '/',
+  nextUrl = '/dashboard',
   claimToken,
 }: SignUpFormProps) {
   const router = useRouter();
@@ -43,7 +43,7 @@ export function SignUpForm({
     if (result.success) {
       // STORY-027: respect the `next` param so guest checkout returns to
       // /checkout/complete (now signed in → falls through to SuccessCard).
-      router.push(nextUrl || '/');
+      router.push(nextUrl || '/dashboard');
       router.refresh();
       toast('Account created', 'success');
     } else {
