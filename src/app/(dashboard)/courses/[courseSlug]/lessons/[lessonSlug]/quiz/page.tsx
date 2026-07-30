@@ -4,9 +4,9 @@ import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { Card, CardHeader, CardTitle, CardDescription, Badge } from '@/components/ui';
 import { Icon } from '@/components/ui/Icon';
-import { submitQuizAction } from '@/app/actions/progress';
 import { evaluateCourseAccess, listActivePricingTiers } from '@/lib/tier-gate';
 import { TierLock } from '@/components/dashboard/TierLock';
+import { QuizFormClient } from './QuizFormClient';
 import styles from './quiz.module.css';
 
 interface PageProps {
@@ -130,34 +130,19 @@ export default async function QuizPage({ params, searchParams }: PageProps) {
         </p>
       </header>
 
-      <form
-        action={
-          submitQuizAction
-            .bind(null, {
-              courseSlug,
-              lessonSlug,
-              answers: [],
-              timeSpentSeconds: 0,
-            }) as unknown as (formData: FormData) => Promise<void>
-        }
-      >
-        <QuizFormClient
-          courseSlug={courseSlug}
-          lessonSlug={lessonSlug}
-          questions={lesson.quiz.questions.map((q) => ({
-            id: q.id,
-            order: q.order,
-            question: q.question,
-            optionA: q.optionA,
-            optionB: q.optionB,
-            optionC: q.optionC,
-            optionD: q.optionD,
-          }))}
-        />
-      </form>
+      <QuizFormClient
+        courseSlug={courseSlug}
+        lessonSlug={lessonSlug}
+        questions={lesson.quiz.questions.map((q) => ({
+          id: q.id,
+          order: q.order,
+          question: q.question,
+          optionA: q.optionA,
+          optionB: q.optionB,
+          optionC: q.optionC,
+          optionD: q.optionD,
+        }))}
+      />
     </main>
   );
 }
-
-// Client component for the form
-import { QuizFormClient } from './QuizFormClient';
