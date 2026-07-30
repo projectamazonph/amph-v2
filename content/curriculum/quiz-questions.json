@@ -679,6 +679,73 @@
           "optionD": "It replaces the need for bid strategy adjustments",
           "correctAnswer": "B",
           "explanation": "Regular search term analysis is the single highest-ROI activity in PPC management. It lets you cut waste (irrelevant terms draining budget) and capture opportunity (converting terms you should bid on explicitly). This is the core loop: discover → triage → optimize → repeat."
+        },
+        {
+          "order": 7,
+          "question": "A search term has 3 clicks and 1 order, a 33% CVR. Why shouldn't you treat this as proof the term is a strong converter?",
+          "optionA": "3 clicks is too small a sample to trust; the true conversion rate could be very different once more data comes in",
+          "optionB": "33% CVR is mathematically impossible, so the data must be wrong",
+          "optionC": "You should always wait exactly 100 clicks before taking any action on any term",
+          "optionD": "Low click counts always mean the term is irrelevant",
+          "correctAnswer": "A",
+          "explanation": "A handful of clicks can produce an eye-catching CVR by pure chance. Confidence grows with volume: below 30 clicks your CVR estimate carries a wide margin of error, and it's much tighter above 100 clicks. A 33% CVR on 3 clicks is one lucky order, not a proven pattern yet."
+        },
+        {
+          "order": 8,
+          "question": "You rank #2 organically for a keyword your Sponsored Products ad also targets. A shopper who would have found you organically clicks the paid ad instead. What category does this fall into, and what should you check?",
+          "optionA": "Winner — any click that converts should be harvested and bid up further",
+          "optionB": "Cannibalizer — check whether the ad click is incremental or just paying for traffic you'd have gotten for free",
+          "optionC": "Irrelevant — negative the term immediately",
+          "optionD": "Surprise — investigate it as a new keyword opportunity",
+          "correctAnswer": "B",
+          "explanation": "This is the Cannibalizer category: you may be paying for a click you'd have earned organically anyway. The judgment call is whether the ad is bringing in incremental shoppers (good) or just displacing free organic clicks (wasted spend) — worth reducing bids on if you rank highly, and worth keeping if your organic position is weak."
+        }
+      ]
+    },
+    {
+      "moduleNumber": 8,
+      "title": "Competitive Intelligence Knowledge Check",
+      "description": "Test your understanding of Brand Analytics, share of voice, and competitor benchmarking.",
+      "questions": [
+        {
+          "order": 1,
+          "question": "What does Amazon Brand Analytics' Search Frequency Rank actually tell you about a search term?",
+          "optionA": "The exact number of monthly searches for that term",
+          "optionB": "A relative ranking against every other search term in the period — rank 1 is the most-searched, but the gap between ranks isn't a fixed size",
+          "optionC": "How many advertisers are currently bidding on that term",
+          "optionD": "The term's average CPC across the category",
+          "correctAnswer": "B",
+          "explanation": "Search Frequency Rank is relative, not absolute. Rank 1 is the single most-searched term in the period, and higher numbers mean less popular, but Amazon doesn't disclose actual search counts, and the gap between rank 5 and 6 isn't the same size as between rank 100 and 101."
+        },
+        {
+          "order": 2,
+          "question": "Per this lesson, what does a seller need beyond Brand Registry enrollment to actually access Amazon Brand Analytics?",
+          "optionA": "Nothing more — Brand Registry enrollment alone is sufficient",
+          "optionB": "An active Professional selling account and Brand Representative access assigned for the enrolled brand",
+          "optionC": "At least $10,000 in monthly ad spend",
+          "optionD": "A minimum of 100 product reviews",
+          "correctAnswer": "B",
+          "explanation": "Brand Registry enrollment alone isn't enough to see Brand Analytics. The account also needs an active Professional selling account and Brand Representative access assigned for that brand — confirm both before promising a client this data."
+        },
+        {
+          "order": 3,
+          "question": "Share of voice measures which of the following?",
+          "optionA": "How much a brand spends on advertising in total dollars",
+          "optionB": "A brand's visibility relative to competitors for a given keyword or category, not an absolute spend figure",
+          "optionC": "The number of five-star reviews a product has",
+          "optionD": "How many Sponsored Brands campaigns an account is running",
+          "correctAnswer": "B",
+          "explanation": "Share of voice is a relative visibility measure — how often a brand shows up for a keyword or category compared to competitors — not a dollar figure or a review count."
+        },
+        {
+          "order": 4,
+          "question": "A gap analysis dimension shows competitors averaging 2.5 (Strong/Medium) and you averaging 1.0 (Weak). Using the matrix's scoring rule (Opportunity = competitors' average at or below 1.5 and yours at or above 2; Vulnerability = competitors' average at or above 2 and yours at or below 1.5), what does this dimension represent?",
+          "optionA": "Opportunity — double down since you're clearly ahead of competitors here",
+          "optionB": "Vulnerability — competitors are strong here and you're weak, so this needs shoring up",
+          "optionC": "Neither — this dimension needs no action",
+          "optionD": "Not enough information — the four-point scale doesn't apply to this dimension",
+          "correctAnswer": "B",
+          "explanation": "This clears the vulnerability rule exactly: competitors' average (2.5) is at or above 2, and your average (1.0) is at or below 1.5. That combination means competitors are winning where you're weak — a gap to shore up, not one to leave for later."
         }
       ]
     }
