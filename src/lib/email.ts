@@ -19,14 +19,14 @@ import { logger } from './logger';
 import { formatDateTime, formatPhp } from './format';
 import { BRAND_NAME } from './brand';
 
-import AccountInviteEmail from '@/emails/account-invite';
-import WelcomeEmail from '@/emails/welcome';
-import LiveClassConfirmationEmail from '@/emails/live-class-confirmation';
-import CertificateIssuedEmail from '@/emails/certificate-issued';
-import PaymentReceiptEmail from '@/emails/payment-receipt';
-import RefundStatusEmail, { type RefundStatusKind } from '@/emails/refund-status';
-import PaymentFailedEmail from '@/emails/payment-failed';
-import PasswordResetEmail from '@/emails/password-reset';
+import AccountInviteEmail from '@/emails/AccountInviteEmail';
+import WelcomeEmail from '@/emails/WelcomeEmail';
+import LiveClassConfirmationEmail from '@/emails/LiveClassConfirmationEmail';
+import CertificateIssuedEmail from '@/emails/CertificateIssuedEmail';
+import PaymentReceiptEmail from '@/emails/PaymentReceiptEmail';
+import RefundStatusEmail, { type RefundStatusKind } from '@/emails/RefundStatusEmail';
+import PaymentFailedEmail from '@/emails/PaymentFailedEmail';
+import PasswordResetEmail from '@/emails/PasswordResetEmail';
 
 // Lazy singleton: the Resend constructor throws when the API key is unset,
 // so constructing at module scope would break `next build` (this module is
@@ -40,6 +40,13 @@ function getResend(): Resend {
 const FROM = process.env.RESEND_FROM_EMAIL ?? 'noreply@projectamazonph.online';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
 
+/** Masks a recipient address for logs, e.g. "st***@example.com". Never log the raw address. */
+function maskEmail(email: string): string {
+  const [local, domain] = email.split('@');
+  if (!local || !domain) return '[redacted]';
+  return `${local.slice(0, 2)}***@${domain}`;
+}
+
 async function sendEmail({
   to,
   subject,
@@ -49,17 +56,18 @@ async function sendEmail({
   subject: string;
   react: React.ReactElement;
 }): Promise<void> {
+  const logCtx = { to: maskEmail(to), subject };
   if (!process.env.RESEND_API_KEY) {
-    logger.info({ to, subject }, '[email disabled] RESEND_API_KEY not set, skipped');
+    logger.info(logCtx, '[email disabled] RESEND_API_KEY not set, skipped');
     return;
   }
   try {
     const { error } = await getResend().emails.send({ from: FROM, to, subject, react });
     if (error) {
-      logger.error({ to, subject, err: error }, '[email] send failed');
+      logger.error({ ...logCtx, err: error }, '[email] send failed');
     }
   } catch (err) {
-    logger.error({ to, subject, err }, '[email] unexpected error');
+    logger.error({ ...logCtx, err }, '[email] unexpected error');
   }
 }
 
@@ -189,7 +197,7 @@ export async function sendCertificateIssuedEmail({
 }
 
 // ---------------------------------------------------------------------------
-// Payment receipt (not wired to a live trigger, see src/emails/payment-receipt.tsx)
+// Payment receipt (not wired to a live trigger, see src/emails/PaymentReceiptEmail.tsx)
 // ---------------------------------------------------------------------------
 
 interface PaymentReceiptEmailArgs {
@@ -228,7 +236,7 @@ export async function sendPaymentReceiptEmail({
 }
 
 // ---------------------------------------------------------------------------
-// Refund status (not wired to a live trigger, see src/emails/refund-status.tsx)
+// Refund status (not wired to a live trigger, see src/emails/RefundStatusEmail.tsx)
 // ---------------------------------------------------------------------------
 
 interface RefundStatusEmailArgs {
@@ -271,7 +279,7 @@ export async function sendRefundStatusEmail({
 }
 
 // ---------------------------------------------------------------------------
-// Payment failed (not wired to a live trigger, see src/emails/payment-failed.tsx)
+// Payment failed (not wired to a live trigger, see src/emails/PaymentFailedEmail.tsx)
 // ---------------------------------------------------------------------------
 
 interface PaymentFailedEmailArgs {
@@ -300,7 +308,7 @@ export async function sendPaymentFailedEmail({
 
 // ---------------------------------------------------------------------------
 // Password reset (template only, no reset-token flow exists yet, see
-// src/emails/password-reset.tsx for why this isn't wired up).
+// src/emails/PasswordResetEmail.tsx for why this isn't wired up).
 // ---------------------------------------------------------------------------
 
 interface PasswordResetEmailArgs {

@@ -64,9 +64,18 @@ describe('email.ts', () => {
       expect(MockResend).not.toHaveBeenCalled();
       expect(mockSend).not.toHaveBeenCalled();
       expect(mockLoggerInfo).toHaveBeenCalledWith(
-        expect.objectContaining({ to: 'student@example.com' }),
+        expect.objectContaining({ to: 'st***@example.com' }),
         expect.stringContaining('skipped'),
       );
+    });
+
+    it('never logs the raw recipient address', async () => {
+      const { sendWelcomeEmail } = await import('@/lib/email');
+      await sendWelcomeEmail({ to: 'student@example.com', studentName: 'Ana' });
+
+      const [logCtx] = mockLoggerInfo.mock.calls[0] ?? [];
+      expect(logCtx.to).not.toBe('student@example.com');
+      expect(logCtx.to).toBe('st***@example.com');
     });
   });
 
@@ -203,7 +212,7 @@ describe('email.ts', () => {
         sendWelcomeEmail({ to: 'student@example.com', studentName: 'Ana' }),
       ).resolves.toBeUndefined();
       expect(mockLoggerError).toHaveBeenCalledWith(
-        expect.objectContaining({ to: 'student@example.com' }),
+        expect.objectContaining({ to: 'st***@example.com' }),
         expect.stringContaining('send failed'),
       );
     });
@@ -216,7 +225,7 @@ describe('email.ts', () => {
         sendWelcomeEmail({ to: 'student@example.com', studentName: 'Ana' }),
       ).resolves.toBeUndefined();
       expect(mockLoggerError).toHaveBeenCalledWith(
-        expect.objectContaining({ to: 'student@example.com' }),
+        expect.objectContaining({ to: 'st***@example.com' }),
         expect.stringContaining('unexpected error'),
       );
     });
