@@ -6,6 +6,8 @@ const mockDb = vi.hoisted(() => {
     user: { findUnique: fn(), create: fn() },
     pricingTier: { findUnique: fn() },
     enrollment: { findMany: fn(), createMany: fn() },
+    payment: { create: fn() },
+    auditLog: { create: fn() },
     $transaction: vi.fn(),
   };
 });
@@ -14,6 +16,7 @@ vi.mock('@/lib/db', () => ({ db: mockDb }));
 
 const mockEnums = vi.hoisted(() => ({
   EnrollmentStatus: { ACTIVE: 'ACTIVE' },
+  PaymentStatus: { COMPLETED: 'COMPLETED' },
 }));
 vi.mock('@/lib/enums', () => mockEnums);
 
@@ -174,5 +177,95 @@ describe('grantManualEnrollment', () => {
 
     expect(result.enrolledCourseIds).toEqual([]);
     expect(mockDb.enrollment.createMany).not.toHaveBeenCalled();
+  });
+
+  it('does not create a Payment or AuditLog row when payment/audit are omitted', async () => {
+    mockDb.pricingTier.findUnique.mockResolvedValue(tier);
+    mockDb.user.findUnique.mockResolvedValue({ id: 'user-1' });
+    mockDb.enrollment.findMany.mockResolvedValue([]);
+    mockDb.enrollment.createMany.mockResolvedValue({ count: 2 });
+
+    const result = await grantManualEnrollment({
+      email: 'student@email.com',
+      pricingTierId: 'tier-1',
+    });
+
+    expect(result.paymentRecorded).toBe(false);
+    expect(mockDb.payment.create).not.toHaveBeenCalled();
+    expect(mockDb.auditLog.create).not.toHaveBeenCalled();
+  });
+
+  it('records a completed Payment and an AuditLog row in the same transaction', async () => {
+    mockDb.pricingTier.findUnique.mockResolvedValue(tier);
+    mockDb.user.findUnique.mockResolvedValue({ id: 'user-1' });
+    mockDb.enrollment.findMany.mockResolvedValue([]);
+    mockDb.enrollment.createMany.mockResolvedValue({ count: 2 });
+    mockDb.payment.create.mockResolvedValue({ id: 'payment-1' });
+    mockDb.auditLog.create.mockResolvedValue({ id: 'audit-1' });
+
+    const result = await grantManualEnrollment({
+      email: 'student@email.com',
+      pricingTierId: 'tier-1',
+      payment: {
+        method: 'GCASH',
+        amountPhp: 299900,
+        reference: '  ref-123  ',
+      },
+      audit: {
+        actorId: 'admin-1',
+        ipAddress: '127.0.0.1',
+        userAgent: 'vitest',
+      },
+    });
+
+    expect(result.paymentRecorded).toBe(true);
+
+    const paymentArg = mockDb.payment.create.mock.calls[0]![0]!;
+    expect(paymentArg.data).toMatchObject({
+      userId: 'user-1',
+      pricingTierId: 'tier-1',
+      amountPhp: 299900,
+      netAmountPhp: 299900,
+      method: 'GCASH',
+      status: 'COMPLETED',
+      metadata: 'ref-123',
+    });
+    expect(paymentArg.data.paidAt).toBeInstanceOf(Date);
+
+    const auditArg = mockDb.auditLog.create.mock.calls[0]![0]!;
+    expect(auditArg.data).toMatchObject({
+      actorId: 'admin-1',
+      action: 'MANUAL_ENROLL',
+      entityType: 'User',
+      entityId: 'user-1',
+      ipAddress: '127.0.0.1',
+      userAgent: 'vitest',
+    });
+    expect(JSON.parse(auditArg.data.metadata)).toEqual({
+      tier: 'PPC Foundations',
+      paymentMethod: 'GCASH',
+      amountPhp: 299900,
+      reference: 'ref-123',
+    });
+  });
+
+  it('writes an AuditLog row with null metadata when no payment is recorded', async () => {
+    mockDb.pricingTier.findUnique.mockResolvedValue(tier);
+    mockDb.user.findUnique.mockResolvedValue({ id: 'user-1' });
+    mockDb.enrollment.findMany.mockResolvedValue([]);
+    mockDb.enrollment.createMany.mockResolvedValue({ count: 2 });
+    mockDb.auditLog.create.mockResolvedValue({ id: 'audit-1' });
+
+    await grantManualEnrollment({
+      email: 'student@email.com',
+      pricingTierId: 'tier-1',
+      audit: { actorId: 'admin-1' },
+    });
+
+    expect(mockDb.payment.create).not.toHaveBeenCalled();
+    const auditArg = mockDb.auditLog.create.mock.calls[0]![0]!;
+    expect(auditArg.data.metadata).toBeNull();
+    expect(auditArg.data.ipAddress).toBeNull();
+    expect(auditArg.data.userAgent).toBeNull();
   });
 });
