@@ -90,7 +90,7 @@ export function EmailShell({
             {children}
           </Section>
           <Text style={{ color: colors.textTertiary, fontSize: 12, textAlign: 'center', margin: '20px 0 0' }}>
-            {`${BRAND_NAME} · projectamazonph.com`}
+            {`${BRAND_NAME} · projectamazonph.online`}
           </Text>
         </Container>
       </Body>
