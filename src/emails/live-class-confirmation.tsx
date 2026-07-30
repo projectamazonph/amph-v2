@@ -32,7 +32,7 @@ export default function LiveClassConfirmationEmail({
 }: LiveClassConfirmationEmailProps) {
   return (
     <EmailShell
-      previewText={`You're registered for ${classTitle} — ${date}`}
+      previewText={`You're registered for ${classTitle} (${date})`}
       eyebrow="Project Amazon PH Academy · Live Class"
     >
       <EmailHeading>{classTitle}</EmailHeading>

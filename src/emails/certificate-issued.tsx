@@ -15,7 +15,7 @@ export default function CertificateIssuedEmail({
   verifyUrl,
 }: CertificateIssuedEmailProps) {
   return (
-    <EmailShell previewText={`Certificate earned — ${courseTitle}`}>
+    <EmailShell previewText={`Certificate earned: ${courseTitle}`}>
       <EmailHeading>Congratulations, {studentName}!</EmailHeading>
       <EmailParagraph>
         You&apos;ve completed <strong>{courseTitle}</strong> and earned your

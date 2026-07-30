@@ -19,8 +19,8 @@ export interface PaymentReceiptEmailProps {
 
 /**
  * Receipt for a completed payment. Not wired to a live trigger in this build
- * — the launch stripped PayMongo, so no code currently creates `Payment`
- * rows. Ready to call from wherever payment confirmation lands next.
+ * (the launch stripped PayMongo, so no code currently creates `Payment`
+ * rows). Ready to call from wherever payment confirmation lands next.
  */
 export default function PaymentReceiptEmail({
   studentName,
@@ -32,7 +32,7 @@ export default function PaymentReceiptEmail({
   receiptUrl,
 }: PaymentReceiptEmailProps) {
   return (
-    <EmailShell previewText={`Receipt for your ${tierName} payment — ${amount}`}>
+    <EmailShell previewText={`Receipt for your ${tierName} payment (${amount})`}>
       <EmailHeading>Payment received</EmailHeading>
       <EmailParagraph>
         Hi {studentName}, thanks for your payment. Here&apos;s your receipt.

@@ -13,7 +13,7 @@ export interface RefundStatusEmailProps {
 
 /**
  * Refund lifecycle notification (requested / approved / rejected). Not wired
- * to a live trigger in this build — refunds depend on the PayMongo flow that
+ * to a live trigger in this build, refunds depend on the PayMongo flow that
  * was stripped for the manual-enrollment launch. Ready to call from
  * `RefundRequest` status transitions when that flow returns.
  */
@@ -36,13 +36,13 @@ export default function RefundStatusEmail({
     status === 'approved' ? colors.success : status === 'rejected' ? colors.error : colors.accent;
 
   return (
-    <EmailShell previewText={`${heading} — ${tierName}`}>
+    <EmailShell previewText={`${heading}: ${tierName}`}>
       <EmailHeading color={headingColor}>{heading}</EmailHeading>
       <EmailParagraph>Hi {studentName},</EmailParagraph>
       {status === 'requested' && (
         <EmailParagraph>
           We received your refund request for your {tierName} enrollment (
-          {amount}). Our team reviews every request personally — you&apos;ll
+          {amount}). Our team reviews every request personally, you&apos;ll
           hear back within one business day.
         </EmailParagraph>
       )}

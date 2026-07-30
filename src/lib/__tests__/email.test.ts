@@ -1,9 +1,26 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { ReactElement } from 'react';
 
+interface SentMessage {
+  to: string;
+  subject: string;
+  react: ReactElement;
+}
+
+/** The first argument of the first call to mockSend, typed and null-checked. */
+function firstSendArg(): SentMessage {
+  const call = mockSend.mock.calls[0];
+  if (!call) throw new Error('mockSend was not called');
+  return call[0] as SentMessage;
+}
+
+function props(element: ReactElement): Record<string, unknown> {
+  return element.props as Record<string, unknown>;
+}
+
 const { mockSend, MockResend } = vi.hoisted(() => {
   const mockSend = vi.fn();
-  // Must be a plain function, not an arrow function — `new Resend(...)` in
+  // Must be a plain function, not an arrow function: `new Resend(...)` in
   // email.ts invokes this as a constructor, and arrow functions can't be.
   const MockResend = vi.fn().mockImplementation(function () {
     return { emails: { send: mockSend } };
@@ -68,10 +85,10 @@ describe('email.ts', () => {
       });
 
       expect(mockSend).toHaveBeenCalledTimes(1);
-      const call = mockSend.mock.calls[0][0];
+      const call = firstSendArg();
       expect(call.to).toBe('guest@example.com');
       expect(call.subject).toContain('Claim your');
-      expect((call.react as ReactElement).props).toMatchObject({
+      expect(props(call.react)).toMatchObject({
         tierName: 'PPC Foundations',
         claimUrl: 'https://amph.test/auth/signup?claim=abc',
       });
@@ -81,9 +98,9 @@ describe('email.ts', () => {
       const { sendWelcomeEmail } = await import('@/lib/email');
       await sendWelcomeEmail({ to: 'student@example.com', studentName: 'Ana' });
 
-      const call = mockSend.mock.calls[0][0];
+      const call = firstSendArg();
       expect(call.subject).toContain('Ana');
-      expect((call.react as ReactElement).props).toMatchObject({
+      expect(props(call.react)).toMatchObject({
         studentName: 'Ana',
         dashboardUrl: expect.stringContaining('/dashboard'),
       });
@@ -101,9 +118,9 @@ describe('email.ts', () => {
         meetingUrl: 'https://meet.example.com/xyz',
       });
 
-      const call = mockSend.mock.calls[0][0];
+      const call = firstSendArg();
       expect(call.subject).toBe("You're registered: Bid Optimization Deep Dive");
-      expect((call.react as ReactElement).props).toMatchObject({
+      expect(props(call.react)).toMatchObject({
         classTitle: 'Bid Optimization Deep Dive',
         instructorName: 'Ryan Dabao',
         durationMinutes: 60,
@@ -120,8 +137,8 @@ describe('email.ts', () => {
         verificationHash: 'hash-123',
       });
 
-      const call = mockSend.mock.calls[0][0];
-      expect((call.react as ReactElement).props.verifyUrl).toContain('/verify/hash-123');
+      const call = firstSendArg();
+      expect(props(call.react).verifyUrl).toContain('/verify/hash-123');
     });
 
     it('sendPaymentReceiptEmail formats centavos into pesos', async () => {
@@ -136,15 +153,15 @@ describe('email.ts', () => {
         receiptUrl: null,
       });
 
-      const call = mockSend.mock.calls[0][0];
-      expect((call.react as ReactElement).props.amount).toContain('2,999.00');
+      const call = firstSendArg();
+      expect(props(call.react).amount).toContain('2,999.00');
     });
 
     it.each([
       ['requested', 'Refund request received'],
       ['approved', 'is being processed'],
       ['rejected', 'not approved'],
-    ] as const)('sendRefundStatusEmail — %s status has the right subject', async (status, expectedSubjectPart) => {
+    ] as const)('sendRefundStatusEmail (%s status) has the right subject', async (status, expectedSubjectPart) => {
       const { sendRefundStatusEmail } = await import('@/lib/email');
       await sendRefundStatusEmail({
         to: 'student@example.com',
@@ -154,7 +171,7 @@ describe('email.ts', () => {
         status,
       });
 
-      const call = mockSend.mock.calls[0][0];
+      const call = firstSendArg();
       expect(call.subject).toContain(expectedSubjectPart);
     });
 
@@ -166,16 +183,16 @@ describe('email.ts', () => {
         tierName: 'PPC Foundations',
       });
 
-      const call = mockSend.mock.calls[0][0];
-      expect((call.react as ReactElement).props.retryUrl).toContain('/pricing');
+      const call = firstSendArg();
+      expect(props(call.react).retryUrl).toContain('/pricing');
     });
 
     it('sendPasswordResetEmail embeds the raw token in the reset URL', async () => {
       const { sendPasswordResetEmail } = await import('@/lib/email');
       await sendPasswordResetEmail({ to: 'student@example.com', resetToken: 'raw-token-abc' });
 
-      const call = mockSend.mock.calls[0][0];
-      expect((call.react as ReactElement).props.resetUrl).toContain('token=raw-token-abc');
+      const call = firstSendArg();
+      expect(props(call.react).resetUrl).toContain('token=raw-token-abc');
     });
 
     it('logs and swallows the error when Resend returns an error', async () => {

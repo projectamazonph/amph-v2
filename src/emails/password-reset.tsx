@@ -6,11 +6,11 @@ export interface PasswordResetEmailProps {
 }
 
 /**
- * Password-reset link. Template only — no reset-token flow exists yet
+ * Password-reset link. Template only, no reset-token flow exists yet
  * (there is no forgot-password action, token model, or reset page in this
  * build; see the sign-in note in src/app/actions/auth.ts about the prior
  * emailVerified lockout incident). Wire this up alongside that flow, not
- * before it — don't gate anything on delivery until send + verify both work.
+ * before it. Don't gate anything on delivery until send and verify both work.
  */
 export default function PasswordResetEmail({ resetUrl, expiresInMinutes }: PasswordResetEmailProps) {
   return (
@@ -22,8 +22,8 @@ export default function PasswordResetEmail({ resetUrl, expiresInMinutes }: Passw
       </EmailParagraph>
       <EmailButton href={resetUrl}>Reset password →</EmailButton>
       <EmailFootnote>
-        If you didn&apos;t request this, you can safely ignore this email —
-        your password won&apos;t change.
+        If you didn&apos;t request this, you can safely ignore this email.
+        Your password won&apos;t change.
       </EmailFootnote>
     </EmailShell>
   );

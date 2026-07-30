@@ -1,11 +1,11 @@
 /**
- * Email — transactional sending via Resend (ADR-007).
+ * Email: transactional sending via Resend (ADR-007).
  *
  * Best-effort: every send function logs and resolves on failure instead of
  * throwing, so a broken inbox or missing API key never breaks the calling
  * flow (enrollment, registration, certificate issuance, ...). When
  * RESEND_API_KEY is unset (e.g. local dev), sends no-op and log what would
- * have been sent — the same fallback behavior the stripped launch build used.
+ * have been sent. The same fallback behavior the stripped launch build used.
  *
  * Templates live in src/emails/*.tsx (React Email components, styled to the
  * "Field Manual" design system). This file only wires data → template → send.
@@ -50,7 +50,7 @@ async function sendEmail({
   react: React.ReactElement;
 }): Promise<void> {
   if (!process.env.RESEND_API_KEY) {
-    logger.info({ to, subject }, '[email disabled] RESEND_API_KEY not set — skipped');
+    logger.info({ to, subject }, '[email disabled] RESEND_API_KEY not set, skipped');
     return;
   }
   try {
@@ -76,7 +76,7 @@ interface AccountInviteEmailArgs {
 /**
  * Deliver the single-use link a newly-enrolled student uses to set a
  * password and claim their account. This is the only place the raw claim
- * token should be sent — never log it.
+ * token should be sent. Never log it.
  */
 export async function sendAccountInviteEmail({ to, tierName, claimUrl }: AccountInviteEmailArgs): Promise<void> {
   await sendEmail({
@@ -133,11 +133,13 @@ export async function sendLiveClassReminderEmail({
     year: 'numeric',
     month: 'long',
     day: 'numeric',
+    timeZone: 'Asia/Manila',
   }).format(scheduledAt);
   const time = new Intl.DateTimeFormat('en-PH', {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,
+    timeZone: 'Asia/Manila',
   }).format(scheduledAt);
 
   await sendEmail({
@@ -176,7 +178,7 @@ export async function sendCertificateIssuedEmail({
 }: CertificateIssuedEmailArgs): Promise<void> {
   await sendEmail({
     to,
-    subject: `Certificate earned — ${courseTitle}`,
+    subject: `Certificate earned: ${courseTitle}`,
     react: createElement(CertificateIssuedEmail, {
       studentName,
       courseTitle,
@@ -187,7 +189,7 @@ export async function sendCertificateIssuedEmail({
 }
 
 // ---------------------------------------------------------------------------
-// Payment receipt — not wired to a live trigger (see src/emails/payment-receipt.tsx)
+// Payment receipt (not wired to a live trigger, see src/emails/payment-receipt.tsx)
 // ---------------------------------------------------------------------------
 
 interface PaymentReceiptEmailArgs {
@@ -212,7 +214,7 @@ export async function sendPaymentReceiptEmail({
   const amount = formatPhp(amountPhp);
   await sendEmail({
     to,
-    subject: `Receipt for your ${tierName} payment — ${amount}`,
+    subject: `Receipt for your ${tierName} payment (${amount})`,
     react: createElement(PaymentReceiptEmail, {
       studentName,
       tierName,
@@ -226,7 +228,7 @@ export async function sendPaymentReceiptEmail({
 }
 
 // ---------------------------------------------------------------------------
-// Refund status — not wired to a live trigger (see src/emails/refund-status.tsx)
+// Refund status (not wired to a live trigger, see src/emails/refund-status.tsx)
 // ---------------------------------------------------------------------------
 
 interface RefundStatusEmailArgs {
@@ -249,7 +251,7 @@ export async function sendRefundStatusEmail({
   const amount = formatPhp(amountPhp);
   const subject =
     status === 'requested'
-      ? `Refund request received — ${tierName}`
+      ? `Refund request received: ${tierName}`
       : status === 'approved'
         ? `Your refund of ${amount} is being processed`
         : `Your refund request was not approved`;
@@ -269,7 +271,7 @@ export async function sendRefundStatusEmail({
 }
 
 // ---------------------------------------------------------------------------
-// Payment failed — not wired to a live trigger (see src/emails/payment-failed.tsx)
+// Payment failed (not wired to a live trigger, see src/emails/payment-failed.tsx)
 // ---------------------------------------------------------------------------
 
 interface PaymentFailedEmailArgs {
@@ -287,7 +289,7 @@ export async function sendPaymentFailedEmail({
 }: PaymentFailedEmailArgs): Promise<void> {
   await sendEmail({
     to,
-    subject: `Your payment didn't go through — ${tierName}`,
+    subject: `Your payment didn't go through: ${tierName}`,
     react: createElement(PaymentFailedEmail, {
       studentName,
       tierName,
@@ -297,7 +299,7 @@ export async function sendPaymentFailedEmail({
 }
 
 // ---------------------------------------------------------------------------
-// Password reset — template only, no reset-token flow exists yet (see
+// Password reset (template only, no reset-token flow exists yet, see
 // src/emails/password-reset.tsx for why this isn't wired up).
 // ---------------------------------------------------------------------------
 

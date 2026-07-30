@@ -8,7 +8,7 @@ export interface WelcomeEmailProps {
 /** Sent right after a student's account becomes active (fresh signup or claimed guest account). */
 export default function WelcomeEmail({ studentName, dashboardUrl }: WelcomeEmailProps) {
   return (
-    <EmailShell previewText={`Welcome, ${studentName} — your account is ready`}>
+    <EmailShell previewText={`Welcome, ${studentName}. Your account is ready`}>
       <EmailHeading>Welcome, {studentName}!</EmailHeading>
       <EmailParagraph>
         Your account is active. Head to your dashboard to start your first

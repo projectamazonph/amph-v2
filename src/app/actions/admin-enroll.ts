@@ -1,7 +1,7 @@
 'use server';
 
 /**
- * Manual enrollment action — stripped launch build.
+ * Manual enrollment action (stripped launch build).
  *
  * Admin enters a student email + pricing tier; we create/find the user and
  * enroll them in every course on the tier. For brand-new students the
@@ -26,7 +26,7 @@ const manualEnrollSchema = z.object({
 
 export interface ManualEnrollActionData {
   isNewUser: boolean;
-  /** Full signup link for new accounts — show once, admin sends it manually. */
+  /** Full signup link for new accounts, shown once, admin sends it manually. */
   claimUrl?: string;
   tierName: string;
   enrolledCount: number;
@@ -70,7 +70,7 @@ export async function manualEnrollAction(
       url.searchParams.set('next', '/dashboard');
       claimUrl = url.toString();
 
-      // Best-effort — errors are logged, never thrown. The claimUrl above is
+      // Best-effort: errors are logged, never thrown. The claimUrl above is
       // shown to the admin regardless, as a manual-send backup.
       sendAccountInviteEmail({
         to: parsed.data.email,
