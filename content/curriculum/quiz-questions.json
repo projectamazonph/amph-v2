@@ -106,7 +106,7 @@
           "optionC": "They measure the same thing — TACoS is just the newer name",
           "optionD": "TACoS measures click cost while ACoS measures revenue",
           "correctAnswer": "A",
-          "explanation": "TACoS = Ad Spend / Total Revenue (organic + ads), while ACoS = Ad Spend / Ad Revenue only. TACoS gives you a holistic view of how ads impact your total business, not just the direct ad-attributed revenue."
+          "explanation": "TACoS = Ad Spend / Total Revenue (organic + ads), while ACoS = Ad Spend / Ad Revenue only. TACoS shows how ads impact your whole business, not just the direct ad-attributed revenue."
         },
         {
           "order": 5,
@@ -147,6 +147,46 @@
           "optionD": "CTR only affects ad placement, not CPC",
           "correctAnswer": "B",
           "explanation": "Amazon's algorithm uses CTR as a quality signal. Higher CTR indicates relevance, which can lead to better placements at lower costs, creating a virtuous cycle of better performance."
+        },
+        {
+          "order": 9,
+          "question": "A campaign has a strong 3.2% CTR but only a 1.5% CVR, and ACoS is well above margin. What's the most defensible first action?",
+          "optionA": "Lower the bid immediately to cut spend",
+          "optionB": "Pull the search-term report to confirm relevance, then inspect the listing",
+          "optionC": "Pause the keyword since it clearly isn't working",
+          "optionD": "Raise the bid to get more data faster",
+          "correctAnswer": "B",
+          "explanation": "High CTR with low CVR usually points to a listing problem once you've confirmed the traffic is relevant, not a targeting or bid problem. Cutting the bid or pausing the keyword first risks losing traffic that would convert if the listing were fixed."
+        },
+        {
+          "order": 10,
+          "question": "A campaign launched 8 days ago is running a 65% ACoS on a product with a 35% margin. What's the most useful next question?",
+          "optionA": "Is this campaign a failure that should be paused?",
+          "optionB": "Is ACoS trending down week over week as the campaign gathers data?",
+          "optionC": "Should the bid be doubled to win more auctions faster?",
+          "optionD": "Is 65% ACoS acceptable forever since it's a new product?",
+          "correctAnswer": "B",
+          "explanation": "New campaigns often run high ACoS while they build search-term data and reviews. The useful question isn't whether today's number is high, it's whether the trend is moving toward break-even. Judge launch campaigns on trajectory, not one day's number."
+        },
+        {
+          "order": 11,
+          "question": "TACoS has risen from 15% to 22% over the past month while ACoS stayed flat. What should you check before telling the client organic sales are falling?",
+          "optionA": "Nothing — a rising TACoS always means organic sales are falling",
+          "optionB": "The actual ad-sales and organic-sales split behind the total",
+          "optionC": "Whether the client's return policy changed",
+          "optionD": "The campaign's placement adjustments only",
+          "correctAnswer": "B",
+          "explanation": "A rising TACoS with flat ACoS can come from falling organic sales, but also from total sales staying flat while ad spend grows, or a seasonal dip. Pull the ad-sales and organic-sales split before naming a cause."
+        },
+        {
+          "order": 12,
+          "question": "Amazon's suggested bid range for a keyword is $0.90 to $1.30. Your calculated maximum CPC for the target ACoS is $0.60. What should you do?",
+          "optionA": "Bid within Amazon's suggested range since Amazon knows the auction best",
+          "optionB": "Treat the suggested range as a signal to compare against your maximum, and bid at or below what your numbers support",
+          "optionC": "Split the difference between the suggested range and your maximum",
+          "optionD": "Ignore your maximum CPC calculation since Amazon's suggestion is more current",
+          "correctAnswer": "B",
+          "explanation": "Amazon's suggested bid reflects what tends to win the auction, not what your margin can afford. When the suggested range sits above your maximum CPC, hold your bid near your own ceiling and investigate targeting or listing fixes instead of chasing the suggestion."
         }
       ]
     },
