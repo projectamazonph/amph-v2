@@ -588,10 +588,30 @@
           "question": "Your keyword has a CPC of $2.50, CVR of 8%, and your product price is $30 with 30% profit margin. What is your approximate ACoS?",
           "optionA": "8.3%",
           "optionB": "62.5%",
-          "optionC": "1042%",
+          "optionC": "104.2%",
           "optionD": "42.7%",
-          "correctAnswer": "B",
+          "correctAnswer": "C",
           "explanation": "Cost per order = CPC / CVR = $2.50 / 0.08 = $31.25. ACoS = Ad Spend / Ad Revenue = $31.25 / $30 = 104.2%. Since this exceeds 100%, you're paying more per order than the product price — this keyword is extremely unprofitable."
+        },
+        {
+          "order": 6,
+          "question": "A $1.00 base bid uses Dynamic Up and Down at its maximum +100% increase, stacked with a +900% top-of-search placement adjustment. What's the maximum possible effective bid at top of search?",
+          "optionA": "$1.00, since placement adjustments replace the dynamic increase rather than stacking with it",
+          "optionB": "$10.00, from the placement adjustment alone",
+          "optionC": "$20.00, since the two multipliers stack: $1.00 × 2.0 × 10.0",
+          "optionD": "$2.00, from the dynamic increase alone",
+          "correctAnswer": "C",
+          "explanation": "Dynamic bid adjustments and placement adjustments stack multiplicatively, not additively. At their combined maximum, a $1.00 base bid can become $1.00 × 2.0 (dynamic) × 10.0 (placement) = $20.00, a 20x multiplier that catches advertisers who only account for one of the two."
+        },
+        {
+          "order": 7,
+          "question": "A keyword's market CPC range sits entirely above your calculated max CPC for the target ACoS. What are your real options?",
+          "optionA": "Bid above your max CPC anyway, since high competition means the keyword must be worth it",
+          "optionB": "Accept a higher ACoS, improve CVR through listing work, or walk away from the keyword",
+          "optionC": "Always walk away — there's never a reason to bid above your calculated max CPC",
+          "optionD": "Switch to Dynamic Up and Down, which removes the ceiling entirely",
+          "correctAnswer": "B",
+          "explanation": "Good bidding is as much about walking away as picking a number. When the market won't let you win profitably at your target ACoS, the real choices are accepting a higher ACoS (sometimes defensible, like during a launch), improving conversion rate so the same CPC supports a lower ACoS, or not bidding on that keyword at all — not bidding blind above your ceiling."
         }
       ]
     },
