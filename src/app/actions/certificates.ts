@@ -18,6 +18,7 @@ import { db } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
 import { createSafeAction } from '@/lib/validation';
 import { evaluateCourseAccess } from '@/lib/tier-gate';
+import { sendCertificateIssuedEmail } from '@/lib/email';
 import {
   issueCertificate,
   getCertificateByVerificationHash,
@@ -59,6 +60,15 @@ export const issueCertificateAction = createSafeAction<
     throw new Error(
       `Course not complete (${summary.completedLessons}/${summary.totalLessons} lessons). Finish every lesson first.`,
     );
+  }
+
+  if (!issued.alreadyExisted) {
+    sendCertificateIssuedEmail({
+      to: user.email,
+      studentName: user.name ?? 'there',
+      courseTitle: course.title,
+      verificationHash: issued.verificationHash,
+    }).catch(() => {});
   }
 
   return {
