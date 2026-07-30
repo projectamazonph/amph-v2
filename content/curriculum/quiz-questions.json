@@ -452,6 +452,93 @@
       ]
     },
     {
+      "moduleNumber": 5,
+      "title": "Portfolio Strategy Knowledge Check",
+      "description": "Test your understanding of campaign portfolios, budget pacing, and seasonal strategy.",
+      "questions": [
+        {
+          "order": 1,
+          "question": "At roughly what campaign count does it make sense to move from managing campaigns individually to grouping them into portfolios?",
+          "optionA": "2-3 campaigns",
+          "optionB": "10 or more campaigns",
+          "optionC": "100 or more campaigns",
+          "optionD": "Never — always manage every campaign individually",
+          "correctAnswer": "B",
+          "explanation": "Below roughly 10 campaigns, managing each one individually is still practical. Past that point, shared budgeting and consolidated reporting through portfolios save real time."
+        },
+        {
+          "order": 2,
+          "question": "A portfolio has a ₱60,000 monthly budget. Campaigns inside it have spent ₱57,000 combined with a few days left in the month. What happens once the portfolio's ₱60,000 is fully spent?",
+          "optionA": "Only the highest-spending campaign inside the portfolio pauses",
+          "optionB": "Every campaign inside the portfolio stops serving for the rest of the period, regardless of each one's own remaining budget",
+          "optionC": "The portfolio automatically raises its own budget to keep campaigns running",
+          "optionD": "Nothing — portfolio budgets are informational only and don't cap spend",
+          "correctAnswer": "B",
+          "explanation": "A portfolio budget is a spend cap for the whole group over the period. Once it's exhausted, every campaign inside stops serving, even one that still had room left on its own individual budget."
+        },
+        {
+          "order": 3,
+          "question": "Do negative keywords and bid adjustments apply across every campaign in a portfolio automatically?",
+          "optionA": "Yes — portfolios manage negatives and bids for every campaign inside them",
+          "optionB": "No — negatives and bid adjustments are campaign-level controls, so each campaign in a portfolio still needs its own",
+          "optionC": "Only bids are shared across the portfolio, not negatives",
+          "optionD": "Only negatives are shared across the portfolio, not bids",
+          "correctAnswer": "B",
+          "explanation": "Portfolios group campaigns for shared budgeting and reporting only. Negative keywords and bid adjustments stay campaign-level, so a new campaign added to a portfolio still needs its own negative list built or copied over."
+        },
+        {
+          "order": 4,
+          "question": "A campaign with a ₱1,500 daily budget has spent 80% of it by 11AM, three days running. What does this pattern indicate, and what's the fix?",
+          "optionA": "Normal pacing — no action needed",
+          "optionB": "Budget is too low for demand; raise the daily budget",
+          "optionC": "Budget is too high for demand; lower it",
+          "optionD": "The campaign should be paused immediately",
+          "correctAnswer": "B",
+          "explanation": "A good pacing target is 80-90% of the daily budget spent by end of day. Hitting 80% by 11AM repeatedly means the campaign is burning through budget in a few hours and going dark for the rest of the day — a sign to raise the budget, not a curiosity to ignore."
+        },
+        {
+          "order": 5,
+          "question": "Over what period is Amazon's stated daily budget actually averaged, and what does that mean for a single day's spend?",
+          "optionA": "Averaged over the calendar month; a single day can legitimately spend above the daily budget, up to an account-set over-delivery cap",
+          "optionB": "Averaged over a single week only",
+          "optionC": "It's a hard per-day cap that can never be exceeded",
+          "optionD": "Averaged over the product's entire lifetime on Amazon",
+          "correctAnswer": "A",
+          "explanation": "The daily budget is averaged over the calendar month, and Amazon allows a single high-traffic day to spend above that average, capped at either 25% or 100% over depending on the account's setting, as long as the month's total doesn't exceed daily budget times days in the month."
+        },
+        {
+          "order": 6,
+          "question": "ACoS rises from 20% to 32% during a seasonal push while margin stays flat and ad spend grows substantially. What should decide whether this is actually a problem?",
+          "optionA": "ACoS alone — any increase is a red flag that should be reversed",
+          "optionB": "Whether profit after ad spend (sales times margin, minus ad spend) still increases despite the higher ACoS",
+          "optionC": "Whether the client feels nervous about the number",
+          "optionD": "The absolute peso size of the ad spend increase, regardless of sales",
+          "correctAnswer": "B",
+          "explanation": "A higher ACoS during a seasonal push is expected and can still mean more money for the client, as long as the sales-volume increase outpaces the efficiency drop. Profit after ad spend is the number that actually answers whether the trade-off is worth it, not ACoS on its own."
+        },
+        {
+          "order": 7,
+          "question": "Per this module's seasonal calendar, when should Q4 (Christmas) PPC preparation start?",
+          "optionA": "October 1, when Q4 officially begins",
+          "optionB": "August, roughly two months ahead of the peak spending window",
+          "optionC": "The day after Black Friday",
+          "optionD": "Whenever the client happens to remember to ask",
+          "correctAnswer": "B",
+          "explanation": "Christmas prep starts in August: researching seasonal keywords, launching discovery campaigns, and testing seasonal messaging well before the November-December peak window."
+        },
+        {
+          "order": 8,
+          "question": "A seasonal profit-after-ad-spend calculation assumes margin stays flat between a normal month and a promotional month. What should you check before trusting that calculation?",
+          "optionA": "Nothing — margin never changes seasonally",
+          "optionB": "Whether the seller is running discounts or lower prices during the promotional push, which would lower the actual margin used in the calculation",
+          "optionC": "Whether the client has approved the calculation in writing",
+          "optionD": "Whether ACoS stays below 50% throughout the season",
+          "correctAnswer": "B",
+          "explanation": "Sellers often discount or run promotions during peak season, which lowers the actual margin. A profit-after-ad-spend projection built on a flat margin assumption needs to be redone with the real promotional margin, not treated as guaranteed."
+        }
+      ]
+    },
+    {
       "moduleNumber": 6,
       "title": "Bidding Lab Knowledge Check",
       "description": "Verify your understanding of bid strategies, placement adjustments, and how to optimize bids for profitability.",
