@@ -4,13 +4,13 @@
  *
  * Source: content/curriculum in this repository:
  *   - content/curriculum/modules (9 module directories, 31 MDX lesson files)
- *   - content/curriculum/quiz-questions.json (8 quizzes, ~40 questions)
+ *   - content/curriculum/quiz-questions.json (9 quizzes, one per module, ~55 questions)
  *
  * Targets:
  *   Course x2      "PPC Foundations" (modules 0-4), "Accelerated Mastery" (modules 5-8)
  *   Module x9      One per AMPH module (0-onboarding through 8-competitive)
  *   Lesson x31     One per MDX file
- *   Quiz x8        One per quiz in the JSON
+ *   Quiz x9        One per quiz in the JSON
  *   QuizQuestion   For each question in each quiz
  *
  * NOTE: this used to be a single course ("amph-foundations") tied to one
