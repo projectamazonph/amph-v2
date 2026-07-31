@@ -8,6 +8,7 @@
  */
 
 import 'server-only';
+import { headers } from 'next/headers';
 
 const buckets = new Map<string, number[]>();
 
@@ -43,6 +44,45 @@ export function rateLimit(key: string, limit = 5, windowMs = 60_000): RateLimitR
     for (const [k, v] of buckets) {
       if (v.every((t) => t <= cutoff)) buckets.delete(k);
     }
+  }
+
+  return { allowed: true, retryAfterSeconds: 0 };
+}
+
+/**
+ * Dual rate-limiter: limits by both target key (email) and client IP address.
+ * Prevents credential-stuffing/brute-force attacks across different emails from a single IP,
+ * and standard brute-force on a single email.
+ */
+export async function rateLimitDual(
+  action: string,
+  email: string,
+  emailLimit = 5,
+  ipLimit = 20,
+  windowMs = 60_000
+): Promise<RateLimitResult> {
+  const emailKey = `${action}:email:${email.toLowerCase()}`;
+  const emailRl = rateLimit(emailKey, emailLimit, windowMs);
+  if (!emailRl.allowed) {
+    return emailRl;
+  }
+
+  try {
+    const heads = await headers();
+    const xff = heads.get('x-forwarded-for');
+    // Safely extract first IP from X-Forwarded-For if present, fallback to X-Real-IP
+    const ip = xff ? xff.split(',')[0]?.trim() : heads.get('x-real-ip');
+
+    if (ip) {
+      const ipKey = `${action}:ip:${ip}`;
+      const ipRl = rateLimit(ipKey, ipLimit, windowMs);
+      if (!ipRl.allowed) {
+        return ipRl;
+      }
+    }
+  } catch {
+    // In environments (such as static build or server component rendering without request context)
+    // where headers() is not available or throws, we bypass the IP check gracefully.
   }
 
   return { allowed: true, retryAfterSeconds: 0 };
