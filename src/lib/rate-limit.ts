@@ -8,6 +8,7 @@
  */
 
 import 'server-only';
+import { headers } from 'next/headers';
 
 const buckets = new Map<string, number[]>();
 
@@ -43,6 +44,43 @@ export function rateLimit(key: string, limit = 5, windowMs = 60_000): RateLimitR
     for (const [k, v] of buckets) {
       if (v.every((t) => t <= cutoff)) buckets.delete(k);
     }
+  }
+
+  return { allowed: true, retryAfterSeconds: 0 };
+}
+
+/**
+ * Dual rate limiter: combines target-based rate limiting with client IP-based rate limiting.
+ * Protects against credential stuffing and distributed brute-force attacks.
+ */
+export async function rateLimitDual(
+  actionType: string,
+  targetKey: string,
+  options: { limit?: number; windowMs?: number } = {}
+): Promise<RateLimitResult> {
+  const limit = options.limit ?? 5;
+  const windowMs = options.windowMs ?? 60_000;
+
+  // 1. Target-based rate limiting (e.g., lowercase email)
+  const targetKeyLower = targetKey.toLowerCase();
+  const targetKeyPrefixed = `${actionType}:target:${targetKeyLower}`;
+  const targetResult = rateLimit(targetKeyPrefixed, limit, windowMs);
+  if (!targetResult.allowed) {
+    return targetResult;
+  }
+
+  // 2. IP-based rate limiting (double the limit of target-based to allow NAT/shared IPs)
+  try {
+    const heads = await headers();
+    const xff = heads.get('x-forwarded-for');
+    const ip = (xff ? xff.split(',')[0]?.trim() : null) ?? heads.get('x-real-ip') ?? 'unknown';
+    const ipPrefixed = `${actionType}:ip:${ip}`;
+    const ipResult = rateLimit(ipPrefixed, limit * 2, windowMs);
+    if (!ipResult.allowed) {
+      return ipResult;
+    }
+  } catch {
+    // Graceful degradation if headers() throws or is unavailable
   }
 
   return { allowed: true, retryAfterSeconds: 0 };
