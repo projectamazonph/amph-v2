@@ -52,6 +52,52 @@ export interface BadgeEvaluationResult {
 }
 
 /**
+ * Lazy Criteria Cache to avoid O(N) database redundant lookups during a single
+ * badge evaluation run.
+ */
+class LazyCriteriaCache {
+  private completedCountPromise: Promise<number> | null = null;
+  private toolSessionsPromises = new Map<string, Promise<number>>();
+  private userPromise: Promise<{ streakDays: number; xp: number } | null> | null = null;
+
+  getCompletedCount(userId: string): Promise<number> {
+    if (!this.completedCountPromise) {
+      this.completedCountPromise = db.lessonProgress.count({
+        where: { userId, status: 'COMPLETED' },
+      });
+    }
+    return this.completedCountPromise!;
+  }
+
+  getToolSessionsCount(userId: string, scopeToolType?: string): Promise<number> {
+    const key = scopeToolType || '__ALL__';
+    const existing = this.toolSessionsPromises.get(key);
+    if (existing) {
+      return existing;
+    }
+    const p = db.toolSession.count({
+      where: {
+        userId,
+        status: 'GRADED',
+        ...(scopeToolType ? { toolType: scopeToolType } : {}),
+      },
+    });
+    this.toolSessionsPromises.set(key, p);
+    return p;
+  }
+
+  getUser(userId: string): Promise<{ streakDays: number; xp: number } | null> {
+    if (!this.userPromise) {
+      this.userPromise = db.user.findUnique({
+        where: { id: userId },
+        select: { streakDays: true, xp: true },
+      });
+    }
+    return this.userPromise!;
+  }
+}
+
+/**
  * Evaluate all badges for a user against the current database state. Award any
  * newly-earned ones. Idempotent — re-running with no new events returns
  * `awarded: []`.
@@ -95,6 +141,8 @@ export async function evaluateBadges(
     xpReward: number;
   }> = [];
 
+  const cache = new LazyCriteriaCache();
+
   for (const badge of published) {
     if (alreadyAwardedSet.has(badge.id)) continue;
 
@@ -106,7 +154,7 @@ export async function evaluateBadges(
       continue;
     }
 
-    const qualifies = await checkCriteria(userId, criteria, event);
+    const qualifies = await checkCriteria(userId, criteria, event, cache);
     if (qualifies) earnedNow.push(badge);
   }
 
@@ -146,12 +194,11 @@ async function checkCriteria(
   userId: string,
   criteria: BadgeCriteria,
   event: BadgeTrigger,
+  cache: LazyCriteriaCache,
 ): Promise<boolean> {
   switch (criteria.type) {
     case 'module_complete': {
-      const completedCount = await db.lessonProgress.count({
-        where: { userId, status: 'COMPLETED' },
-      });
+      const completedCount = await cache.getCompletedCount(userId);
       // Treat each completed lesson as progress toward module_complete; the
       // seed threshold is 1 so this triggers after the first lesson.
       return completedCount >= criteria.threshold;
@@ -165,30 +212,18 @@ async function checkCriteria(
 
     case 'tool_sessions': {
       const scopeToolType = criteria.scope?.toolType;
-      const count = await db.toolSession.count({
-        where: {
-          userId,
-          status: 'GRADED',
-          ...(scopeToolType ? { toolType: scopeToolType } : {}),
-        },
-      });
+      const count = await cache.getToolSessionsCount(userId, scopeToolType);
       return count >= criteria.threshold;
     }
 
     case 'streak_days': {
-      const user = await db.user.findUnique({
-        where: { id: userId },
-        select: { streakDays: true },
-      });
+      const user = await cache.getUser(userId);
       if (!user) return false;
       return user.streakDays >= criteria.threshold;
     }
 
     case 'xp_threshold': {
-      const user = await db.user.findUnique({
-        where: { id: userId },
-        select: { xp: true },
-      });
+      const user = await cache.getUser(userId);
       if (!user) return false;
       return user.xp >= criteria.threshold;
     }

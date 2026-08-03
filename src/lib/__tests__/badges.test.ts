@@ -92,4 +92,17 @@ describe('badges.ts', () => {
     const result = await evaluateBadges('user-1', { trigger: 'login' });
     expect(result.awarded).toEqual([]);
   });
+
+  it('minimizes database calls by caching query promises during evaluation', async () => {
+    (db.badge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([
+      { id: 'b1', title: 'Streak 1', criteria: JSON.stringify({ type: 'streak_days', threshold: 7 }), xpReward: 30, description: '', icon: '', tier: 'SILVER', isPublished: true, deletedAt: null },
+      { id: 'b2', title: 'XP 1', criteria: JSON.stringify({ type: 'xp_threshold', threshold: 100 }), xpReward: 50, description: '', icon: '', tier: 'BRONZE', isPublished: true, deletedAt: null },
+    ]);
+    (db.userBadge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    (db.user.findUnique as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({ streakDays: 10, xp: 150 });
+
+    const result = await evaluateBadges('user-1', { trigger: 'login' });
+    expect(result.awarded).toHaveLength(2);
+    expect(db.user.findUnique).toHaveBeenCalledTimes(1);
+  });
 });
