@@ -8,6 +8,7 @@
  */
 
 import 'server-only';
+import { headers } from 'next/headers';
 
 const buckets = new Map<string, number[]>();
 
@@ -46,4 +47,57 @@ export function rateLimit(key: string, limit = 5, windowMs = 60_000): RateLimitR
   }
 
   return { allowed: true, retryAfterSeconds: 0 };
+}
+
+/**
+ * Perform dual rate-limiting on both client IP and a target-based identifier.
+ */
+export async function rateLimitDual(
+  actionName: string,
+  targetId: string,
+  options?: {
+    ipLimit?: number;
+    targetLimit?: number;
+    windowMs?: number;
+  }
+): Promise<RateLimitResult> {
+  const ipLimit = options?.ipLimit ?? 10;
+  const targetLimit = options?.targetLimit ?? 5;
+  const windowMs = options?.windowMs ?? 60_000;
+
+  // 1. Get client IP from headers safely (noUncheckedIndexedAccess enabled)
+  let ip = 'unknown';
+  try {
+    const heads = await headers();
+    const xff = heads.get('x-forwarded-for');
+    const xri = heads.get('x-real-ip');
+    ip = (xff && xff.split(',')[0]?.trim()) || xri || 'unknown';
+  } catch {
+    // Fail-safe default IP if headers cannot be read
+    ip = 'unknown';
+  }
+
+  // 2. Perform rate-limiting on client IP first to block abusive actors early
+  // and prevent an IP-blocked attacker from polluting target-based buckets.
+  const ipKey = `${actionName}:ip:${ip}`;
+  const ipRl = rateLimit(ipKey, ipLimit, windowMs);
+  if (!ipRl.allowed) {
+    return ipRl;
+  }
+
+  // 3. Perform rate-limiting on target ID (e.g., lowercase email)
+  const targetKey = `${actionName}:target:${targetId.toLowerCase()}`;
+  const targetRl = rateLimit(targetKey, targetLimit, windowMs);
+  if (!targetRl.allowed) {
+    return targetRl;
+  }
+
+  return { allowed: true, retryAfterSeconds: 0 };
+}
+
+/**
+ * Clean up helper for testing purposes.
+ */
+export function _clearBuckets(): void {
+  buckets.clear();
 }
