@@ -8,6 +8,7 @@
  */
 
 import 'server-only';
+import { headers } from 'next/headers';
 
 const buckets = new Map<string, number[]>();
 
@@ -46,4 +47,47 @@ export function rateLimit(key: string, limit = 5, windowMs = 60_000): RateLimitR
   }
 
   return { allowed: true, retryAfterSeconds: 0 };
+}
+
+/**
+ * Asynchronous dual rate limiter that safeguards sensitive endpoints
+ * against brute force and credential stuffing by constraining both the
+ * client IP and target-based identifiers.
+ *
+ * Executes the client IP check first to prevent malicious IP-blocked
+ * actors from polluting target-based buckets (Account Lockout DoS).
+ */
+export async function rateLimitDual(
+  actionName: string,
+  targetKey: string,
+  ipLimit = 20,
+  targetLimit = 5,
+  windowMs = 60_000,
+): Promise<RateLimitResult> {
+  let ipAddress = 'unknown';
+  try {
+    const heads = await headers();
+    const xff = heads.get('x-forwarded-for');
+    const xri = heads.get('x-real-ip');
+
+    // Safely extract client IP in a strict TypeScript environment (noUncheckedIndexedAccess)
+    const clientIp = xff ? xff.split(',')[0]?.trim() : xri;
+    if (clientIp) {
+      ipAddress = clientIp;
+    }
+  } catch {
+    // Fallback if headers() is called outside server context or without mocks
+  }
+
+  const ipKey = `${actionName}:ip:${ipAddress}`;
+  const targetKeyPrefixed = `${actionName}:target:${targetKey.toLowerCase()}`;
+
+  // 1. IP rate limit check first (prevent Account Lockout DoS on target)
+  const ipResult = rateLimit(ipKey, ipLimit, windowMs);
+  if (!ipResult.allowed) {
+    return ipResult;
+  }
+
+  // 2. Target rate limit check second
+  return rateLimit(targetKeyPrefixed, targetLimit, windowMs);
 }
