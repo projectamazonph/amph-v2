@@ -72,5 +72,5 @@
       "eslint --fix"
     ]
   },
-  "packageManager": "pnpm@10.14.3"
+  "packageManager": "pnpm@10.34.5"
 }
