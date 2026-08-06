@@ -155,7 +155,7 @@ describe('badges.ts', () => {
     (db.userBadge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 
     const findUniqueSpy = vi.spyOn(db.user, 'findUnique');
-    findUniqueSpy.mockResolvedValue({ streakDays: 10, xp: 150 });
+    findUniqueSpy.mockResolvedValue({ streakDays: 10, xp: 150 } as any);
 
     const result = await evaluateBadges('user-1', { trigger: 'login' });
     expect(result.awarded).toHaveLength(2);
