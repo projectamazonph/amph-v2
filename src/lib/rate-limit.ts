@@ -8,6 +8,7 @@
  */
 
 import 'server-only';
+import { headers } from 'next/headers';
 
 const buckets = new Map<string, number[]>();
 
@@ -46,4 +47,43 @@ export function rateLimit(key: string, limit = 5, windowMs = 60_000): RateLimitR
   }
 
   return { allowed: true, retryAfterSeconds: 0 };
+}
+
+/**
+ * Dual rate limiter: rate limits based on both the client IP address (retrieved safely
+ * from Next.js request headers) and a target identifier (such as email).
+ *
+ * Always runs the IP check BEFORE target-based check to prevent IP-blocked malicious actors
+ * from lockouting legitimate accounts (Account Lockout Denial of Service).
+ */
+export async function rateLimitDual(
+  action: string,
+  target: string,
+  targetLimit = 5,
+  targetWindowMs = 60_000,
+  ipLimit = 15,
+  ipWindowMs = 60_000
+): Promise<RateLimitResult> {
+  const h = await headers();
+  const xff = h.get('x-forwarded-for');
+  const ip = (xff ? xff.split(',')[0]?.trim() : null) || h.get('x-real-ip') || 'unknown-ip';
+
+  const ipKey = `${action}:ip:${ip}`;
+  const targetKey = `${action}:target:${target.toLowerCase()}`;
+
+  // 1. IP check first (avoids target-based bucket pollution by blocked IPs)
+  const ipResult = rateLimit(ipKey, ipLimit, ipWindowMs);
+  if (!ipResult.allowed) {
+    return ipResult;
+  }
+
+  // 2. Target check second
+  return rateLimit(targetKey, targetLimit, targetWindowMs);
+}
+
+/**
+ * Resets all rate-limiting buckets (useful for clearing test pollution/interference).
+ */
+export function resetRateLimits(): void {
+  buckets.clear();
 }
