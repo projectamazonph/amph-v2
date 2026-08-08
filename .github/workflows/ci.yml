@@ -44,7 +44,12 @@ jobs:
           # revision" on every PR regardless of what changed.
           fetch-depth: 0
 
+      - name: Workaround broken pnpm 11.13.0 release
+        run: node -e "const fs = require('fs'); const p = JSON.parse(fs.readFileSync('package.json', 'utf8')); delete p.packageManager; fs.writeFileSync('package.json', JSON.stringify(p, null, 2));"
+
       - uses: pnpm/action-setup@v6
+        with:
+          version: 11.11.0
 
       - uses: actions/setup-node@v7
         with:
@@ -133,7 +138,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Workaround broken pnpm 11.13.0 release
+        run: node -e "const fs = require('fs'); const p = JSON.parse(fs.readFileSync('package.json', 'utf8')); delete p.packageManager; fs.writeFileSync('package.json', JSON.stringify(p, null, 2));"
+
       - uses: pnpm/action-setup@v6
+        with:
+          version: 11.11.0
 
       - uses: actions/setup-node@v7
         with:
@@ -195,7 +205,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Workaround broken pnpm 11.13.0 release
+        run: node -e "const fs = require('fs'); const p = JSON.parse(fs.readFileSync('package.json', 'utf8')); delete p.packageManager; fs.writeFileSync('package.json', JSON.stringify(p, null, 2));"
+
       - uses: pnpm/action-setup@v6
+        with:
+          version: 11.11.0
 
       - uses: actions/setup-node@v7
         with:
