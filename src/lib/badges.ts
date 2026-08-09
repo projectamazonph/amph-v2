@@ -83,7 +83,7 @@ export async function evaluateBadges(
     where: { userId },
     select: { badgeId: true },
   });
-  const alreadyAwardedSet = new Set(alreadyAwarded.map((ub) => ub.badgeId));
+  const alreadyAwardedSet = new Set(alreadyAwarded.map((ub: { badgeId: string }) => ub.badgeId));
 
   const earnedNow: Array<{
     id: string;
@@ -94,6 +94,9 @@ export async function evaluateBadges(
     tier: string;
     xpReward: number;
   }> = [];
+
+  // Transient EvaluationCache holds query promises to avoid N+1 query pattern during evaluation
+  const cache = new EvaluationCache();
 
   for (const badge of published) {
     if (alreadyAwardedSet.has(badge.id)) continue;
@@ -106,13 +109,13 @@ export async function evaluateBadges(
       continue;
     }
 
-    const qualifies = await checkCriteria(userId, criteria, event);
+    const qualifies = await checkCriteria(userId, criteria, event, cache);
     if (qualifies) earnedNow.push(badge);
   }
 
   // Persist awards in one transaction so partial failures roll back cleanly.
   if (earnedNow.length > 0) {
-    await db.$transaction(async (tx) => {
+    await db.$transaction(async (tx: Parameters<Parameters<typeof db.$transaction>[0]>[0]) => {
       for (const badge of earnedNow) {
         await tx.userBadge.create({
           data: { userId, badgeId: badge.id },
@@ -142,18 +145,28 @@ export async function evaluateBadges(
  * Returns true if the user has met the given badge criteria at this moment.
  * Each branch is a narrow DB read — no writes.
  */
+class EvaluationCache {
+  lessonCompletedCount: Promise<number> | null = null;
+  user: Promise<{ streakDays: number; xp: number } | null> | null = null;
+  toolSessionCount = new Map<string, Promise<number>>();
+}
+
+/**
+ * Returns true if the user has met the given badge criteria at this moment.
+ * Uses shared promises from EvaluationCache to collapse O(R) database roundtrips to O(1).
+ */
 async function checkCriteria(
   userId: string,
   criteria: BadgeCriteria,
   event: BadgeTrigger,
+  cache: EvaluationCache,
 ): Promise<boolean> {
   switch (criteria.type) {
     case 'module_complete': {
-      const completedCount = await db.lessonProgress.count({
+      cache.lessonCompletedCount ??= db.lessonProgress.count({
         where: { userId, status: 'COMPLETED' },
       });
-      // Treat each completed lesson as progress toward module_complete; the
-      // seed threshold is 1 so this triggers after the first lesson.
+      const completedCount = await cache.lessonCompletedCount!;
       return completedCount >= criteria.threshold;
     }
 
@@ -164,31 +177,38 @@ async function checkCriteria(
     }
 
     case 'tool_sessions': {
-      const scopeToolType = criteria.scope?.toolType;
-      const count = await db.toolSession.count({
-        where: {
-          userId,
-          status: 'GRADED',
-          ...(scopeToolType ? { toolType: scopeToolType } : {}),
-        },
-      });
+      const toolType = criteria.scope?.toolType || 'ALL';
+      let promise = cache.toolSessionCount.get(toolType);
+      if (!promise) {
+        promise = db.toolSession.count({
+          where: {
+            userId,
+            status: 'GRADED',
+            ...(criteria.scope?.toolType ? { toolType: criteria.scope.toolType } : {}),
+          },
+        });
+        cache.toolSessionCount.set(toolType, promise);
+      }
+      const count = await promise;
       return count >= criteria.threshold;
     }
 
     case 'streak_days': {
-      const user = await db.user.findUnique({
+      cache.user ??= db.user.findUnique({
         where: { id: userId },
-        select: { streakDays: true },
+        select: { streakDays: true, xp: true },
       });
+      const user = await cache.user!;
       if (!user) return false;
       return user.streakDays >= criteria.threshold;
     }
 
     case 'xp_threshold': {
-      const user = await db.user.findUnique({
+      cache.user ??= db.user.findUnique({
         where: { id: userId },
-        select: { xp: true },
+        select: { streakDays: true, xp: true },
       });
+      const user = await cache.user!;
       if (!user) return false;
       return user.xp >= criteria.threshold;
     }
