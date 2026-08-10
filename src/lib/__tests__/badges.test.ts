@@ -92,4 +92,23 @@ describe('badges.ts', () => {
     const result = await evaluateBadges('user-1', { trigger: 'login' });
     expect(result.awarded).toEqual([]);
   });
+
+  it('collapses redundant database queries during a single evaluateBadges run using EvaluationCache', async () => {
+    // Set up multiple badges that check the same type of criteria
+    (db.badge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([
+      { id: 'b1', title: 'Streak 1', slug: 'streak-1', criteria: JSON.stringify({ type: 'streak_days', threshold: 3 }), xpReward: 10, description: '', icon: '', tier: 'BRONZE', isPublished: true, deletedAt: null },
+      { id: 'b2', title: 'Streak 2', slug: 'streak-2', criteria: JSON.stringify({ type: 'streak_days', threshold: 7 }), xpReward: 20, description: '', icon: '', tier: 'SILVER', isPublished: true, deletedAt: null },
+      { id: 'b3', title: 'XP 1', slug: 'xp-1', criteria: JSON.stringify({ type: 'xp_threshold', threshold: 500 }), xpReward: 10, description: '', icon: '', tier: 'BRONZE', isPublished: true, deletedAt: null },
+      { id: 'b4', title: 'XP 2', slug: 'xp-2', criteria: JSON.stringify({ type: 'xp_threshold', threshold: 1000 }), xpReward: 20, description: '', icon: '', tier: 'SILVER', isPublished: true, deletedAt: null },
+    ]);
+    (db.userBadge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    (db.user.findUnique as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({ streakDays: 10, xp: 1200 });
+
+    const result = await evaluateBadges('user-1', { trigger: 'login' });
+    expect(result.awarded).toHaveLength(4);
+
+    // Because of the transient EvaluationCache, db.user.findUnique should only have been called once
+    // despite 4 different criteria checks checking user details (streak_days, streak_days, xp_threshold, xp_threshold)
+    expect(db.user.findUnique).toHaveBeenCalledTimes(1);
+  });
 });
