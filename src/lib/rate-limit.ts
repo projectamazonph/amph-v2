@@ -8,6 +8,7 @@
  */
 
 import 'server-only';
+import { headers } from 'next/headers';
 
 const buckets = new Map<string, number[]>();
 
@@ -46,4 +47,44 @@ export function rateLimit(key: string, limit = 5, windowMs = 60_000): RateLimitR
   }
 
   return { allowed: true, retryAfterSeconds: 0 };
+}
+
+/**
+ * Perform dual rate limiting to prevent both brute-force attacks and target-based lockout DoS.
+ *
+ * Always runs the client IP check BEFORE checking target-based keys (such as email) so that
+ * blocked IPs cannot fill/exhaust a legitimate user's target rate-limiting bucket.
+ */
+export async function rateLimitDual(
+  action: string,
+  targetKey: string,
+  ipLimit = 10,
+  targetLimit = 5,
+  windowMs = 60_000,
+): Promise<RateLimitResult> {
+  const reqHeaders = await headers();
+  const xff = reqHeaders.get('x-forwarded-for');
+  const xri = reqHeaders.get('x-real-ip');
+
+  // Safely extract client IP from x-forwarded-for (handling noUncheckedIndexedAccess)
+  const clientIp = (xff ? xff.split(',')[0]?.trim() : null) || xri || 'unknown';
+
+  // 1. Check IP-based rate limiting first
+  const ipKey = `ip:${action}:${clientIp}`;
+  const ipResult = rateLimit(ipKey, ipLimit, windowMs);
+  if (!ipResult.allowed) {
+    return ipResult;
+  }
+
+  // 2. Check target-based rate limiting second (using lowercase keys for case insensitivity)
+  const targetKeyLower = targetKey.toLowerCase();
+  const targetKeyFormatted = `target:${action}:${targetKeyLower}`;
+  return rateLimit(targetKeyFormatted, targetLimit, windowMs);
+}
+
+/**
+ * Resets the in-memory rate-limiting maps to prevent test pollution.
+ */
+export function resetRateLimits(): void {
+  buckets.clear();
 }
