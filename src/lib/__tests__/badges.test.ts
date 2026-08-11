@@ -92,4 +92,39 @@ describe('badges.ts', () => {
     const result = await evaluateBadges('user-1', { trigger: 'login' });
     expect(result.awarded).toEqual([]);
   });
+
+  it('collapses redundant database queries during badge evaluation using EvaluationCache', async () => {
+    (db.badge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([
+      { id: 'b1', title: 'Streak 1', criteria: JSON.stringify({ type: 'streak_days', threshold: 5 }), xpReward: 10, description: '', icon: '', tier: 'BRONZE', isPublished: true, deletedAt: null },
+      { id: 'b2', title: 'Streak 2', criteria: JSON.stringify({ type: 'streak_days', threshold: 10 }), xpReward: 20, description: '', icon: '', tier: 'SILVER', isPublished: true, deletedAt: null },
+      { id: 'b3', title: 'XP Threshold 1', criteria: JSON.stringify({ type: 'xp_threshold', threshold: 100 }), xpReward: 10, description: '', icon: '', tier: 'BRONZE', isPublished: true, deletedAt: null },
+      { id: 'b4', title: 'XP Threshold 2', criteria: JSON.stringify({ type: 'xp_threshold', threshold: 500 }), xpReward: 20, description: '', icon: '', tier: 'SILVER', isPublished: true, deletedAt: null },
+    ]);
+    (db.userBadge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    (db.user.findUnique as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({ streakDays: 7, xp: 150 });
+
+    const result = await evaluateBadges('user-1', { trigger: 'login' });
+    expect(result.awarded).toHaveLength(2); // Should award Streak 1 and XP Threshold 1
+
+    // Check that db.user.findUnique was only called EXACTLY once instead of 4 times (since they are collapsed)
+    expect(db.user.findUnique).toHaveBeenCalledTimes(1);
+  });
+
+  it('collapses redundant queries for module_complete and tool_sessions', async () => {
+    (db.badge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([
+      { id: 'b1', title: 'Module 1', criteria: JSON.stringify({ type: 'module_complete', threshold: 1 }), xpReward: 10, description: '', icon: '', tier: 'BRONZE', isPublished: true, deletedAt: null },
+      { id: 'b2', title: 'Module 2', criteria: JSON.stringify({ type: 'module_complete', threshold: 5 }), xpReward: 20, description: '', icon: '', tier: 'SILVER', isPublished: true, deletedAt: null },
+      { id: 'b3', title: 'Tools 1', criteria: JSON.stringify({ type: 'tool_sessions', threshold: 2, scope: { toolType: 'CAMPAIGN_BUILDER' } }), xpReward: 10, description: '', icon: '', tier: 'BRONZE', isPublished: true, deletedAt: null },
+      { id: 'b4', title: 'Tools 2', criteria: JSON.stringify({ type: 'tool_sessions', threshold: 5, scope: { toolType: 'CAMPAIGN_BUILDER' } }), xpReward: 20, description: '', icon: '', tier: 'SILVER', isPublished: true, deletedAt: null },
+    ]);
+    (db.userBadge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    (db.lessonProgress.count as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(3);
+    (db.toolSession.count as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(4);
+
+    const result = await evaluateBadges('user-1', { trigger: 'login' });
+    expect(result.awarded).toHaveLength(2); // Should award Module 1 and Tools 1
+
+    expect(db.lessonProgress.count).toHaveBeenCalledTimes(1);
+    expect(db.toolSession.count).toHaveBeenCalledTimes(1);
+  });
 });
