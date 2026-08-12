@@ -8,6 +8,7 @@
  */
 
 import 'server-only';
+import { headers } from 'next/headers';
 
 const buckets = new Map<string, number[]>();
 
@@ -46,4 +47,58 @@ export function rateLimit(key: string, limit = 5, windowMs = 60_000): RateLimitR
   }
 
   return { allowed: true, retryAfterSeconds: 0 };
+}
+
+/**
+ * Dual rate limiter: combines client IP check and target-based checks (like email).
+ * Always executes the client IP check and rate limiting before checking the target-based
+ * identifier to prevent malicious IP-blocked actors from polluting target-based buckets
+ * and causing an Account Lockout Denial of Service (DoS) for legitimate users.
+ */
+export async function rateLimitDual(
+  ipKeyPrefix: string,
+  targetKey: string,
+  options: {
+    ipLimit?: number;
+    ipWindowMs?: number;
+    targetLimit?: number;
+    targetWindowMs?: number;
+  } = {}
+): Promise<RateLimitResult> {
+  const {
+    ipLimit = 10,
+    ipWindowMs = 60_000,
+    targetLimit = 5,
+    targetWindowMs = 60_000,
+  } = options;
+
+  let heads;
+  try {
+    heads = await headers();
+  } catch {
+    // Fallback gracefully if called outside of request context (e.g. testing)
+  }
+
+  if (heads) {
+    const xff = heads.get('x-forwarded-for');
+    // Safe access for split under noUncheckedIndexedAccess rule
+    const ip = xff ? xff.split(',')[0]?.trim() : (heads.get('x-real-ip') ?? null);
+
+    if (ip) {
+      const ipKey = `${ipKeyPrefix}:${ip}`;
+      const ipResult = rateLimit(ipKey, ipLimit, ipWindowMs);
+      if (!ipResult.allowed) {
+        return ipResult;
+      }
+    }
+  }
+
+  return rateLimit(targetKey, targetLimit, targetWindowMs);
+}
+
+/**
+ * Resets the in-memory rate-limiting buckets (primarily for testing purposes).
+ */
+export function resetRateLimits(): void {
+  buckets.clear();
 }
