@@ -8,6 +8,7 @@
  */
 
 import 'server-only';
+import { headers } from 'next/headers';
 
 const buckets = new Map<string, number[]>();
 
@@ -46,4 +47,41 @@ export function rateLimit(key: string, limit = 5, windowMs = 60_000): RateLimitR
   }
 
   return { allowed: true, retryAfterSeconds: 0 };
+}
+
+/**
+ * Perform asynchronous rate limiting using client IP and target-based identifiers.
+ * Always run client IP rate check BEFORE target check to prevent account-lockout DoS.
+ */
+export async function rateLimitDual(
+  targetKey: string,
+  targetLimit = 5,
+  targetWindowMs = 60_000,
+  ipLimit = 10,
+  ipWindowMs = 60_000,
+): Promise<RateLimitResult> {
+  let ip: string | null = null;
+  try {
+    const headersList = await headers();
+    const xff = headersList.get('x-forwarded-for');
+    ip = xff ? (xff.split(',')[0]?.trim() ?? null) : (headersList.get('x-real-ip') ?? null);
+  } catch {
+    // Graceful fallback if headers() cannot be called or fails
+  }
+
+  // IP rate limiting check first
+  const ipResult = rateLimit(`ip:${ip ?? 'unknown'}`, ipLimit, ipWindowMs);
+  if (!ipResult.allowed) {
+    return ipResult;
+  }
+
+  // Target-based rate limiting check second
+  return rateLimit(targetKey, targetLimit, targetWindowMs);
+}
+
+/**
+ * Clear in-memory rate-limiting maps to prevent inter-test interference.
+ */
+export function resetRateLimits(): void {
+  buckets.clear();
 }
