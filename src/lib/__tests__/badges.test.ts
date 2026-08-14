@@ -92,4 +92,18 @@ describe('badges.ts', () => {
     const result = await evaluateBadges('user-1', { trigger: 'login' });
     expect(result.awarded).toEqual([]);
   });
+
+  it('reuses promises from EvaluationCache to prevent duplicate DB queries', async () => {
+    (db.badge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([
+      { id: 'b1', title: 'Module 1', criteria: JSON.stringify({ type: 'module_complete', threshold: 1 }), xpReward: 10, description: '', icon: '', tier: 'BRONZE', isPublished: true, deletedAt: null },
+      { id: 'b2', title: 'Module 2', criteria: JSON.stringify({ type: 'module_complete', threshold: 2 }), xpReward: 10, description: '', icon: '', tier: 'BRONZE', isPublished: true, deletedAt: null },
+    ]);
+    (db.userBadge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    (db.lessonProgress.count as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(5);
+
+    await evaluateBadges('user-1', { trigger: 'login' });
+
+    // Both badge criteria check 'module_complete', but db.lessonProgress.count should only be called once!
+    expect(db.lessonProgress.count).toHaveBeenCalledTimes(1);
+  });
 });

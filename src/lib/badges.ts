@@ -61,6 +61,43 @@ export interface BadgeEvaluationResult {
  * wants to count it; the engine does NOT mutate `User.xp` to keep this function
  * composable inside larger transactions.
  */
+/**
+ * Transient cache of database query promises to prevent redundant database lookups
+ * when checking criteria for multiple badges within a single evaluation lifecycle.
+ * This collapses the database overhead from O(R) to O(1) where R is the number of rules.
+ */
+class EvaluationCache {
+  private completed: Promise<number> | null = null;
+  private tools = new Map<string | undefined, Promise<number>>();
+  private user: Promise<{ xp: number; streakDays: number } | null> | null = null;
+
+  constructor(private userId: string) {}
+
+  getCompleted(): Promise<number> {
+    return this.completed ??= db.lessonProgress.count({
+      where: { userId: this.userId, status: 'COMPLETED' },
+    });
+  }
+
+  getToolCount(toolType?: string): Promise<number> {
+    const cached = this.tools.get(toolType);
+    if (cached) return cached;
+
+    const p = db.toolSession.count({
+      where: { userId: this.userId, status: 'GRADED', ...(toolType ? { toolType } : {}) },
+    });
+    this.tools.set(toolType, p);
+    return p;
+  }
+
+  getUser(): Promise<{ xp: number; streakDays: number } | null> {
+    return this.user ??= db.user.findUnique({
+      where: { id: this.userId },
+      select: { xp: true, streakDays: true },
+    }) as Promise<{ xp: number; streakDays: number } | null>;
+  }
+}
+
 export async function evaluateBadges(
   userId: string,
   event: BadgeTrigger,
@@ -95,6 +132,8 @@ export async function evaluateBadges(
     xpReward: number;
   }> = [];
 
+  const cache = new EvaluationCache(userId);
+
   for (const badge of published) {
     if (alreadyAwardedSet.has(badge.id)) continue;
 
@@ -106,7 +145,7 @@ export async function evaluateBadges(
       continue;
     }
 
-    const qualifies = await checkCriteria(userId, criteria, event);
+    const qualifies = await checkCriteria(userId, criteria, event, cache);
     if (qualifies) earnedNow.push(badge);
   }
 
@@ -140,18 +179,17 @@ export async function evaluateBadges(
 
 /**
  * Returns true if the user has met the given badge criteria at this moment.
- * Each branch is a narrow DB read — no writes.
+ * Reuses the provided transient EvaluationCache to avoid redundant database lookups.
  */
 async function checkCriteria(
   userId: string,
   criteria: BadgeCriteria,
   event: BadgeTrigger,
+  cache: EvaluationCache,
 ): Promise<boolean> {
   switch (criteria.type) {
     case 'module_complete': {
-      const completedCount = await db.lessonProgress.count({
-        where: { userId, status: 'COMPLETED' },
-      });
+      const completedCount = await cache.getCompleted();
       // Treat each completed lesson as progress toward module_complete; the
       // seed threshold is 1 so this triggers after the first lesson.
       return completedCount >= criteria.threshold;
@@ -165,30 +203,18 @@ async function checkCriteria(
 
     case 'tool_sessions': {
       const scopeToolType = criteria.scope?.toolType;
-      const count = await db.toolSession.count({
-        where: {
-          userId,
-          status: 'GRADED',
-          ...(scopeToolType ? { toolType: scopeToolType } : {}),
-        },
-      });
+      const count = await cache.getToolCount(scopeToolType);
       return count >= criteria.threshold;
     }
 
     case 'streak_days': {
-      const user = await db.user.findUnique({
-        where: { id: userId },
-        select: { streakDays: true },
-      });
+      const user = await cache.getUser();
       if (!user) return false;
       return user.streakDays >= criteria.threshold;
     }
 
     case 'xp_threshold': {
-      const user = await db.user.findUnique({
-        where: { id: userId },
-        select: { xp: true },
-      });
+      const user = await cache.getUser();
       if (!user) return false;
       return user.xp >= criteria.threshold;
     }
