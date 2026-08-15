@@ -47,6 +47,12 @@ export function StrTriageRunner({ sessionId, scenario, toolSlug }: StrTriageRunn
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
+  // Precompute Map lookup for search terms by ID to avoid O(M) scans on user action
+  const searchTermMap = useMemo(
+    () => new Map(scenario.searchTerms.map((t) => [t.id, t])),
+    [scenario.searchTerms]
+  );
+
   const counts = useMemo(() => {
     let keep = 0;
     let pause = 0;
@@ -71,7 +77,7 @@ export function StrTriageRunner({ sessionId, scenario, toolSlug }: StrTriageRunn
         searchTermId: termId,
         action,
         ...(action === 'negate-exact' || action === 'negate-phrase'
-          ? { negativeKeyword: current?.negativeKeyword ?? scenario.searchTerms.find((t) => t.id === termId)?.term ?? '' }
+          ? { negativeKeyword: current?.negativeKeyword ?? searchTermMap.get(termId)?.term ?? '' }
           : {}),
         ...(action === 'optimize-bid'
           ? { newBid: current?.newBid ?? Math.max(5, Math.round((current?.newBid ?? 15) / 5) * 5) }
