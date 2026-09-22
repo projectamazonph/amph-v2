@@ -23,7 +23,10 @@
     "format": "prettier --write .",
     "prepare": "husky",
     "lint:purge": "node scripts/lint-purge.js",
-    "sentry:sourcemaps": "sentry-cli sourcemaps inject .next && sentry-cli sourcemaps upload"
+    "sentry:sourcemaps": "sentry-cli sourcemaps inject .next && sentry-cli sourcemaps upload",
+    "lint:check": "eslint .",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,md}\"",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.7",
@@ -55,11 +58,11 @@
     "@vitejs/plugin-react": "^6.0.3",
     "@vitest/coverage-v8": "^4.1.10",
     "dotenv": "^17.4.2",
-    "pino-pretty": "^13.0.0",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.0.0",
     "husky": "^9.1.6",
     "lint-staged": "^17.0.8",
+    "pino-pretty": "^13.0.0",
     "prettier": "^3.9.5",
     "prisma": "^7.8.0",
     "tsx": "^4.23.1",
