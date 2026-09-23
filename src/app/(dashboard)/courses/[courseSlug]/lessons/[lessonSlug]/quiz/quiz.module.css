@@ -60,3 +60,11 @@
 .ctaSecondary:hover {
   background: var(--accent-soft, var(--surface-2));
 }
+
+.reviewCard {
+  border-left: 3px solid var(--danger);
+}
+
+.reviewCard[data-correct="true"] {
+  border-left-color: var(--success);
+}
