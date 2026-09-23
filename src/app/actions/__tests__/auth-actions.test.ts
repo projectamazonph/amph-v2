@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { signInAction, signUpAction, signOutAction } from '@/app/actions/auth';
 import { PLACEHOLDER_PASSWORD_PREFIX } from '@/lib/claim-token';
+import { resetRateLimits } from '@/lib/rate-limit';
 
 const mockSignToken = vi.fn();
 const mockSetAuthCookie = vi.fn();
@@ -29,6 +30,7 @@ vi.mock('next/headers', () => ({
     set: vi.fn(),
     delete: vi.fn(),
   }),
+  headers: () => Promise.resolve({ get: () => null }),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -41,6 +43,7 @@ describe('auth actions', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mockSignToken.mockResolvedValue('token');
+    resetRateLimits();
   });
 
   it('signInAction rejects unknown email', async () => {
