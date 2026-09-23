@@ -29,6 +29,9 @@ vi.mock('next/headers', () => ({
     set: vi.fn(),
     delete: vi.fn(),
   }),
+  headers: () => Promise.resolve({
+    get: () => null,
+  }),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -36,11 +39,13 @@ vi.mock('next/navigation', () => ({
 }));
 
 import { db } from '@/lib/db';
+import { resetRateLimits } from '@/lib/rate-limit';
 
 describe('auth actions', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mockSignToken.mockResolvedValue('token');
+    resetRateLimits();
   });
 
   it('signInAction rejects unknown email', async () => {
