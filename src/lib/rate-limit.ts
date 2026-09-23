@@ -8,6 +8,7 @@
  */
 
 import 'server-only';
+import { headers } from 'next/headers';
 
 const buckets = new Map<string, number[]>();
 
@@ -46,4 +47,44 @@ export function rateLimit(key: string, limit = 5, windowMs = 60_000): RateLimitR
   }
 
   return { allowed: true, retryAfterSeconds: 0 };
+}
+
+/**
+ * Reset all rate-limiting buckets (primarily for testing to avoid inter-test pollution).
+ */
+export function resetRateLimits(): void {
+  buckets.clear();
+}
+
+/**
+ * Asynchronous dual rate-limiting utility function.
+ * Safeguards sensitive endpoints like signUpAction and signInAction against brute force
+ * and credential stuffing by constraining both the client IP and target-based identifiers.
+ *
+ * Always executes the client IP check and rate limiting before checking target-based
+ * identifiers (such as emails) to prevent malicious IP-blocked actors from polluting
+ * target-based buckets and causing an Account Lockout Denial of Service (DoS) for legitimate users.
+ */
+export async function rateLimitDual(
+  actionName: string,
+  targetId: string,
+  options: {
+    ipLimit?: number;
+    ipWindowMs?: number;
+    targetLimit?: number;
+    targetWindowMs?: number;
+  } = {},
+): Promise<RateLimitResult> {
+  const heads = await headers();
+  const xff = heads.get('x-forwarded-for');
+  const ip = (xff ? xff.split(',')[0]?.trim() : null) ?? heads.get('x-real-ip') ?? '127.0.0.1';
+
+  const { ipLimit = 10, ipWindowMs = 60_000, targetLimit = 5, targetWindowMs = 60_000 } = options;
+
+  const ipResult = rateLimit(`ip:${actionName}:${ip}`, ipLimit, ipWindowMs);
+  if (!ipResult.allowed) {
+    return ipResult;
+  }
+
+  return rateLimit(`target:${actionName}:${targetId.toLowerCase()}`, targetLimit, targetWindowMs);
 }
