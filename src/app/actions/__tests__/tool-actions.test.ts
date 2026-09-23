@@ -35,6 +35,7 @@ vi.mock('next/headers', () => ({
     set: vi.fn(),
     delete: vi.fn(),
   }),
+  headers: () => Promise.resolve({ get: () => null }),
 }))
 
 vi.mock('next/navigation', () => ({
