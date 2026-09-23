@@ -52,6 +52,52 @@ export interface BadgeEvaluationResult {
 }
 
 /**
+ * Transient cache for badge evaluations to prevent redundant database queries.
+ * This shares database query promises across all checkCriteria evaluations
+ * during a single evaluateBadges invocation, collapsing queries from O(R) to O(1).
+ */
+class EvaluationCache {
+  private moduleComplete: Promise<number> | null = null;
+  private toolSessions = new Map<string, Promise<number>>();
+  private userProfile: Promise<{ streakDays: number; xp: number } | null> | null = null;
+
+  getModuleComplete(userId: string): Promise<number> {
+    if (!this.moduleComplete) {
+      this.moduleComplete = db.lessonProgress.count({
+        where: { userId, status: 'COMPLETED' },
+      });
+    }
+    return this.moduleComplete;
+  }
+
+  getToolSessions(userId: string, toolType: string | undefined): Promise<number> {
+    const key = toolType || '__all__';
+    let p = this.toolSessions.get(key);
+    if (!p) {
+      p = db.toolSession.count({
+        where: {
+          userId,
+          status: 'GRADED',
+          ...(toolType ? { toolType } : {}),
+        },
+      });
+      this.toolSessions.set(key, p);
+    }
+    return p;
+  }
+
+  getUserProfile(userId: string): Promise<{ streakDays: number; xp: number } | null> {
+    if (!this.userProfile) {
+      this.userProfile = db.user.findUnique({
+        where: { id: userId },
+        select: { streakDays: true, xp: true },
+      }) as Promise<{ streakDays: number; xp: number } | null>;
+    }
+    return this.userProfile;
+  }
+}
+
+/**
  * Evaluate all badges for a user against the current database state. Award any
  * newly-earned ones. Idempotent — re-running with no new events returns
  * `awarded: []`.
@@ -95,6 +141,8 @@ export async function evaluateBadges(
     xpReward: number;
   }> = [];
 
+  const cache = new EvaluationCache();
+
   for (const badge of published) {
     if (alreadyAwardedSet.has(badge.id)) continue;
 
@@ -106,7 +154,7 @@ export async function evaluateBadges(
       continue;
     }
 
-    const qualifies = await checkCriteria(userId, criteria, event);
+    const qualifies = await checkCriteria(userId, criteria, event, cache);
     if (qualifies) earnedNow.push(badge);
   }
 
@@ -140,18 +188,17 @@ export async function evaluateBadges(
 
 /**
  * Returns true if the user has met the given badge criteria at this moment.
- * Each branch is a narrow DB read — no writes.
+ * Each branch uses the shared evaluation cache to prevent redundant DB reads.
  */
 async function checkCriteria(
   userId: string,
   criteria: BadgeCriteria,
   event: BadgeTrigger,
+  cache: EvaluationCache,
 ): Promise<boolean> {
   switch (criteria.type) {
     case 'module_complete': {
-      const completedCount = await db.lessonProgress.count({
-        where: { userId, status: 'COMPLETED' },
-      });
+      const completedCount = await cache.getModuleComplete(userId);
       // Treat each completed lesson as progress toward module_complete; the
       // seed threshold is 1 so this triggers after the first lesson.
       return completedCount >= criteria.threshold;
@@ -165,30 +212,18 @@ async function checkCriteria(
 
     case 'tool_sessions': {
       const scopeToolType = criteria.scope?.toolType;
-      const count = await db.toolSession.count({
-        where: {
-          userId,
-          status: 'GRADED',
-          ...(scopeToolType ? { toolType: scopeToolType } : {}),
-        },
-      });
+      const count = await cache.getToolSessions(userId, scopeToolType);
       return count >= criteria.threshold;
     }
 
     case 'streak_days': {
-      const user = await db.user.findUnique({
-        where: { id: userId },
-        select: { streakDays: true },
-      });
+      const user = await cache.getUserProfile(userId);
       if (!user) return false;
       return user.streakDays >= criteria.threshold;
     }
 
     case 'xp_threshold': {
-      const user = await db.user.findUnique({
-        where: { id: userId },
-        select: { xp: true },
-      });
+      const user = await cache.getUserProfile(userId);
       if (!user) return false;
       return user.xp >= criteria.threshold;
     }
