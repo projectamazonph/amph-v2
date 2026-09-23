@@ -30,11 +30,17 @@ export default async function DashboardPage() {
     },
   });
 
-  // Get user's lesson progress
-  const lessonProgress = await db.lessonProgress.findMany({
-    where: { userId: user.id, deletedAt: null },
-    select: { lessonId: true, status: true },
-  });
+  // Get user's lesson progress (optimized: scope query to published lessons only to avoid loading full history)
+  const allPublishedLessonIds = courses.flatMap((c) =>
+    c.modules.flatMap((m) => m.lessons.map((l) => l.id))
+  );
+
+  const lessonProgress = allPublishedLessonIds.length > 0
+    ? await db.lessonProgress.findMany({
+        where: { userId: user.id, lessonId: { in: allPublishedLessonIds }, deletedAt: null },
+        select: { lessonId: true, status: true },
+      })
+    : [];
   const progressMap = new Map(lessonProgress.map((p) => [p.lessonId, p.status]));
 
   // Compute aggregate stats
