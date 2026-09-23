@@ -46,6 +46,7 @@ import {
   Download,
   Video,
   Circle,
+  UserPlus,
 } from '@phosphor-icons/react/dist/ssr';
 import clsx from 'clsx';
 import styles from './Icon.module.css';
@@ -113,7 +114,8 @@ export type PhosphorIconName =
   | 'ArrowRight'
   | 'Download'
   | 'Video'
-  | 'Circle';
+  | 'Circle'
+  | 'UserPlus';
 
 const ICON_MAP: Record<PhosphorIconName, React.ComponentType<PhosphorIconProps>> = {
   House,
@@ -149,6 +151,7 @@ const ICON_MAP: Record<PhosphorIconName, React.ComponentType<PhosphorIconProps>>
   Download,
   Video,
   Circle,
+  UserPlus,
 };
 
 export function Icon({

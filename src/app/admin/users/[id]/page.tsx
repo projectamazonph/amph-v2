@@ -172,13 +172,16 @@ export default async function UserDetailPage({
                 <div key={p.id} className={styles.listItem}>
                   <div className={styles.itemTitle}>
                     {formatPhp(p.amountPhp)}{' '}
-                    <Badge variant={p.status === 'PAID' ? 'success' : 'default'}>
+                    <Badge variant={p.status === 'COMPLETED' ? 'success' : 'default'}>
                       {p.status}
                     </Badge>
                   </div>
                   <div className={styles.itemMeta}>
-                    {p.pricingTier?.name} · {formatDate(p.createdAt)}
+                    {p.pricingTier?.name} · {p.method} · {formatDate(p.createdAt)}
                   </div>
+                  {p.metadata && (
+                    <div className={styles.itemMeta}>{p.metadata}</div>
+                  )}
                 </div>
               ))}
             </div>

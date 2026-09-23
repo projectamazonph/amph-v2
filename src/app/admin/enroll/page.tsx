@@ -43,6 +43,7 @@ export default async function AdminEnrollPage({
           id: t.id,
           name: t.name,
           priceLabel: formatPhp(t.pricePhp),
+          pricePhp: t.pricePhp,
           courseCount: t.courses.length,
         }))}
       />
