@@ -8,6 +8,7 @@
  */
 
 import 'server-only';
+import { headers } from 'next/headers';
 
 const buckets = new Map<string, number[]>();
 
@@ -46,4 +47,34 @@ export function rateLimit(key: string, limit = 5, windowMs = 60_000): RateLimitR
   }
 
   return { allowed: true, retryAfterSeconds: 0 };
+}
+
+/**
+ * Asynchronously dual rate-limit client IP first, then the target-based key.
+ * Prevents account lockout attacks by rejecting blocked IPs before updating target buckets.
+ */
+export async function rateLimitDual(
+  targetKey: string,
+  limit = 5,
+  windowMs = 60_000
+): Promise<RateLimitResult> {
+  const heads = await headers();
+  const xff = heads.get('x-forwarded-for');
+  const ip = (xff ? xff.split(',')[0]?.trim() : null) ?? heads.get('x-real-ip') ?? 'unknown';
+
+  // Always check and record IP limit first.
+  const ipRl = rateLimit(`ip:${ip}`, limit, windowMs);
+  if (!ipRl.allowed) {
+    return ipRl;
+  }
+
+  // Only check and record target limit if IP check passed.
+  return rateLimit(targetKey, limit, windowMs);
+}
+
+/**
+ * Resets all rate limit buckets (primarily for testing isolation).
+ */
+export function resetRateLimits(): void {
+  buckets.clear();
 }
