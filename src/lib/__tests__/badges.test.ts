@@ -92,4 +92,79 @@ describe('badges.ts', () => {
     const result = await evaluateBadges('user-1', { trigger: 'login' });
     expect(result.awarded).toEqual([]);
   });
+
+  it('awards module_complete badge when criteria met', async () => {
+    (db.badge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([
+      { id: 'b1', title: 'Module', criteria: JSON.stringify({ type: 'module_complete', threshold: 1 }), xpReward: 20, description: '', icon: '', tier: 'BRONZE', isPublished: true, deletedAt: null },
+    ]);
+    (db.userBadge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    (db.lessonProgress.count as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(2);
+    const result = await evaluateBadges('user-1', { trigger: 'lesson_complete' });
+    expect(result.awarded).toHaveLength(1);
+    expect(result.totalXpGained).toBe(20);
+  });
+
+  it('awards quiz_score badge when criteria met', async () => {
+    (db.badge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([
+      { id: 'b1', title: 'Quiz Master', criteria: JSON.stringify({ type: 'quiz_score', threshold: 90 }), xpReward: 40, description: '', icon: '', tier: 'GOLD', isPublished: true, deletedAt: null },
+    ]);
+    (db.userBadge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    const result = await evaluateBadges('user-1', { trigger: 'quiz_submit', score: 95, passed: true });
+    expect(result.awarded).toHaveLength(1);
+    expect(result.totalXpGained).toBe(40);
+  });
+
+  it('does not award quiz_score badge when not passed', async () => {
+    (db.badge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([
+      { id: 'b1', title: 'Quiz Master', criteria: JSON.stringify({ type: 'quiz_score', threshold: 90 }), xpReward: 40, description: '', icon: '', tier: 'GOLD', isPublished: true, deletedAt: null },
+    ]);
+    (db.userBadge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    const result = await evaluateBadges('user-1', { trigger: 'quiz_submit', score: 95, passed: false });
+    expect(result.awarded).toHaveLength(0);
+  });
+
+  it('does not award quiz_score badge when non-quiz trigger', async () => {
+    (db.badge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([
+      { id: 'b1', title: 'Quiz Master', criteria: JSON.stringify({ type: 'quiz_score', threshold: 90 }), xpReward: 40, description: '', icon: '', tier: 'GOLD', isPublished: true, deletedAt: null },
+    ]);
+    (db.userBadge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    const result = await evaluateBadges('user-1', { trigger: 'login' });
+    expect(result.awarded).toHaveLength(0);
+  });
+
+  it('awards tool_sessions badge when criteria met', async () => {
+    (db.badge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([
+      { id: 'b1', title: 'Tool Pro', criteria: JSON.stringify({ type: 'tool_sessions', threshold: 5 }), xpReward: 50, description: '', icon: '', tier: 'SILVER', isPublished: true, deletedAt: null },
+    ]);
+    (db.userBadge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    (db.toolSession.count as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(5);
+    const result = await evaluateBadges('user-1', { trigger: 'tool_submit', toolType: 'CAMPAIGN_BUILDER', passed: true });
+    expect(result.awarded).toHaveLength(1);
+    expect(result.totalXpGained).toBe(50);
+  });
+
+  it('awards tool_sessions scoped badge when criteria met', async () => {
+    (db.badge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([
+      { id: 'b1', title: 'Campaign Builder Pro', criteria: JSON.stringify({ type: 'tool_sessions', threshold: 3, scope: { toolType: 'CAMPAIGN_BUILDER' } }), xpReward: 50, description: '', icon: '', tier: 'SILVER', isPublished: true, deletedAt: null },
+    ]);
+    (db.userBadge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    (db.toolSession.count as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(3);
+    const result = await evaluateBadges('user-1', { trigger: 'tool_submit', toolType: 'CAMPAIGN_BUILDER', passed: true });
+    expect(result.awarded).toHaveLength(1);
+    expect(result.totalXpGained).toBe(50);
+  });
+
+  it('EvaluationCache caches database query promises and prevents N+1 queries', async () => {
+    (db.badge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([
+      { id: 'b1', title: 'Streak 1', criteria: JSON.stringify({ type: 'streak_days', threshold: 3 }), xpReward: 10, description: '', icon: '', tier: 'BRONZE', isPublished: true, deletedAt: null },
+      { id: 'b2', title: 'Streak 2', criteria: JSON.stringify({ type: 'streak_days', threshold: 7 }), xpReward: 20, description: '', icon: '', tier: 'SILVER', isPublished: true, deletedAt: null },
+    ]);
+    (db.userBadge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    (db.user.findUnique as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({ streakDays: 10, xp: 0 });
+
+    const result = await evaluateBadges('user-1', { trigger: 'login' });
+    expect(result.awarded).toHaveLength(2);
+    // Verified that db.user.findUnique was only called ONCE for both criteria because of EvaluationCache!
+    expect(db.user.findUnique).toHaveBeenCalledTimes(1);
+  });
 });
