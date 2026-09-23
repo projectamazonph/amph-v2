@@ -15,6 +15,7 @@ import {
   getSession,
 } from '@/lib/auth';
 import { logger } from '@/lib/logger';
+import { sendWelcomeEmail } from '@/lib/email';
 import { rateLimit } from '@/lib/rate-limit';
 import {
   hashClaimToken,
@@ -93,6 +94,9 @@ export const signUpAction = createSafeAction(signUpSchema, async (data) => {
       name: data.name ?? existing.name,
     });
     await setAuthCookie(token);
+
+    sendWelcomeEmail({ to: existing.email, studentName: data.name ?? existing.name ?? 'there' }).catch(() => {});
+
     return { userId: existing.id };
   }
 
@@ -114,6 +118,8 @@ export const signUpAction = createSafeAction(signUpSchema, async (data) => {
     name: user.name,
   });
   await setAuthCookie(token);
+
+  sendWelcomeEmail({ to: user.email, studentName: user.name ?? 'there' }).catch(() => {});
 
   return { userId: user.id };
 });

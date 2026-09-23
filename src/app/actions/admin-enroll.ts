@@ -1,12 +1,13 @@
 'use server';
 
 /**
- * Manual enrollment action — stripped launch build.
+ * Manual enrollment action (stripped launch build).
  *
  * Admin enters a student email + pricing tier; we create/find the user and
  * enroll them in every course on the tier. For brand-new students the
- * one-time claim link is returned so the admin can send it to the student
- * over Messenger/email themselves (no automated email in this build).
+ * one-time claim link is emailed automatically (best-effort) and also
+ * returned so the admin can send it themselves over Messenger as a backup
+ * if the email doesn't land (e.g. no Resend domain verified yet).
  */
 
 import { z } from 'zod';
@@ -14,6 +15,7 @@ import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/auth';
 import { auditLog } from '@/lib/admin-audit';
 import { grantManualEnrollment } from '@/lib/enrollment';
+import { sendAccountInviteEmail } from '@/lib/email';
 import type { ActionResult } from '@/lib/validation';
 
 const manualEnrollSchema = z.object({
@@ -24,7 +26,7 @@ const manualEnrollSchema = z.object({
 
 export interface ManualEnrollActionData {
   isNewUser: boolean;
-  /** Full signup link for new accounts — show once, admin sends it manually. */
+  /** Full signup link for new accounts, shown once, admin sends it manually. */
   claimUrl?: string;
   tierName: string;
   enrolledCount: number;
@@ -67,6 +69,14 @@ export async function manualEnrollAction(
       url.searchParams.set('email', parsed.data.email);
       url.searchParams.set('next', '/dashboard');
       claimUrl = url.toString();
+
+      // Best-effort: errors are logged, never thrown. The claimUrl above is
+      // shown to the admin regardless, as a manual-send backup.
+      sendAccountInviteEmail({
+        to: parsed.data.email,
+        tierName: result.tierName,
+        claimUrl,
+      }).catch(() => {});
     }
 
     return {

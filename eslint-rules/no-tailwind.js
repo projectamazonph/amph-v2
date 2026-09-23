@@ -10,7 +10,7 @@
 const TAILWIND_UTILITIES = /\b(bg-|text-|flex|grid|gap-|w-|h-|p-|m-|rounded-|border-|shadow-|font-|leading-|tracking-|overflow-|position-|z-|opacity-|cursor-|select-|sr-|transition-|animate-|from-|to-|via-|dark:|hover:|focus:|active:|disabled:)/;
 
 const PDF_GENERATOR_FILES = /cert-pdf|receipt-pdf/;
-const EMAIL_TEMPLATE_FILES = /email\.tsx$/;
+const EMAIL_TEMPLATE_FILES = /email\.tsx$|[\\/]emails[\\/]/;
 
 function isTokensFile(filename) {
   return filename && filename.includes('src/styles/tokens.css');
