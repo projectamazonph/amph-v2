@@ -15,7 +15,7 @@ import {
   getSession,
 } from '@/lib/auth';
 import { logger } from '@/lib/logger';
-import { rateLimit } from '@/lib/rate-limit';
+import { rateLimitDual } from '@/lib/rate-limit';
 import {
   hashClaimToken,
   PLACEHOLDER_PASSWORD_PREFIX,
@@ -32,7 +32,13 @@ import {
 // ---------------------------------------------------------------------------
 
 export const signUpAction = createSafeAction(signUpSchema, async (data) => {
-  const rl = rateLimit(`signup:${data.email.toLowerCase()}`, 5, 60_000);
+  // Use dual rate-limiting combining client IP check and target-based checks (email)
+  const rl = await rateLimitDual('signup-ip', `signup:${data.email.toLowerCase()}`, {
+    ipLimit: 10,
+    ipWindowMs: 60_000,
+    targetLimit: 5,
+    targetWindowMs: 60_000,
+  });
   if (!rl.allowed) {
     throw new Error(`Too many attempts. Try again in ${rl.retryAfterSeconds}s.`);
   }
@@ -123,9 +129,15 @@ export const signUpAction = createSafeAction(signUpSchema, async (data) => {
 // ---------------------------------------------------------------------------
 
 export const signInAction = createSafeAction(signInSchema, async (data) => {
-  // Rate-limit BEFORE any DB or scrypt work — the sync scrypt verify is
-  // exactly what an attacker would use to burn the event loop.
-  const rl = rateLimit(`signin:${data.email.toLowerCase()}`, 5, 60_000);
+  // Use dual rate-limiting combining client IP check and target-based checks (email).
+  // Rate-limit BEFORE any DB or scrypt work — the async scrypt verify can still
+  // be targeted to cause severe load.
+  const rl = await rateLimitDual('signin-ip', `signin:${data.email.toLowerCase()}`, {
+    ipLimit: 10,
+    ipWindowMs: 60_000,
+    targetLimit: 5,
+    targetWindowMs: 60_000,
+  });
   if (!rl.allowed) {
     throw new Error(`Too many attempts. Try again in ${rl.retryAfterSeconds}s.`);
   }
