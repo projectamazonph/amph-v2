@@ -92,4 +92,58 @@ describe('badges.ts', () => {
     const result = await evaluateBadges('user-1', { trigger: 'login' });
     expect(result.awarded).toEqual([]);
   });
+
+  it('minimizes database calls by caching query promises during evaluation', async () => {
+    (db.badge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([
+      { id: 'b1', title: 'Streak 1', criteria: JSON.stringify({ type: 'streak_days', threshold: 7 }), xpReward: 30, description: '', icon: '', tier: 'SILVER', isPublished: true, deletedAt: null },
+      { id: 'b2', title: 'XP 1', criteria: JSON.stringify({ type: 'xp_threshold', threshold: 100 }), xpReward: 50, description: '', icon: '', tier: 'BRONZE', isPublished: true, deletedAt: null },
+    ]);
+    (db.userBadge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    (db.user.findUnique as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({ streakDays: 10, xp: 150 });
+
+    const result = await evaluateBadges('user-1', { trigger: 'login' });
+    expect(result.awarded).toHaveLength(2);
+    expect(db.user.findUnique).toHaveBeenCalledTimes(1);
+  });
+
+  it('awards module_complete badge when criteria met', async () => {
+    (db.badge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([
+      { id: 'b1', title: 'Module Completed', criteria: JSON.stringify({ type: 'module_complete', threshold: 1 }), xpReward: 20, description: '', icon: '', tier: 'BRONZE', isPublished: true, deletedAt: null },
+    ]);
+    (db.userBadge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    (db.lessonProgress.count as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(2);
+
+    const result = await evaluateBadges('user-1', { trigger: 'lesson_complete' });
+    expect(result.awarded).toHaveLength(1);
+    expect(result.totalXpGained).toBe(20);
+  });
+
+  it('awards tool_sessions badge when criteria met', async () => {
+    (db.badge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([
+      { id: 'b1', title: 'Campaign Builder Pro', criteria: JSON.stringify({ type: 'tool_sessions', threshold: 3, scope: { toolType: 'CAMPAIGN_BUILDER' } }), xpReward: 40, description: '', icon: '', tier: 'SILVER', isPublished: true, deletedAt: null },
+    ]);
+    (db.userBadge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    (db.toolSession.count as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(5);
+
+    const result = await evaluateBadges('user-1', { trigger: 'tool_submit', toolType: 'CAMPAIGN_BUILDER', passed: true });
+    expect(result.awarded).toHaveLength(1);
+    expect(result.totalXpGained).toBe(40);
+  });
+
+  it('minimizes database calls for lessonProgress and toolSession counts', async () => {
+    (db.badge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([
+      { id: 'b1', title: 'Module 1', criteria: JSON.stringify({ type: 'module_complete', threshold: 1 }), xpReward: 10, description: '', icon: '', tier: 'BRONZE', isPublished: true, deletedAt: null },
+      { id: 'b2', title: 'Module 2', criteria: JSON.stringify({ type: 'module_complete', threshold: 2 }), xpReward: 20, description: '', icon: '', tier: 'BRONZE', isPublished: true, deletedAt: null },
+      { id: 'b3', title: 'Tool 1', criteria: JSON.stringify({ type: 'tool_sessions', threshold: 1, scope: { toolType: 'CAMPAIGN_BUILDER' } }), xpReward: 30, description: '', icon: '', tier: 'SILVER', isPublished: true, deletedAt: null },
+      { id: 'b4', title: 'Tool 2', criteria: JSON.stringify({ type: 'tool_sessions', threshold: 3, scope: { toolType: 'CAMPAIGN_BUILDER' } }), xpReward: 40, description: '', icon: '', tier: 'SILVER', isPublished: true, deletedAt: null },
+    ]);
+    (db.userBadge.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    (db.lessonProgress.count as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(5);
+    (db.toolSession.count as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(4);
+
+    const result = await evaluateBadges('user-1', { trigger: 'lesson_complete' });
+    expect(result.awarded).toHaveLength(4);
+    expect(db.lessonProgress.count).toHaveBeenCalledTimes(1);
+    expect(db.toolSession.count).toHaveBeenCalledTimes(1);
+  });
 });
