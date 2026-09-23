@@ -8,6 +8,7 @@
  */
 
 import 'server-only';
+import { headers } from 'next/headers';
 
 const buckets = new Map<string, number[]>();
 
@@ -15,6 +16,13 @@ export interface RateLimitResult {
   allowed: boolean;
   /** Seconds until the oldest hit falls out of the window (0 when allowed). */
   retryAfterSeconds: number;
+}
+
+/**
+ * Reset all rate limit buckets (useful for unit testing).
+ */
+export function resetRateLimits(): void {
+  buckets.clear();
 }
 
 /**
@@ -46,4 +54,36 @@ export function rateLimit(key: string, limit = 5, windowMs = 60_000): RateLimitR
   }
 
   return { allowed: true, retryAfterSeconds: 0 };
+}
+
+/**
+ * Dual rate limiting by IP first, then target identifier (e.g. email).
+ * Performing IP check first prevents malicious IP-blocked actors from polluting target-based
+ * buckets and causing account lockout DoS for legitimate users.
+ */
+export async function rateLimitDual(
+  actionPrefix: string,
+  targetKey: string,
+  limit = 5,
+  windowMs = 60_000,
+): Promise<RateLimitResult> {
+  let clientIp = 'unknown-ip';
+  try {
+    const h = await headers();
+    const xff = h.get('x-forwarded-for');
+    const xri = h.get('x-real-ip');
+    const firstXff = xff ? xff.split(',')[0] : null;
+    clientIp = (firstXff ? firstXff.trim() : null) || xri || 'unknown-ip';
+  } catch {
+    // If headers() is unavailable or throws, fallback to unknown-ip
+  }
+
+  // 1. IP rate limit check FIRST
+  const ipResult = rateLimit(`${actionPrefix}:ip:${clientIp}`, limit, windowMs);
+  if (!ipResult.allowed) {
+    return ipResult;
+  }
+
+  // 2. Target rate limit check SECOND
+  return rateLimit(`${actionPrefix}:target:${targetKey.toLowerCase()}`, limit, windowMs);
 }
