@@ -24,6 +24,9 @@ vi.mock('@/lib/db', () => ({
 }));
 
 vi.mock('next/headers', () => ({
+  headers: () => Promise.resolve({
+    get: () => null,
+  }),
   cookies: () => ({
     get: () => undefined,
     set: vi.fn(),
