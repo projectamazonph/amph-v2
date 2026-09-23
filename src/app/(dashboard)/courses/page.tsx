@@ -37,11 +37,16 @@ export default async function CoursesIndexPage() {
     },
   });
 
-  // Get user's lesson progress
-  const lessonProgress = await db.lessonProgress.findMany({
-    where: { userId: user.id, deletedAt: null },
-    select: { lessonId: true, status: true },
-  });
+  const allLessonIds = courses.flatMap((c) => c.modules.flatMap((m) => m.lessons.map((l) => l.id)));
+
+  // Bolt optimization: Scope lessonProgress query to published course lesson IDs
+  // to avoid loading un-scoped progress records from other courses/deleted items.
+  const lessonProgress = allLessonIds.length > 0
+    ? await db.lessonProgress.findMany({
+        where: { userId: user.id, lessonId: { in: allLessonIds }, deletedAt: null },
+        select: { lessonId: true, status: true },
+      })
+    : [];
   const progressMap = new Map(lessonProgress.map((p) => [p.lessonId, p.status]));
 
   return (

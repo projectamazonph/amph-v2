@@ -194,13 +194,24 @@ async function PendingLessons({
     take: 50,
   });
 
+  const allLessonIds = allLessons.map((l) => l.id);
+
+  // Bolt optimization: Scope lessonProgress query to course lesson IDs
+  // to prevent fetching full user history across all courses.
   const completedSet = new Set(
-    (
-      await db.lessonProgress.findMany({
-        where: { userId, status: 'COMPLETED', deletedAt: null },
-        select: { lessonId: true },
-      })
-    ).map((p) => p.lessonId),
+    allLessonIds.length > 0
+      ? (
+          await db.lessonProgress.findMany({
+            where: {
+              userId,
+              lessonId: { in: allLessonIds },
+              status: 'COMPLETED',
+              deletedAt: null,
+            },
+            select: { lessonId: true },
+          })
+        ).map((p) => p.lessonId)
+      : [],
   );
 
   const pending = allLessons.filter((l) => !completedSet.has(l.id)).slice(0, 8);
