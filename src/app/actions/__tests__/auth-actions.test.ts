@@ -23,12 +23,19 @@ vi.mock('@/lib/db', () => ({
   },
 }));
 
+const { mockHeaders } = vi.hoisted(() => ({
+  mockHeaders: {
+    get: vi.fn().mockReturnValue(null),
+  },
+}));
+
 vi.mock('next/headers', () => ({
   cookies: () => ({
     get: () => undefined,
     set: vi.fn(),
     delete: vi.fn(),
   }),
+  headers: () => Promise.resolve(mockHeaders),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -138,5 +145,61 @@ describe('auth actions', () => {
     const result = await signOutAction();
     expect(result.success).toBe(true);
     expect((result as any).data.ok).toBe(true);
+  });
+
+  describe('dual rate-limiting', () => {
+    beforeEach(() => {
+      mockHeaders.get.mockImplementation((header: string) => {
+        if (header === 'x-forwarded-for') return '203.0.113.195';
+        return null;
+      });
+    });
+
+    it('rate-limits by email on multiple sign-in attempts for same email', async () => {
+      (db.user.findUnique as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+
+      // Trigger rate limit with 5 allowed requests
+      for (let i = 0; i < 5; i++) {
+        const res = await signInAction({ email: 'target@example.com', password: 'x' });
+        expect(res.success).toBe(false);
+        if (!res.success) {
+          expect(res.error).toBe('Email or password is incorrect.');
+        }
+      }
+
+      // 6th request triggers email rate limit
+      const blockedRes = await signInAction({ email: 'target@example.com', password: 'x' });
+      expect(blockedRes.success).toBe(false);
+      if (!blockedRes.success) {
+        expect(blockedRes.error).toMatch(/Too many attempts\. Try again in \d+s\./);
+      }
+    });
+
+    it('rate-limits by IP on multiple sign-in attempts from same IP but different emails', async () => {
+      (db.user.findUnique as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+
+      // Use a distinct IP
+      mockHeaders.get.mockImplementation((header: string) => {
+        if (header === 'x-forwarded-for') return '198.51.100.42';
+        return null;
+      });
+
+      // 10 attempts on different emails from same IP are allowed to check credentials (but fail credential check)
+      for (let i = 0; i < 10; i++) {
+        const email = `user-${i}@example.com`;
+        const res = await signInAction({ email, password: 'x' });
+        expect(res.success).toBe(false);
+        if (!res.success) {
+          expect(res.error).toBe('Email or password is incorrect.');
+        }
+      }
+
+      // 11th request triggers IP rate limit
+      const blockedRes = await signInAction({ email: 'user-11@example.com', password: 'x' });
+      expect(blockedRes.success).toBe(false);
+      if (!blockedRes.success) {
+        expect(blockedRes.error).toBe('Too many attempts from this IP. Try again in 60s.');
+      }
+    });
   });
 });
