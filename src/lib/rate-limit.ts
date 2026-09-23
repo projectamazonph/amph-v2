@@ -8,6 +8,7 @@
  */
 
 import 'server-only';
+import { headers } from 'next/headers';
 
 const buckets = new Map<string, number[]>();
 
@@ -15,6 +16,32 @@ export interface RateLimitResult {
   allowed: boolean;
   /** Seconds until the oldest hit falls out of the window (0 when allowed). */
   retryAfterSeconds: number;
+}
+
+/**
+ * Reset all rate limiting buckets (useful for unit testing).
+ */
+export function resetRateLimits(): void {
+  buckets.clear();
+}
+
+/**
+ * Safely extract client IP from Next.js headers.
+ */
+export async function getClientIp(): Promise<string> {
+  try {
+    const headerStore = await headers();
+    const xff = headerStore.get('x-forwarded-for');
+    if (xff) {
+      const ip = xff.split(',')[0]?.trim();
+      if (ip) return ip;
+    }
+    const realIp = headerStore.get('x-real-ip');
+    if (realIp) return realIp.trim();
+  } catch {
+    // Outside request context (e.g. in tests without request context)
+  }
+  return '127.0.0.1';
 }
 
 /**
@@ -46,4 +73,25 @@ export function rateLimit(key: string, limit = 5, windowMs = 60_000): RateLimitR
   }
 
   return { allowed: true, retryAfterSeconds: 0 };
+}
+
+/**
+ * Dual rate limiting: Checks IP first to block brute force / DoS before
+ * checking target identifier (e.g. email) bucket, preventing Account Lockout DoS.
+ */
+export async function rateLimitDual(
+  actionPrefix: string,
+  targetIdentifier: string,
+  ipLimit = 20,
+  targetLimit = 5,
+  windowMs = 60_000,
+): Promise<RateLimitResult> {
+  const ip = await getClientIp();
+  // IP rate limiting executed FIRST to prevent blocked IP from polluting target bucket
+  const ipResult = rateLimit(`ip:${actionPrefix}:${ip}`, ipLimit, windowMs);
+  if (!ipResult.allowed) {
+    return ipResult;
+  }
+
+  return rateLimit(`target:${actionPrefix}:${targetIdentifier.toLowerCase()}`, targetLimit, windowMs);
 }
