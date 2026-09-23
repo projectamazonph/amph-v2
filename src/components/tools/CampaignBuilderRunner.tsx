@@ -47,6 +47,9 @@ const CAMPAIGN_TYPES: { value: CampaignType; label: string; description: string 
   },
 ];
 
+// Bolt optimization: Map campaign types by value for O(1) label lookups
+const CAMPAIGN_TYPE_MAP = new Map(CAMPAIGN_TYPES.map((c) => [c.value, c]));
+
 const TARGETING_TYPES: { value: TargetingType; label: string }[] = [
   { value: 'MANUAL', label: 'Manual' },
   { value: 'AUTO', label: 'Auto' },
@@ -307,7 +310,7 @@ export function CampaignBuilderRunner({ sessionId, scenario, toolSlug }: Campaig
         </CardHeader>
         <p className={styles.allowedNote}>
           <strong>Allowed campaign types:</strong>{' '}
-          {allowedTypes.map((t) => CAMPAIGN_TYPES.find((c) => c.value === t)?.label ?? t).join(' · ')}
+          {allowedTypes.map((t) => CAMPAIGN_TYPE_MAP.get(t)?.label ?? t).join(' · ')}
           <br />
           <strong>Allowed bid strategies:</strong> {allowedStrategies.join(' · ')}
         </p>
